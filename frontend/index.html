@@ -6,28 +6,28 @@
     </head>
     <body>
       <style>
-	div.layout {
-	    display: flex;
-	    flex-direction: row;
-	}
-	div.pane {
-	    padding: 0.5em;
-	}
+        div.layout {
+            display: flex;
+            flex-direction: row;
+        }
+        div.pane {
+            padding: 0.5em;
+        }
       </style>
       <div class="layout">
-	<div class="pane">
-	  <form action="">
-	    <label for="language">Language:</label>
+        <div class="pane">
+          <form action="">
+            <label for="language">Language:</label>
             <input name="language" type="text" value="python"/>
             <button>Send</button>
             <br/>
             <textarea cols="80" id="code" name="code" rows="40"></textarea>
-	  </form>
-	</div>
-	<div class="pane">
-	  <p>Output:</p>
-	  <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30"></textarea>
-	</div>
+          </form>
+        </div>
+        <div class="pane">
+          <p>Output:</p>
+          <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30"></textarea>
+        </div>
       </div>
     </body>
 </html>
