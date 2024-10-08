@@ -2,7 +2,7 @@ name: Build, Test and Publish Image
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev, 3-setup-deployment]
 
 jobs:
   build:
