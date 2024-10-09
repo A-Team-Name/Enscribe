@@ -1,9 +1,9 @@
-from flask import Flask
+from flask import Flask, render_template
 app = Flask(__name__)
 
 @app.route('/')
-def hello_geek():
-    return '<h1>Hello from Flask & Docker</h2>'
+def home_page():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
