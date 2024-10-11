@@ -3,12 +3,50 @@
   <head>
     <meta charset="utf-8"/>
     <title>Canvas Drawing Prototype</title>
+    <style>
+      .ltr-layout {
+	  display: flex;
+
+	  * {
+	      margin: 0.2em;
+	  }
+      }
+    </style>
   </head>
   <body>
-    <h1>Canvas Drawing!</h1>
-    <canvas id="demo-canvas" height="500" width="400">
-      
-    </canvas>
+    <h1></h1>
+    <div class="ltr-layout">
+      <div>
+	<div>
+          <button id="clear-canvas">Clear</button>
+	  <button id="random-symbol">Random Symbol</button>
+          <input id="line-width" type="range" value="3" min="1" max="20"/>
+	  <label for="line-width">3px</label>
+	</div>
+	<canvas id="demo-canvas" height="500" width="500" style="border: solid"></canvas>
+      </div>
+      <div>
+        <label for="written-symbol">Draw this symbol, then save.</label>
+	<input id="written-symbol" type="text" value="≥"
+	       style="font-size: 500%"/>
+	<p>Symbols:</p>
+	<textarea cols="100" rows="4" id="symbol-set">⌶%'⍺⍵_abcdefghijklmnopqrstuvwxyz¯.⍬0123456789⊢$£∆ABCDEFGHIJKLMNOPQRSTUVWXYZ·⍙{}⊣⌷¨⍨[/⌿\⍀<≤=≥>≠∨∧-+÷×?∊⍴~↑↓⍳○*⌈⌊∇∘(⊂⊃∩∪⊥⊤|;,⍱⍲⍒⍋⍉⌽⊖⍟⌹!⍕⍎⍫⍪≡≢"#&´@^`∣:⍷⋄←→⍝)]⎕⍞⍣</textarea>
+	<div>
+	  <a id="save-image" download filename="foo.png"></a>
+	</div>
+      </div>
+    </div>
     <script src="/static/canvas_drawing.js" charset="utf-8"></script>
+    <script>
+      setupCanvasDrawing(document.getElementById("demo-canvas"),
+			 {
+			     "lineWidth": document.getElementById("line-width"),
+			     "save": document.getElementById("save-image"),
+			     "writtenSymbol": document.getElementById("written-symbol"),
+			     "randomSymbol": document.getElementById("random-symbol"),
+			     "symbolSet": document.getElementById("symbol-set"),
+			     "clear": document.getElementById("clear-canvas")
+			 });
+    </script>
   </body>
 </html>
