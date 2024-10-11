@@ -1,10 +1,13 @@
 services:
   api:
+    environment:
+      - SECRET_KEY=$SECRET_KEY
     build:
       context: ./backend
       dockerfile: dockerfile
     ports:
       - "5000:5000"
+
   # client:
   #   build:
   #     context: ./frontend
