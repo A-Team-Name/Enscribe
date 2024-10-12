@@ -24,8 +24,14 @@ const setupCanvasDrawing = (canvas, controls) => {
 
     ctx.lineWidth = controls.lineWidth.value || 3;
 
+    const removeSaveLink = () => {
+	controls.save.href = "";
+	controls.save.innerHTML = "";
+    }
+
     const clearCanvas = () => {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	removeSaveLink();
     }
 
     controls.lineWidth.addEventListener(
@@ -43,14 +49,18 @@ const setupCanvasDrawing = (canvas, controls) => {
 				   (event) => {
 				       // Clear the canvas, delayed until after save.
 				       setTimeout(clearCanvas, 200);
-				       // Remove the link text, so we don't accidentally save over
+				       // Remove the save link, so we don't accidentally save over
 				       // a drawing by clicking multiple times.
-				       controls.save.innerHTML = "";
+				       removeSaveLink();
 				   })
 
     controls.nextSymbol.addEventListener(
 	"click",
 	(event) => {
+	    // Save the currently drawn symbol, if any.
+	    if (controls.save.innerHTML != "") {
+		controls.save.click();
+	    }
 	    clearCanvas();
 	    nextSymbol();
 	}
