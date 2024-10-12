@@ -9,6 +9,18 @@ function getRandomInt(min, max) {
 
 const setupCanvasDrawing = (canvas, controls) => {
     let ctx = canvas.getContext("2d");
+    let drawing_index = controls.symbolSet.value.length;
+
+    // Advance to the next symbol in the symbol set.
+    const nextSymbol = () => {
+	let symbols = controls.symbolSet.value;
+	drawing_index = drawing_index % symbols.length;
+	let chosen_symbol = symbols.substring(drawing_index, drawing_index + 1);
+	drawing_index = (drawing_index + 1) % symbols.length;
+	controls.writtenSymbol.value = chosen_symbol;
+    }
+
+    nextSymbol();
 
     ctx.lineWidth = controls.lineWidth.value || 3;
 
@@ -36,17 +48,11 @@ const setupCanvasDrawing = (canvas, controls) => {
 				       controls.save.innerHTML = "";
 				   })
 
-    controls.randomSymbol.addEventListener(
+    controls.nextSymbol.addEventListener(
 	"click",
 	(event) => {
-	    // Clear the canvas.
 	    clearCanvas();
-	    let symbols = controls.symbolSet.value;
-	    let chosen_index = getRandomInt(0, symbols.length);
-	    console.log(chosen_index);
-	    let chosen_symbol = symbols.substring(chosen_index, chosen_index + 1);
-	    console.log(chosen_symbol);
-	    controls.writtenSymbol.value = chosen_symbol;
+	    nextSymbol();
 	}
     )
 
