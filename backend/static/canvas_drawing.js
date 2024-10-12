@@ -45,14 +45,6 @@ const setupCanvasDrawing = (canvas, controls) => {
     );
 
     controls.clear.addEventListener("click", clearCanvas);
-    controls.save.addEventListener("click",
-				   (event) => {
-				       // Clear the canvas, delayed until after save.
-				       setTimeout(clearCanvas, 200);
-				       // Remove the save link, so we don't accidentally save over
-				       // a drawing by clicking multiple times.
-				       removeSaveLink();
-				   })
 
     controls.nextSymbol.addEventListener(
 	"click",
