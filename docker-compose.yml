@@ -5,6 +5,10 @@ services:
       dockerfile: dockerfile
     ports:
       - "5000:5000"
+    volumes:
+      - ./backend/:/backend/
+    environment:
+      FLASK_ENV: "development"
   # client:
   #   build:
   #     context: ./frontend
