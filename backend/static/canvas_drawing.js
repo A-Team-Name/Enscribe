@@ -52,9 +52,11 @@ const setupCanvasDrawing = (canvas, controls) => {
 	    // Save the currently drawn symbol, if any.
 	    if (controls.save.innerHTML != "") {
 		controls.save.click();
+		clearCanvas();
+		nextSymbol();
+	    } else {
+		alert("You haven't drawn anything for the current symbol.");
 	    }
-	    clearCanvas();
-	    nextSymbol();
 	}
     )
 
