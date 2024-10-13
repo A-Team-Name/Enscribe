@@ -26,6 +26,7 @@ jobs:
 
       - name: Poetry Install
         run: |
+          cd backend
           poetry install
 
       - name: Ruff format check
