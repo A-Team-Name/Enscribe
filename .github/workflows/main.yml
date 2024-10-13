@@ -18,6 +18,12 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry config virtualenvs.in-project true
+
+
       - name: Poetry Install
         run: |
           poetry install
