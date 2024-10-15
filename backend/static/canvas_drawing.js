@@ -50,6 +50,8 @@ const setupCanvasDrawing = (canvas, controls) => {
     nextSymbol();
 
     ctx.lineWidth = controls.lineWidth.value || 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     /** Remove the href and contents of controls.save. */
     const removeSaveLink = () => {
@@ -105,7 +107,6 @@ const setupCanvasDrawing = (canvas, controls) => {
 	if (event.buttons & 1) {
 	    ctx.lineTo(event.offsetX, event.offsetY);
 	    ctx.stroke();
-	    drawPoint(event);
 	    generateSaveLink();
 	}
     }
