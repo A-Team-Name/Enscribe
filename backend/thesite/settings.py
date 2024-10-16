@@ -28,7 +28,7 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 e.g. pass to Docker by
 
 export SECRET_KEY=blah
-SECRET_KEY=$SECRET_KEY docker-compose up
+docker-compose up
 
 compose yml handles the rest
 """
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'appl'
+    'backend'
 ]
 
 MIDDLEWARE = [
@@ -64,11 +64,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'thesite.urls'
 
-TEMPLATES_DIR = BASE_DIR.parent / 'templates'  # push templates up a level, change when moving
+TEMPLATES_DIR = BASE_DIR / 'templates'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',  # should handle template reloading
         'DIRS': [TEMPLATES_DIR],  # push templates up a level
         'APP_DIRS': True,
         'OPTIONS': {
@@ -118,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-gb'
 
 TIME_ZONE = 'UTC'
 
@@ -131,6 +131,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
