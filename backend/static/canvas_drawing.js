@@ -35,6 +35,10 @@ function getRandomInt(min, max) {
  * @param {CharacterDrawingControls} controls
  */
 const setupCanvasDrawing = (canvas, controls) => {
+    // Fix an issue that prevents canvas drawing on iPad
+    // https://github.com/playcanvas/editor/issues/160#issuecomment-1314064644
+    canvas.style['-webkit-user-select'] = 'none';
+
     let ctx = canvas.getContext("2d");
     let drawing_index = controls.symbolSet.value.length;
 
