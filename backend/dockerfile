@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
 WORKDIR /backend
 
@@ -9,6 +9,6 @@ RUN pip install poetry
 RUN poetry config virtualenvs.create false
 
 RUN poetry install
-
-CMD [ "poetry", "run", "python", "-m", "flask", "run", "--host=0.0.0.0" ]
+RUN chmod +x entrypoint.sh
+CMD [ "./entrypoint.sh" ]
 
