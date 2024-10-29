@@ -5,5 +5,6 @@ from . import views
 urlpatterns = [
     path('', views.index),
     path('index/', views.index),
-    path('draw/', views.draw)
+    path('draw/', views.draw),
+    path('execute', views.execute)
 ]
