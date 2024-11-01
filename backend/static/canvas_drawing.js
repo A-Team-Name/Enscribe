@@ -96,7 +96,7 @@ const setupCanvasDrawing = (canvas, controls) => {
     )
 
     /** Make controls.save a link to download the current canvas contents. */
-    const generateSaveLink = (event) => {
+    const generateSaveLink = () => {
         // Set up the save link so clicking it downloads the currently drawn character.
         controls.save.href = canvas.toDataURL();
         controls.save.download =
@@ -106,38 +106,71 @@ const setupCanvasDrawing = (canvas, controls) => {
         controls.save.innerHTML = "Save: " + controls.save.download;
     }
 
-    /** Draw a line to event's offset coordinates from the previous location. */
-    const drawLine = (event) => {
-        if (event.buttons & 1) {
-            ctx.lineTo(event.offsetX, event.offsetY);
-            ctx.stroke();
-            generateSaveLink();
-        }
+    /** Draw a line to (x, y) from the previous location. */
+    const drawLine = (x, y) => {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        generateSaveLink();
     }
 
-    /** Draw a circle, radius ctx.lineWidth/2 at event's offset coordinates. */
-    const drawPoint = (event) => {
+    /** Draw a circle, diameter ctx.lineWidth at (x, y). */
+    const drawPoint = (x, y) => {
         const circle = new Path2D();
         // Radius must be half ctx.lineWidth so diameter matches lines.
-        circle.arc(event.offsetX, event.offsetY, ctx.lineWidth / 2, 0, 2 * Math.PI);
+        circle.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
         ctx.fill(circle);
     }
 
-    /** Start a new drawn line at event's offset coordinates. */
-    const penDown = (event) => {
+    /**
+     * Start a new drawn line at (x, y).
+     * Draw a dot at that point, which will appear even if the pointer doesn't move.
+     */
+    const penDown = (x, y) => {
+        drawPoint(x, y);
         ctx.beginPath();
-        ctx.moveTo(event.offsetX, event.offsetY);
+        ctx.moveTo(x, y);
+        generateSaveLink();
     }
 
-    canvas.addEventListener("mousedown", drawPoint);
-    canvas.addEventListener("mousedown", penDown);
-    canvas.addEventListener("mousedown", generateSaveLink);
+    /**
+     * Create a handler for a mouse event that calls fn(x, y),
+     * where (x, y) is the position of the cursor relative to the canvas.
+     */
+    const mouseAction = (fn) => {
+        return (event) => {
+            if (event.buttons & 1) {
+                fn(event.offsetX, event.offsetY);
+            }
+        };
+    }
+    const mousePenDown = mouseAction(penDown);
+    const mouseDrawLine = mouseAction(drawLine);
+    canvas.addEventListener("mousedown", mousePenDown);
+    canvas.addEventListener("mouseenter", mousePenDown);
+    canvas.addEventListener("mouseup", mouseDrawLine);
+    canvas.addEventListener("mouseleave", mouseDrawLine);
+    canvas.addEventListener("mousemove", mouseDrawLine);
 
-    canvas.addEventListener("mouseenter", penDown);
+    /**
+     * Create a handler for a touch event that calls fn(x, y),
+     * where (x, y) is the position of a finger relative to the canvas.
+     */
+    const touchAction = (fn) => {
+        return (event) => {
+            // Prevent panning when touching canvas.
+            event.preventDefault();
+            // Don't handle multitouch for now.
+            let touch = event.changedTouches[0];
+            // Compensate for the offset of the canvas.
+            let box = canvas.getBoundingClientRect();
+            fn(touch.pageX - box.x, touch.pageY - box.y);
+        };
+    }
 
-    canvas.addEventListener("mouseup", drawLine);
-
-    canvas.addEventListener("mouseleave", drawLine);
-
-    canvas.addEventListener("mousemove", drawLine);
+    const touchPenDown = touchAction(penDown);
+    const touchDrawLine = touchAction(drawLine);
+    canvas.addEventListener("touchstart", touchPenDown);
+    canvas.addEventListener("touchmove", touchDrawLine);
+    canvas.addEventListener("touchend", touchDrawLine);
+    canvas.addEventListener("touchcancel", touchDrawLine);
 }
