@@ -1,13 +1,14 @@
 [tool.poetry]
 name = "4yp-backend"
 version = "0.1.0"
-description = "Backend service for \"A Team Name\"'s 4th yeare project"
+description = "Backend service for \"A Team Name\"'s 4th year project"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-Flask = "^3.0.3"
+django = "^5.1.2"
+gunicorn = "^23.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

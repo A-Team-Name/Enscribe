@@ -9,6 +9,7 @@ RUN pip install poetry
 RUN poetry config virtualenvs.create false
 
 RUN poetry install
-RUN chmod +x entrypoint.sh
-CMD [ "./entrypoint.sh" ]
 
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]

@@ -1,7 +1,6 @@
 #!/bin/sh
-if [ "$FLASK_ENV" = "development" ]; then
-    exec poetry run python -m flask run --debug --host=0.0.0.0
+if [ "$DJANGO_ENV" = "development" ]; then
+    poetry run python ./manage.py runserver 0.0.0.0:5000
 else
-    poetry add gunicorn
-    exec poetry run gunicorn --bind 0.0.0.0:5000 app:app
+    poetry run gunicorn --bind 0.0.0.0:5000 thesite.wsgi:application
 fi
