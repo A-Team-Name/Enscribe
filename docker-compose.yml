@@ -5,9 +5,9 @@ services:
       dockerfile: dockerfile
     ports:
       - "5000:5000"
-  # client:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: dockerfile
-  #   ports:
-  #     "3000:3000"
+
+    volumes:
+      - ./backend/:/backend/
+    
+    env_file:
+      - .env

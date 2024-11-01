@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -11,6 +12,16 @@
               margin: 0.2em;
           }
       }
+
+      @font-face {
+          font-family: bqn386;
+          src: url('/static/BQN386.ttf');
+      }
+
+      #written-symbol, #symbol-set {
+          font-family: bqn386;
+      }
+
       button {
           font-size: 200%;
       }
@@ -29,10 +40,20 @@
       </div>
       <div>
         <label for="written-symbol">Current Symbol:</label><br/>
-        <input id="written-symbol" type="text" value="≥"
-               style="width: 1em; font-size: 500%"/><br/>
-        <label for="symbol-set">Symbols:</label><br/>
-        <textarea cols="100" rows="4" id="symbol-set">⌶%'⍺⍵_abcdefghijklmnopqrstuvwxyz¯.⍬0123456789⊢$£∆ABCDEFGHIJKLMNOPQRSTUVWXYZ·⍙{}⊣⌷¨⍨[/⌿\⍀<≤=≥>≠∨∧-+÷×?∊⍴~↑↓⍳○*⌈⌊∇∘(⊂⊃∩∪⊥⊤|;,⍱⍲⍒⍋⍉⌽⊖⍟⌹!⍕⍎⍫⍪≡≢"#&´@^`∣:⍷⋄←→⍝)]⎕⍞⍣</textarea>
+        <input
+          id="written-symbol"
+          type="text"
+          value="≥"
+          style="width: 0.6em; font-size: 500%"
+        />
+        <br/>
+        <label for="symbol-set">Symbols:</label>
+        <br/>
+        <textarea
+          cols="64"
+          rows="1"
+          id="symbol-set"
+        >¨¯×÷←↑→↓∆∊∘∧∨∩∪≠≡≢≤≥⊂⊃⊆⊖⊢⊣⊤⊥⌈⌊⌶⌷⌸⌹⌺⌽⌿⍀⍉⍋⍎⍒⍕⍙⍟⍠⍣⍤⍥⍨⍪⍬⍱⍲⍳⍴⍷⍸○⍬⊇⍛⍢⍫√</textarea>
         <div>
           <button id="next-symbol">Next Symbol</button>
           <a id="save-image" download></a>
@@ -47,7 +68,7 @@
         </ol>
       </div>
     </div>
-    <script src="/static/canvas_drawing.js" charset="utf-8"></script>
+    <script src="{% static 'canvas_drawing.js' %}" charset="utf-8"></script>
     <script>
       setupCanvasDrawing(
           document.getElementById("demo-canvas"),
