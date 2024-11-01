@@ -101,7 +101,7 @@ const setupCanvasDrawing = (canvas, controls) => {
             + "-" + Date.now() + ".png";
         controls.save.innerHTML = "Save: " + controls.save.download;
     }
-    
+
     /** Draw a line to (x, y) from the previous location. */
     const drawLine = (x, y) => {
         ctx.lineTo(x, y);
