@@ -36,7 +36,7 @@ compose yml handles the rest
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if os.getenv("DJANGO_ENV") == "development" else False
 
 ALLOWED_HOSTS = ["enscribe", "enscribe-dev"]
 
