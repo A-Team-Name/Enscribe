@@ -42,9 +42,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.getenv("DJANGO_ENV") == "development" else False
 
-ALLOWED_HOSTS = (
-    ["localhost", "127.0.0.1"] if DEBUG else ["enscribe", "enscribe-dev", "localhost"]
-)
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else ["enscribe", "enscribe-dev"]
 
 
 # Application definition
