@@ -40,7 +40,7 @@ compose yml handles the rest
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.getenv("DJANGO_ENV") == "development" else False
+DEBUG = os.getenv("DJANGO_ENV") == "development"
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else ["enscribe", "enscribe-dev"]
 
@@ -136,8 +136,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+# public_static is the mount in prod, it is automatically generated
+# via the entrypoint.sh file
 STATIC_ROOT = "public_static/"
+
+# static_url is the root to follow to access static files
 STATIC_URL = "static/"
+
+# staticfiles_dirs is a list of all directories holding static files we want hosting
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 print(STATICFILES_DIRS)
