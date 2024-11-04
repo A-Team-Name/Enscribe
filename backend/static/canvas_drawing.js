@@ -50,6 +50,7 @@ const setupCanvasDrawing = (canvas, controls) => {
     nextSymbol();
 
     ctx.lineWidth = controls.lineWidth.value || 3;
+    controls.lineWidth.labels[0].innerHTML = ctx.lineWidth + "px";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
