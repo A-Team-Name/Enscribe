@@ -8,6 +8,6 @@ services:
 
     volumes:
       - ./backend/:/backend/
-    environment:
-      - SECRET_KEY=${SECRET_KEY}
-      - DJANGO_ENV=development
+    
+    env_file:
+      - .env
