@@ -36,7 +36,7 @@ function getRandomInt(min, max) {
  */
 const setupCanvasDrawing = (canvas, controls) => {
     let ctx = canvas.getContext("2d");
-    let drawing_index = controls.symbolSet.value.length;
+    let drawing_index = getRandomInt(0, controls.symbolSet.value.length);
 
     /** Select the next symbol in controls.symbolSet, wrapping if necessary. */
     const nextSymbol = () => {
