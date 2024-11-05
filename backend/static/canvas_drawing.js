@@ -36,20 +36,20 @@ function getRandomInt(min, max) {
  */
 const setupCanvasDrawing = (canvas, controls) => {
     let ctx = canvas.getContext("2d");
-    let drawing_index = controls.symbolSet.value.length;
+    let drawing_index = getRandomInt(0, controls.symbolSet.value.length);
 
-    /** Select the next symbol in controls.symbolSet, wrapping if necessary. */
-    const nextSymbol = () => {
+    /** Select the nth next symbol in controls.symbolSet, wrapping if necessary. */
+    const selectSymbol = (n) => {
         let symbols = controls.symbolSet.value;
-        drawing_index = drawing_index % symbols.length;
+        drawing_index = (drawing_index + n) % symbols.length;
         let chosen_symbol = symbols.substring(drawing_index, drawing_index + 1);
-        drawing_index = (drawing_index + 1) % symbols.length;
         controls.writtenSymbol.value = chosen_symbol;
     }
 
-    nextSymbol();
+    selectSymbol(0);
 
     ctx.lineWidth = controls.lineWidth.value || 3;
+    controls.lineWidth.labels[0].innerHTML = ctx.lineWidth + "px";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -84,10 +84,18 @@ const setupCanvasDrawing = (canvas, controls) => {
             if (controls.save.innerHTML != "") {
                 controls.save.click();
                 clearCanvas();
-                nextSymbol();
+                selectSymbol(1);
             } else {
                 alert("You haven't drawn anything for the current symbol.");
             }
+        }
+    )
+
+    controls.previousSymbol.addEventListener(
+        "click",
+        (event) => {
+            clearCanvas();
+            selectSymbol(-1);
         }
     )
 

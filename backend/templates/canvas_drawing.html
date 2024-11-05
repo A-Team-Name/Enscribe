@@ -33,8 +33,8 @@
       <div>
         <div>
           <button id="clear-canvas">Clear</button>
-          <input id="line-width" type="range" value="3" min="1" max="20"/>
-          <label for="line-width">3px</label>
+          <input id="line-width" type="range" value="20" min="3" max="30"/>
+          <label for="line-width"></label>
         </div>
         <canvas id="demo-canvas" height="500" width="500" style="border: solid"></canvas>
       </div>
@@ -43,7 +43,6 @@
         <input
           id="written-symbol"
           type="text"
-          value="≥"
           style="width: 0.6em; font-size: 500%"
         />
         <br/>
@@ -56,6 +55,9 @@
         >¨¯×÷←↑→↓∆∊∘∧∨∩∪≠≡≢≤≥⊂⊃⊆⊖⊢⊣⊤⊥⌈⌊⌶⌷⌸⌹⌺⌽⌿⍀⍉⍋⍎⍒⍕⍙⍟⍠⍣⍤⍥⍨⍪⍬⍱⍲⍳⍴⍷⍸○⍬⊇⍛⍢⍫√</textarea>
         <div>
           <button id="next-symbol">Next Symbol</button>
+          <button id="previous-symbol">Previous Symbol</button>
+        </div>
+        <div>
           <a id="save-image" download></a>
         </div>
         <h2>Usage</h2>
@@ -77,6 +79,7 @@
               "save": document.getElementById("save-image"),
               "writtenSymbol": document.getElementById("written-symbol"),
               "nextSymbol": document.getElementById("next-symbol"),
+              "previousSymbol": document.getElementById("previous-symbol"),
               "symbolSet": document.getElementById("symbol-set"),
               "clear": document.getElementById("clear-canvas")
           });
