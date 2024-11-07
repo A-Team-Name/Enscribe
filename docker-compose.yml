@@ -8,6 +8,16 @@ services:
 
     volumes:
       - ./backend/:/backend/
-    
+
     env_file:
       - .env
+
+  kernel:
+    build:
+      context: ./kernels
+      dockerfile: dockerfile
+    volumes:
+      - ./work:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    command: "start-notebook.sh --NotebookApp.token="
