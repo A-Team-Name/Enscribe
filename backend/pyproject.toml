@@ -11,6 +11,7 @@ django = "^5.1.2"
 gunicorn = "^23.0.0"
 python-dotenv = "^1.0.1"
 whitenoise = "^6.8.2"
+websocket-client = "^1.8.0"
 
 
 [tool.poetry.group.dev.dependencies]
