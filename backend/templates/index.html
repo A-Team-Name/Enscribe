@@ -16,17 +16,18 @@
       </style>
       <div class="layout">
         <div class="pane">
-          <form action="">
+          <form method="post" action="execute">
+            {% csrf_token %}
             <label for="language">Language:</label>
-            <input name="language" type="text" value="python"/>
+            <input name="language" type="text" value="python3"/>
             <button>Send</button>
             <br/>
-            <textarea cols="80" id="code" name="code" rows="40"></textarea>
+            <textarea cols="80" id="code" name="code" rows="40">{{input}}</textarea>
           </form>
         </div>
         <div class="pane">
           <p>Output:</p>
-          <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30"></textarea>
+          <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30">{{output | safe}}</textarea>
         </div>
       </div>
     </body>
