@@ -10,11 +10,14 @@ The only thing you need to do is create a .env file in the outermost directory o
 ```env
 DJANGO_ENV='development'
 SECRET_KEY='...'
+PORT=...
 ```
 Replace the ... with some random string. Django can generate a key for you with the following CLI command:
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
+
+If `PORT` is not specified, the default is `5000`.
 
 From here you can build and the start the container
 - `docker-compose build`
