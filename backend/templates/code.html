@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Enscribe</title>
+    <link href="/static/stylesheet.css" rel="stylesheet"/>
+  </head>
+  <body>
+    <header>
+      <div class="spaced-bar" style="flex-grow: 1">
+        <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+        <div>
+          <button>Save</button>
+          <button>New</button>
+          <button>Open</button>
+        </div>
+
+        <fieldset class="spaced-bar">
+          <label for="interaction-mode-pan">
+            <input id="interaction-mode-pan" type="radio" name="interaction-mode" value="pan" checked/>
+            Pan
+          </label>
+          <label for="interaction-mode-select">
+            <input id="interaction-mode-select" type="radio" name="interaction-mode" value="select" />
+            Select
+          </label>
+          <label for="interaction-mode-write">
+            <input id="interaction-mode-write" type="radio" name="interaction-mode" value="write" checked/>
+            Write
+          </label>
+        </fieldset>
+
+        <label>
+          Pen Width
+          <input id="pen-width" type="number"
+                 value="20" min="5" max="30"
+                 style="width: 2.5em"/>
+          (px)
+        </label>
+
+        <div class="ui-group spaced-bar">
+          <label for="pen-mode-erase">
+            <input id="pen-mode-erase" type="radio" name="pen-mode" value="erase" checked/>
+            Erase
+          </label>
+          <label for="pen-mode-code">
+            <input id="pen-mode-code" type="radio" name="pen-mode" value="code" checked/>
+            Code
+          </label>
+          <label for="pen-mode-annotation">
+            <input id="pen-mode-annotation" type="radio" name="pen-mode" value="annotation"/>
+            Annotation
+          </label>
+        </div>
+        <div>
+          <button>Settings</button>
+        </div>
+      </div>
+    </header>
+    <main>
+    </main>
+  </body>
+</html>
