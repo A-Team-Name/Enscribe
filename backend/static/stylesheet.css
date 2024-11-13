@@ -16,7 +16,11 @@
     --writing-annotation: #0000ff;
 
     /* Sizes and Shapes */
-    --thin-border: 3px;
+    --thin-border: 0.2em;
+    --thick-border: calc(2 * var(--thin-border));
+
+    /* Borders */
+    --border-tentative-selection: var(--thick-border) dashed var(--ui-accent);
 }
 
 /* || CSS Reset & Global Style */
@@ -36,7 +40,7 @@ body {
 /* || UI Classes */
 
 .ui-window {
-    border: 6px solid var(--ui-border);
+    border: var(--thick-border) solid var(--ui-border);
     background-color: var(--ui-background);
     border-radius: 6px;
 }
@@ -49,18 +53,16 @@ body {
 
 .spaced-bar {
     display: flex;
+    flex-flow: row wrap;
+    row-gap: 0.5em;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    /* padding: 0em 0.3em; */
-    > * {
-        margin: 0em 0.3em;
-    }
 }
 
-/* || Specific Elements */
+/* || UI Elements */
 header {
-    padding: 0.5em 0.3em;
+    padding: 0.5em;
     background: var(--ui-background);
     border-color: var(--ui-border);
     border-width: 1px;
@@ -72,8 +74,47 @@ button {
 }
 
 fieldset {
-    padding: 0;
-    > * {
-        margin: 0.5em;
+    border: var(--thin-border) solid var(--ui-border);
+    /* border-radius: var(--thin-border); */
+    /* Small padding so most of internal area is in children. */
+    padding: 0 0.2rem;
+    /* Add large padding to child elements to make them easier to hit. */
+    > *:not(legend) {
+        padding: 0.5rem;
     }
+}
+
+/* || Whiteboard interaction */
+body {
+    /* display: flex forces main to not overflow from body */
+    display: flex;
+    flex-direction: column;
+}
+html, body {
+    /* exactly fill viewport so we can only scroll the whiteboard area */
+    height: 100%;
+}
+main {
+    /* let the whiteboard scroll */
+    overflow: scroll;
+}
+#whiteboard {
+    border: var(--thick-border) dashed var(--ui-border);
+    /* width and height of #whiteboard must match the canvas width and height components of the canvas layers, which must also all be equal */
+    width: 3000px;
+    height: 3000px;
+    position: relative;
+    > canvas {
+        /* Overlay the canvases; a programming convenience. */
+        position: absolute;
+    }
+}
+#whiteboard-overlay {
+    z-index: 3;
+}
+#whiteboard-writing {
+    z-index: 2;
+}
+#whiteboard-background {
+    z-index: 1;
 }
