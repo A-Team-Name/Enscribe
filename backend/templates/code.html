@@ -82,8 +82,8 @@
       ctx.fillRect(25, 25, 100, 100);
       ctx.fillRect(100, 100, 500, 10);
       let ctx2 = document.getElementById("whiteboard-background").getContext("2d");
-      ctx2.fillStyle = 'green';
-      ctx2.fillRect(22, 23, 10, 10);
+      ctx2.fillStyle = getComputedStyle(document.body).getPropertyValue('--ui-accent-color');
+      ctx2.fillRect(12, 13, 20, 20);
     </script>
   </body>
 </html>
