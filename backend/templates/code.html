@@ -63,14 +63,15 @@
     </header>
     <main>
       <div id="whiteboard">
+        <!-- Lower layers come -->
+        <canvas width="3000" height="3000" id="whiteboard-background"></canvas>
+        <canvas width="3000" height="3000" id="whiteboard-writing"></canvas>
         <!-- We may wish to encapsulate some parts, the drawing interface especially, into web components to separate functionality. -->
         <div width="3000" height="3000" id="whiteboard-overlay">
           <div class="tentative-selection" style="width: fit-content; top: 200px; left: 50px">
             <pre><code>1 2 3 + 4 5 6</code></pre>
           </div>
         </div>
-        <canvas width="3000" height="3000" id="whiteboard-writing"></canvas>
-        <canvas width="3000" height="3000" id="whiteboard-background"></canvas>
       </div>
     </main>
     <script>
