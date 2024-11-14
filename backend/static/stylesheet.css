@@ -36,12 +36,11 @@ body {
 
 /* || UI Classes */
 
-.active-selection {
-    border: var(--thick-border) dashed var(--ui-accent-color);
-}
-
-.tentative-selection {
-    border: var(--thick-border) dashed var(--ui-accent-color);
+.selection {
+    border: var(--thick-border) solid var(--ui-accent-color);
+    &.tentative {
+        border-style: dashed;
+    }
 }
 
 .ui-window {
