@@ -7,20 +7,19 @@
 
 :root {
     /* Colors (American spelling since it's what CSS uses) */
-    --default-background: white;
-    --ui-accent: #1ed214;
-    --ui-border: #cbcbcb;
-    --ui-background: #f2f2f2;
-    --ui-output: #ff0000;
-    --writing-code: #000000;
-    --writing-annotation: #0000ff;
+    --default-background-color: white;
+    --ui-accent-color: #1ed214;
+    --ui-border-color: #cbcbcb;
+    --ui-background-color: #f2f2f2;
+    --ui-output-color: #ff0000;
+    --writing-code-color: #000000;
+    --writing-annotation-color: #0000ff;
 
     /* Sizes and Shapes */
     --thin-border: 0.2em;
     --thick-border: calc(2 * var(--thin-border));
 
-    /* Borders */
-    --border-tentative-selection: var(--thick-border) dashed var(--ui-accent);
+    --border-tentative-selection: var(--thick-border) dashed var(--ui-accent-color);
 }
 
 /* || CSS Reset & Global Style */
@@ -34,20 +33,20 @@
 body {
     font-family: Verdana, sans-serif;
     font-size: 12pt;
-    background-color: var(--default-background);
+    background-color: var(--default-background-color);
 }
 
 /* || UI Classes */
 
 .ui-window {
-    border: var(--thick-border) solid var(--ui-border);
-    background-color: var(--ui-background);
+    border: var(--thick-border) solid var(--ui-border-color);
+    background-color: var(--ui-background-color);
     border-radius: 6px;
 }
 
 .ui-group {
     padding: 0.5rem;
-    border: var(--thin-border) solid var(--ui-border);
+    border: var(--thin-border) solid var(--ui-border-color);
     border-radius: 3px;
 }
 
@@ -63,8 +62,8 @@ body {
 /* || UI Elements */
 header {
     padding: 0.5em;
-    background: var(--ui-background);
-    border-color: var(--ui-border);
+    background: var(--ui-background-color);
+    border-color: var(--ui-border-color);
     border-width: 1px;
     border-bottom-style: solid;
 }
@@ -74,7 +73,7 @@ button {
 }
 
 fieldset {
-    border: var(--thin-border) solid var(--ui-border);
+    border: var(--thin-border) solid var(--ui-border-color);
     /* border-radius: var(--thin-border); */
     /* Small padding so most of internal area is in children. */
     padding: 0 0.2rem;
@@ -99,7 +98,7 @@ main {
     overflow: scroll;
 }
 #whiteboard {
-    border: var(--thick-border) dashed var(--ui-border);
+    border: var(--thick-border) dashed var(--ui-border-color);
     /* width and height of #whiteboard must match the canvas width and height components of the canvas layers, which must also all be equal */
     width: 3000px;
     height: 3000px;
