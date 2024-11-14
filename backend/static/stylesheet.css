@@ -112,7 +112,7 @@ main {
 }
 #whiteboard-overlay {
     > * {
-        position: relative;
+        position: absolute;
     }
 }
 #whiteboard-writing {
