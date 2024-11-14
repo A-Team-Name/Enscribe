@@ -18,8 +18,6 @@
     /* Sizes and Shapes */
     --thin-border: 0.2em;
     --thick-border: calc(2 * var(--thin-border));
-
-    --border-tentative-selection: var(--thick-border) dashed var(--ui-accent-color);
 }
 
 /* || CSS Reset & Global Style */
@@ -37,6 +35,10 @@ body {
 }
 
 /* || UI Classes */
+
+.tentative-selection {
+    border: var(--thick-border) dashed var(--ui-accent-color);
+}
 
 .ui-window {
     border: var(--thick-border) solid var(--ui-border-color);
@@ -110,6 +112,9 @@ main {
 }
 #whiteboard-overlay {
     z-index: 3;
+    > * {
+        position: relative;
+    }
 }
 #whiteboard-writing {
     z-index: 2;
