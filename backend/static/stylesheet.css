@@ -111,14 +111,11 @@ main {
     }
 }
 #whiteboard-overlay {
-    z-index: 3;
     > * {
         position: relative;
     }
 }
 #whiteboard-writing {
-    z-index: 2;
 }
 #whiteboard-background {
-    z-index: 1;
 }
