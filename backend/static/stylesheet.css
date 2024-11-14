@@ -108,7 +108,7 @@ main {
     width: 3000px;
     height: 3000px;
     position: relative;
-    > canvas {
+    > * {
         /* Overlay the canvases; a programming convenience. */
         position: absolute;
     }
