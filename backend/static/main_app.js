@@ -42,11 +42,3 @@ const settings = {
         return document.querySelector("input[name=pen-mode]:checked").value;
     },
 };
-
-whiteboard.input
-    .addEventListener(
-        "mousedown",
-        (event) => {
-            console.log("Mouse down at " + event.offsetX + " " +  event.offsetY);
-        }
-    );
