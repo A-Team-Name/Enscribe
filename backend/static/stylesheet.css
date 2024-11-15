@@ -113,12 +113,13 @@ main {
         position: absolute;
     }
 }
-#whiteboard-overlay {
+#whiteboard-ui {
+    .clickable {
+        /* Move clickable UI elements above the touch input layer. */
+        z-index: 2;
+    }
     > * {
+        /* Enable manual positioning with `top` and `left` CSS properties. */
         position: absolute;
     }
-}
-#whiteboard-writing {
-}
-#whiteboard-background {
 }
