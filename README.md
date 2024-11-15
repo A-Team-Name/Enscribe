@@ -43,7 +43,7 @@ Now whenever you attempt to commit, our ruff formatting checks will be ran autom
 
 ## Frontend Implementation Notes
 ### User Interface DOM Layout
-The user interface is composed of several overlapping elements, including a mixture of canvases and divs. Below is a rough illustration of how the DOM is structured:
+The user interface is composed of several overlapping elements, including a mixture of canvases and divs. See `layering_example.html` (accessible at route `/layering`) for an example of how we can use these layers. Below is a rough illustration of how the DOM is structured:
 
 ![UI layers illustration](ui-layers.png)
 
