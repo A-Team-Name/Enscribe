@@ -33,3 +33,7 @@ body {
     font-size: 12pt;
     background-color: var(--default-background-color);
 }
+
+code {
+    font-family: bqn386;
+}
