@@ -12,8 +12,8 @@ def draw(request: WSGIRequest) -> HttpResponse:
     return render(request, "canvas_drawing.html")
 
 
-def code(request: WSGIRequest) -> HttpResponse:
-    return render(request, "code.html")
+def main_app(request: WSGIRequest) -> HttpResponse:
+    return render(request, "main_app.html")
 
 
 def layering_demo(request: WSGIRequest) -> HttpResponse:
