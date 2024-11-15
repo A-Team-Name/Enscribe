@@ -1,0 +1,35 @@
+/* || Font, Variable etc. Definitions */
+
+@font-face {
+    font-family: bqn386;
+    src: url("/static/BQN386.ttf");
+}
+
+:root {
+    /* Colors (American spelling since it's what CSS uses) */
+    --default-background-color: white;
+    --ui-accent-color: #1ed214;
+    --ui-border-color: #cbcbcb;
+    --ui-background-color: #f2f2f2;
+    --ui-output-color: #ff0000;
+    --writing-code-color: #000000;
+    --writing-annotation-color: #0000ff;
+
+    /* Sizes and Shapes */
+    --thin-border: 0.2em;
+    --thick-border: calc(2 * var(--thin-border));
+}
+
+/* || CSS Reset & Global Style */
+
+* {
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+}
+
+body {
+    font-family: Verdana, sans-serif;
+    font-size: 12pt;
+    background-color: var(--default-background-color);
+}
