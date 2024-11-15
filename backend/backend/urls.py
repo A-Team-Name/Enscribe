@@ -7,4 +7,5 @@ urlpatterns = [
     path("index/", views.index),
     path("draw/", views.draw),
     path("code/", views.code),
+    path("layering/", views.layering_demo),
 ]

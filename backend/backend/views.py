@@ -14,3 +14,7 @@ def draw(request: WSGIRequest) -> HttpResponse:
 
 def code(request: WSGIRequest) -> HttpResponse:
     return render(request, "code.html")
+
+
+def layering_demo(request: WSGIRequest) -> HttpResponse:
+    return render(request, "layering_demo.html")
