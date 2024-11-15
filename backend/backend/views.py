@@ -28,17 +28,31 @@ def execute(request: WSGIRequest) -> HttpResponse:
         "X-XSRFToken": request.COOKIES["_xsrf"],
     }
 
-    print(request.POST.get("language"), flush=True)
-
     url = base + "/api/kernels"
-    response = requests.post(
-        url, headers=headers, json={"name": request.POST.get("language")}
-    )
-    kernel = json.loads(response.text)
-    print("ws://kernel:8888/api/kernels/" + kernel["id"] + "/channels", flush=True)
+
+    # Get execution language from frontend request
+    language = request.POST.get("language")
+
+    # Get list of existing kernels
+    response = requests.get(url, headers=headers)
+
+    # Single user kernel management
+    # Use existing kernel if exists for execution language, otherwise start new kernel
+    existing_kernel = False
+    if response:
+        for kernel in json.loads(response.text):
+            if kernel["name"] == language:
+                active_kernel = kernel
+                existing_kernel = True
+
+    if not existing_kernel:
+        response = requests.post(url, headers=headers, json={"name": language})
+        active_kernel = json.loads(response.text)
+
     # Create connection to jupyter kernel
     ws = create_connection(
-        "ws://kernel:8888/api/kernels/" + kernel["id"] + "/channels", header=headers
+        "ws://kernel:8888/api/kernels/" + active_kernel["id"] + "/channels",
+        header=headers,
     )
 
     # Get code from POST request body
