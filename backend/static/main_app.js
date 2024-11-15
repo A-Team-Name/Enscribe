@@ -30,7 +30,11 @@ const whiteboard = {
     },
 };
 
+whiteboard.width = whiteboard.height = 10000;
+
 const settings = {
+    openButton: document.getElementById("open-settings"),
+    dialog: document.getElementById("settings-dialog"),
     get penWidth() {
         return parseInt(this.penWidthInput.value);
     },
@@ -42,4 +46,9 @@ const settings = {
     },
 };
 
-whiteboard.width = whiteboard.height = 10000;
+settings.openButton.addEventListener(
+    "click",
+    () => {
+        settings.dialog.showModal();
+    }
+)

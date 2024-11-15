@@ -57,7 +57,9 @@
         </label>
       </fieldset>
       <div>
-        <button id="settings">Settings</button>
+        <button id="open-settings">
+          Settings
+        </button>
       </div>
     </header>
     <main>
@@ -69,6 +71,18 @@
         <div id="whiteboard-input"></div>
       </div>
     </main>
+    <dialog id="settings-dialog">
+      <h1>Settings</h1>
+      <form method="dialog" class="close">
+        <button>❌</button>
+      </form>
+      <form method="dialog">
+        <label>
+          <span slot=title></span>
+        </label>
+        <button>Apply Changes</button>
+      </form>
+    </dialog>
     <script src="/static/main_app.js" charset="utf-8"></script>
   </body>
 </html>
