@@ -1,36 +1,5 @@
 @import './common.css';
 
-/* || UI Classes */
-
-.selection {
-    border: var(--thick-border) solid var(--ui-accent-color);
-    &.tentative {
-        border-style: dashed;
-    }
-}
-
-.ui-window {
-    border: var(--thick-border) solid var(--ui-border-color);
-    background-color: var(--ui-background-color);
-    border-radius: 6px;
-}
-
-.ui-group {
-    padding: 0.5rem;
-    border: var(--thin-border) solid var(--ui-border-color);
-    border-radius: 3px;
-}
-
-.spaced-bar {
-    display: flex;
-    flex-flow: row wrap;
-    row-gap: 0.5em;
-    column-gap: 0.2em;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
 /* || UI Elements */
 header {
     padding: 0.5em;
@@ -38,10 +7,6 @@ header {
     border-color: var(--ui-border-color);
     border-width: 1px;
     border-bottom-style: solid;
-}
-
-button {
-    padding: 0.25rem 0.5rem;
 }
 
 fieldset {
