@@ -18,19 +18,22 @@ def draw(request: WSGIRequest) -> HttpResponse:
     return render(request, "canvas_drawing.html")
 
 
-def execute(request) -> HttpResponse:
+def execute(request: WSGIRequest) -> HttpResponse:
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
-    base = "http://localhost:8888"
-    headers = {"Authorization": "Token "}
+    base = "http://kernel:8888"
+    headers = {
+        "Authorization": "Token ",
+        "Cookie": request.headers["Cookie"],
+        "X-XSRFToken": request.COOKIES["_xsrf"],
+    }
 
     url = base + "/api/kernels"
-    response = requests.post(url, headers=headers)
-    kernel = json.loads(response.text)
-
+    response = requests.get(url, headers=headers)
+    kernel = json.loads(response.text)[0]
     # Create connection to jupyter kernel
     ws = create_connection(
-        "ws://localhost:8888/api/kernels/" + kernel["id"] + "/channels", header=headers
+        "ws://kernel:8888/api/kernels/" + kernel["id"] + "/channels", header=headers
     )
 
     # Get code from POST request body
