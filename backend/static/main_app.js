@@ -1,4 +1,5 @@
 const whiteboard = {
+    container: document.getElementById("whiteboard"),
     background: document.getElementById("whiteboard-background"),
     code: document.getElementById("whiteboard-code"),
     annotations: document.getElementById("whiteboard-annotations"),
@@ -6,10 +7,10 @@ const whiteboard = {
     input: document.getElementById("whiteboard-input"),
 
     get width() {
-        return this.background.width;
+        return this.container.width;
     },
     get height() {
-        return this.background.height;
+        return this.container.height;
     },
 
     /* Set the width of the whiteboard to value (an integer number of pixels). */
@@ -17,8 +18,7 @@ const whiteboard = {
         this.background.width = value;
         this.code.width = value;
         this.annotations.width = value;
-        this.ui.style["width"] = value + "px";
-        this.input.style["width"] = value + "px;"
+        this.container.style["width"] = value + "px";
     },
 
     /* Set the height of the whiteboard to value (an integer number of pixels). */
@@ -26,8 +26,7 @@ const whiteboard = {
         this.background.height = value;
         this.code.height = value;
         this.annotations.height = value;
-        this.ui.style["height"] = value + "px";
-        this.input.style["height"] = value + "px;"
+        this.container.style["height"] = value + "px";
     },
 };
 
@@ -42,3 +41,5 @@ const settings = {
         return document.querySelector("input[name=pen-mode]:checked").value;
     },
 };
+
+whiteboard.width = whiteboard.height = 10000;

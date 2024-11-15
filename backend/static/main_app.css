@@ -71,10 +71,11 @@ main {
 }
 #whiteboard {
     border: var(--thick-border) dashed var(--ui-border-color);
-    /* width and height of #whiteboard must match the canvas width and height components of the canvas layers, which must also all be equal */
-    width: 3000px;
-    height: 3000px;
     position: relative;
+    > :not(canvas) {
+        width: 100%;
+        height: 100%;
+    }
     > * {
         /* Overlay the canvases; a programming convenience. */
         position: absolute;
