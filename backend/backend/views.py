@@ -18,19 +18,27 @@ def draw(request: WSGIRequest) -> HttpResponse:
     return render(request, "canvas_drawing.html")
 
 
-def execute(request) -> HttpResponse:
+def execute(request: WSGIRequest) -> HttpResponse:
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
-    base = "http://localhost:8888"
-    headers = {"Authorization": "Token "}
+    base = "http://kernel:8888"
+    headers = {
+        "Authorization": "Token ",
+        "Cookie": request.headers["Cookie"],
+        "X-XSRFToken": request.COOKIES["_xsrf"],
+    }
+
+    print(request.POST.get("language"), flush=True)
 
     url = base + "/api/kernels"
-    response = requests.post(url, headers=headers)
+    response = requests.post(
+        url, headers=headers, json={"name": request.POST.get("language")}
+    )
     kernel = json.loads(response.text)
-
+    print("ws://kernel:8888/api/kernels/" + kernel["id"] + "/channels", flush=True)
     # Create connection to jupyter kernel
     ws = create_connection(
-        "ws://localhost:8888/api/kernels/" + kernel["id"] + "/channels", header=headers
+        "ws://kernel:8888/api/kernels/" + kernel["id"] + "/channels", header=headers
     )
 
     # Get code from POST request body
@@ -40,21 +48,13 @@ def execute(request) -> HttpResponse:
     ws.send(json.dumps(send_execute_request(code)))
 
     # Process response
-    msg_type = ""
+    output = []
     while True:
         rsp = json.loads(ws.recv())
+        print(rsp, flush=True)
         msg_type = rsp["msg_type"]
-        output = ""
-        if msg_type == "stream":
-            output = rsp["content"]["text"]
-            print(output)
-            break
-        if msg_type == "error":
-            output = rsp["content"]["ename"] + "\n" + rsp["content"]["evalue"] + "\n"
-            # traceback uses text colour
-            for line in rsp["content"]["traceback"]:
-                output += line + "\n"
-            print(output)
+        output.append(rsp)
+        if msg_type == "execute_reply":
             break
 
     ws.close()

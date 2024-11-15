@@ -1,13 +1,31 @@
 services:
   api:
+    container_name: api
     build:
       context: ./backend
       dockerfile: dockerfile
     ports:
       - "5000:5000"
-
     volumes:
       - ./backend/:/backend/
-    
+    networks:
+      - kernel_bridge
     env_file:
       - .env
+
+  kernel:
+    container_name: kernel
+    build:
+      context: ./kernels
+      dockerfile: dockerfile
+    volumes:
+      - ./work:/home/jovyan/work
+    networks:
+      - kernel_bridge
+    ports:
+      - "8888:8888"
+    command: "start-notebook.sh --NotebookApp.token="
+
+networks:
+  kernel_bridge:
+    external: true
