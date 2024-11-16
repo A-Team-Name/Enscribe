@@ -7,6 +7,8 @@ import requests
 from websocket import create_connection
 from backend.utils import send_execute_request
 
+from .forms import ImageForm
+
 
 # Create your views here.
 def index(request: WSGIRequest) -> HttpResponse:
@@ -75,3 +77,18 @@ def execute(request: WSGIRequest) -> HttpResponse:
     context = {"input": code, "output": output}
     return render(request, "index.html", context)
     # return HttpResponse(output)
+
+
+def image_to_text(request):
+    if request.method == "POST":
+        form = ImageForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            form.save()
+
+            # Call handwriting recognition API
+
+            return HttpResponse("successfully uploaded")
+    else:
+        form = ImageForm()
+    return HttpResponse("upload failed")
