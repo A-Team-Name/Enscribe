@@ -7,10 +7,10 @@ const whiteboard = {
     input: document.getElementById("whiteboard-input"),
 
     get width() {
-        return this.container.width;
+        return this.background.width;
     },
     get height() {
-        return this.container.height;
+        return this.background.height;
     },
 
     /* Set the width of the whiteboard to value (an integer number of pixels). */
