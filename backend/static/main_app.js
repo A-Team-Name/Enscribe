@@ -35,6 +35,7 @@ whiteboard.width = whiteboard.height = 5000;
 const settings = {
     openButton: document.getElementById("open-settings"),
     dialog: document.getElementById("settings-dialog"),
+    penWidthInput: document.getElementById("pen-width"),
     get penWidth() {
         return parseInt(this.penWidthInput.value);
     },
