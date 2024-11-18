@@ -30,7 +30,7 @@ const whiteboard = {
     },
 };
 
-whiteboard.width = whiteboard.height = 10000;
+whiteboard.width = whiteboard.height = 5000;
 
 const settings = {
     openButton: document.getElementById("open-settings"),
