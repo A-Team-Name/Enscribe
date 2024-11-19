@@ -8,9 +8,9 @@
 :root {
     /* Colors (American spelling since it's what CSS uses) */
     --default-background-color: white;
-    --ui-border-color: #cbcbcb;
-    --ui-background-color: #f2f2f2;
     --ui-accent-color: #10A608;
+    --ui-border-color: color-mix(in hsl, var(--default-background-color), grey 40%);
+    --ui-background-color: color-mix(in hsl, var(--default-background-color), grey 10%);
     --ui-output-color: #ff0000;
     --writing-code-color: #000000;
     --writing-annotation-color: #0000ff;
