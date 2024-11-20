@@ -1,4 +1,5 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
+customElements.define("white-board", Whiteboard);
 
 const settings = {
     openButton: document.getElementById("open-settings"),

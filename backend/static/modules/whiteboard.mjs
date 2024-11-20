@@ -119,6 +119,5 @@ class Whiteboard extends HTMLElement {
         }
     }
 }
-customElements.define("white-board", Whiteboard);
 
 export { Whiteboard };
