@@ -63,13 +63,11 @@
       </div>
     </header>
     <main>
-      <div id="whiteboard">
-        <canvas id="whiteboard-background"></canvas>
-        <canvas id="whiteboard-code"></canvas>
-        <canvas id="whiteboard-annotations"></canvas>
-        <div id="whiteboard-ui"></div>
-        <div id="whiteboard-input"></div>
-      </div>
+      <white-board id="whiteboard"
+                   width="5000"
+                   height="5000"
+                   background="squares">
+      </white-board>
     </main>
     <dialog id="settings-dialog">
       <h1>Settings</h1>
@@ -81,6 +79,6 @@
         <option value="dark">Dark</option>
       </select>
     </dialog>
-    <script src="/static/main_app.js" charset="utf-8"></script>
+    <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>
 </html>

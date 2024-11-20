@@ -42,24 +42,6 @@ main {
     overflow: scroll;
 }
 #whiteboard {
-    border: var(--thick-border) dashed var(--ui-border-color);
     position: relative;
-    > :not(canvas) {
-        width: 100%;
-        height: 100%;
-    }
-    > * {
-        /* Overlay the canvases; a programming convenience. */
-        position: absolute;
-    }
-}
-#whiteboard-ui {
-    .clickable {
-        /* Move clickable UI elements above the touch input layer. */
-        z-index: 2;
-    }
-    > * {
-        /* Enable manual positioning with `top` and `left` CSS properties. */
-        position: absolute;
-    }
+    border: var(--thick-border) dashed var(--ui-border-color);
 }
