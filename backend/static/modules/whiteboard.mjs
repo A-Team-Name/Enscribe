@@ -105,7 +105,6 @@ class Whiteboard extends HTMLElement {
      */
     #configureCanvasLayer(canvas) {
         let ctx = canvas.getContext("2d");
-        ctx.
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.lineWidth = this.lineWidth;
