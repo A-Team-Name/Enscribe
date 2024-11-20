@@ -1,24 +1,24 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
 customElements.define("white-board", Whiteboard);
 
-const settings = {
-    openButton: document.getElementById("open-settings"),
-    dialog: document.getElementById("settings-dialog"),
-    penWidthInput: document.getElementById("pen-width"),
-    get penWidth() {
-        return parseInt(this.penWidthInput.value);
-    },
-    get interactionMode() {
-        return document.querySelector("input[name=interaction-mode]:checked").value;
-    },
-    get penMode() {
-        return document.querySelector("input[name=pen-mode]:checked").value;
-    },
-};
+const settingsDialog = document.getElementById("settings-dialog");
+const whiteboard = document.getElementById("whiteboard");
 
-settings.openButton.addEventListener(
-    "click",
-    () => {
-        settings.dialog.showModal();
-    }
-)
+document.getElementById("open-settings")
+    .addEventListener("click", () => settingsDialog.showModal());
+
+/**
+ * Add a "change" event listener to input that will set the given attribute of
+ * whiteboard to event.target.value.
+ */
+function linkInputToWhiteboardAttribute(input, attribute) {
+    input.addEventListener(
+        "change",
+        (event) => {
+            whiteboard.setAttribute(attribute, event.target.value);
+        }
+    );
+}
+
+linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
+                               "data-line-width");
