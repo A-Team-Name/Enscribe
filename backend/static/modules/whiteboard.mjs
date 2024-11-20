@@ -37,7 +37,12 @@ const whiteboard_template = `
 `;
 
 class Whiteboard extends HTMLElement {
-    static observedAttributes = ["line-width", "width", "height", "background"];
+    static observedAttributes = [
+        "data-line-width",
+        "data-width",
+        "data-height",
+        "data-background"
+    ];
 
     #background;
     #code;
@@ -45,9 +50,6 @@ class Whiteboard extends HTMLElement {
     #ui;
     #input;
     #canvas_layers;
-    #width;
-    #height;
-    #lineWidth;
 
     constructor() {
         super();
@@ -60,40 +62,6 @@ class Whiteboard extends HTMLElement {
         this.#ui = shadowRoot.getElementById("ui");
         this.#input = shadowRoot.getElementById("input");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
-        this.#width = 0;
-        this.#height = 0;
-        this.#lineWidth = 1;
-    }
-
-    get width() {
-        return this.#width;
-    }
-    set width(value) {
-        this.#resize(parseInt(value), this.height);
-    }
-
-    get height() {
-        return this.#height;
-    }
-    set height(value) {
-        this.#resize(this.width, parseInt(value));
-    }
-
-    get background() {
-        return this.getAttribute("background");
-    }
-    set background(value) {
-        // TODO: Draw a background pattern: plain/squares/lines
-    }
-
-    get lineWidth() {
-        return this.#lineWidth;
-    }
-    set lineWidth(value) {
-        this.#lineWidth = parseInt(value);
-        for (const c of this.#canvas_layers) {
-            this.#configureCanvasLayer(c);
-        }
     }
 
     /**
@@ -107,7 +75,7 @@ class Whiteboard extends HTMLElement {
         let ctx = canvas.getContext("2d");
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.lineWidth = this.lineWidth;
+        ctx.lineWidth = this.dataset.lineWidth;
         ctx.fillStyle = ctx.strokeStyle = "#ffffff";
         canvas.ctx = ctx;
     }
@@ -119,16 +87,14 @@ class Whiteboard extends HTMLElement {
      */
     #resizeCanvasLayer(canvas) {
         // TODO: Retain contents
-        canvas.width = this.width;
-        canvas.height = this.height;
+        canvas.width = this.dataset.width;
+        canvas.height = this.dataset.height;
         this.#configureCanvasLayer(canvas);
     }
 
-    #resize(newWidth, newHeight) {
-        this.#height = newHeight;
-        this.#width = newWidth;
-        this.style["width"] = newWidth + "px";
-        this.style["height"] = newHeight + "px";
+    #resize() {
+        this.style["width"] = this.dataset.width + "px";
+        this.style["height"] = this.dataset.height + "px";
         for (const c of this.#canvas_layers) {
             this.#resizeCanvasLayer(c);
         }
@@ -138,17 +104,17 @@ class Whiteboard extends HTMLElement {
         if (oldValue === newValue)
             return;
         switch (name) {
-        case "line-width":
-            this.lineWidth = newValue;
+        case "data-line-width":
+            for (const c of this.#canvas_layers) {
+                this.#configureCanvasLayer(c);
+            }
             break;
-        case "width":
-            this.width = newValue;
+        case "data-width":
+        case "data-height":
+            this.#resize();
             break;
-        case "height":
-            this.height = newValue;
-            break;
-        case "background":
-            this.background = newValue;
+        case "data-background":
+            // TODO: Draw a background pattern
             break;
         }
     }
