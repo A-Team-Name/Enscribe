@@ -18,6 +18,8 @@ function linkInputToWhiteboardAttribute(input, attribute) {
             whiteboard.setAttribute(attribute, event.target.value);
         }
     );
+    if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
+        whiteboard.setAttribute(attribute, input.value);
 }
 
 linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
