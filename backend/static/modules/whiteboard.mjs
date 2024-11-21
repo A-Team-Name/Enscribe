@@ -39,6 +39,8 @@ const whiteboard_template = `
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-line-width",
+        "data-pen",
+        "data-tool",
         "data-width",
         "data-height",
         "data-background"

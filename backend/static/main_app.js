@@ -22,3 +22,9 @@ function linkInputToWhiteboardAttribute(input, attribute) {
 
 linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
                                "data-line-width");
+for (const radio of document.querySelectorAll("input[name='pen']")) {
+    linkInputToWhiteboardAttribute(radio, "data-pen");
+}
+for (const radio of document.querySelectorAll("input[name='tool']")) {
+    linkInputToWhiteboardAttribute(radio, "data-tool");
+}
