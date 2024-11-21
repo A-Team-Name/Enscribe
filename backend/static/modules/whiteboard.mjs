@@ -29,6 +29,9 @@ const whiteboard_template = `
 #annotations {
     filter: url(/static/filters.svg#blue);
 }
+:host([data-show-annotations="off"]) #annotations {
+    display: none;
+}
 #ui {
     .clickable {
         /* Move clickable UI elements above the touch input layer. */
@@ -59,7 +62,8 @@ class Whiteboard extends HTMLElement {
         "data-tool",
         "data-width",
         "data-height",
-        "data-background"
+        "data-background",
+        "data-show-annotations",
     ];
 
     #container;

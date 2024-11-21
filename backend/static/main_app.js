@@ -24,6 +24,12 @@ function linkInputToWhiteboardAttribute(input, attribute) {
 
 linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
                                "data-line-width");
+document.getElementById("show-annotations")
+    .addEventListener("change",
+                      (event) => {
+                          whiteboard.setAttribute("data-show-annotations",
+                                                  event.target.checked ? "on" : "off");
+                      })
 for (const radio of document.querySelectorAll("input[name='pen']")) {
     linkInputToWhiteboardAttribute(radio, "data-pen");
 }
