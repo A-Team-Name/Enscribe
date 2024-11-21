@@ -109,6 +109,17 @@ class Whiteboard extends HTMLElement {
     }
 
     /**
+     * Get the "active" canvas drawing context, based on the data-pen attribute.
+     */
+    #activeDrawingContext() {
+        if (this.dataset.pen === "code") {
+            return this.#code_ctx;
+        } else {
+            return this.#annotations_ctx;
+        }
+    }
+
+    /**
      * Decides what type of action to perform based on the PointerEvent received,
      * and the state of the whiteboard.
      */
@@ -127,29 +138,16 @@ class Whiteboard extends HTMLElement {
 
         switch (this.dataset.tool) {
         case "write":
-            this.#handleDrawEvent(event);
+            this.#draw(event, this.#activeDrawingContext());
+            break;
+        case "erase":
+            let ctx = this.#activeDrawingContext();
+            ctx.globalCompositeOperation = "destination-out";
+            this.#draw(event, ctx);
+            ctx.globalCompositeOperation = "source-over";
             break;
         case "select":
             // TODO: Implement selection
-            break;
-        }
-    }
-
-    #handleDrawEvent(event) {
-        switch (this.dataset.pen) {
-        case "code":
-            this.#draw(event, this.#code_ctx);
-            break;
-        case "annotations":
-            this.#draw(event, this.#annotations_ctx);
-            break;
-        case "erase":
-            this.#code_ctx.globalCompositeOperation = "destination-out";
-            this.#draw(event, this.#code_ctx);
-            this.#code_ctx.globalCompositeOperation = "source-over";
-            this.#annotations_ctx.globalCompositeOperation = "destination-out";
-            this.#draw(event, this.#annotations_ctx);
-            this.#annotations_ctx.globalCompositeOperation = "source-over";
             break;
         }
     }
