@@ -39,9 +39,5 @@ html, body {
 }
 main {
     /* let the whiteboard scroll */
-    overflow: scroll;
-}
-#whiteboard {
-    position: relative;
-    border: var(--thick-border) dashed var(--ui-border-color);
+    overflow: hidden;
 }

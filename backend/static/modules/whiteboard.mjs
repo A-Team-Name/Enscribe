@@ -1,8 +1,20 @@
 const whiteboard_template = `
 <style>
 @import '/static/common.css';
-:host {
+#container {
+    touch-action: none;
+    overflow: scroll;
+    width: 100%;
+    height: 100%;
+}
+:host([data-tool="pan"]) #container {
+    touch-action: pan-x pan-y;
+}
+#surface {
     display: block;
+    position: relative;
+    border: var(--thick-border) dashed var(--ui-border-color);
+
     > :not(canvas) {
         width: 100%;
         height: 100%;
@@ -29,11 +41,15 @@ const whiteboard_template = `
     }
 }
 </style>
-<canvas id="background"></canvas>
-<canvas id="code"></canvas>
-<canvas id="annotations"></canvas>
-<div id="ui"></div>
-<div id="input"></div>
+<div id="container">
+  <div id="surface">
+    <canvas id="background"></canvas>
+    <canvas id="code"></canvas>
+    <canvas id="annotations"></canvas>
+    <div id="ui"></div>
+    <div id="input"></div>
+  </div>
+</div>
 `;
 
 class Whiteboard extends HTMLElement {
@@ -46,6 +62,8 @@ class Whiteboard extends HTMLElement {
         "data-background"
     ];
 
+    #container;
+    #surface;
     #background;
     #code;
     #annotations;
@@ -58,6 +76,8 @@ class Whiteboard extends HTMLElement {
 
         const shadowRoot = this.attachShadow({mode: 'closed'});
         shadowRoot.innerHTML = whiteboard_template;
+        this.#container = shadowRoot.getElementById("container");
+        this.#surface = shadowRoot.getElementById("surface");
         this.#background = shadowRoot.getElementById("background");
         this.#code = shadowRoot.getElementById("code");
         this.#annotations = shadowRoot.getElementById("annotations");
@@ -95,8 +115,8 @@ class Whiteboard extends HTMLElement {
     }
 
     #resize() {
-        this.style["width"] = this.dataset.width + "px";
-        this.style["height"] = this.dataset.height + "px";
+        this.#surface.style["width"] = this.dataset.width + "px";
+        this.#surface.style["height"] = this.dataset.height + "px";
         for (const c of this.#canvas_layers) {
             this.#resizeCanvasLayer(c);
         }
