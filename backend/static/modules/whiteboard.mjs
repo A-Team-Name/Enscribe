@@ -66,6 +66,7 @@ class Whiteboard extends HTMLElement {
         "data-show-annotations",
     ];
 
+    // DOM elements
     #container;
     #surface;
     #background;
@@ -74,6 +75,12 @@ class Whiteboard extends HTMLElement {
     #ui;
     #input;
     #canvas_layers;
+
+    // Drawing state
+    #code_ctx;
+    #annotations_ctx;
+    #background_ctx;
+    #pointer_active;
 
     constructor() {
         super();
@@ -88,6 +95,99 @@ class Whiteboard extends HTMLElement {
         this.#ui = shadowRoot.getElementById("ui");
         this.#input = shadowRoot.getElementById("input");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
+
+        this.#code_ctx = this.#code.getContext("2d");
+        this.#annotations_ctx = this.#annotations.getContext("2d");
+        this.#background_ctx = this.#background.getContext("2d");
+
+        this.#input.addEventListener("pointerdown",
+            (event) => this.#handlePointerMove(event));
+
+        this.#input.addEventListener("pointermove",
+            (event) => this.#handlePointerMove(event));
+
+    }
+
+    /**
+     * Decides what type of action to perform based on the PointerEvent received,
+     * and the state of the whiteboard.
+     */
+    #handlePointerMove(event) {
+        event.preventDefault();
+        if (event.buttons === 0) {
+            // The input is not active: do nothing.
+            return;
+        }
+
+        if (this.dataset.tool === "pan") {
+            // Rely on default touch panning behaviour.
+            // TODO: Implement panning with mouse and pen
+            return;
+        }
+
+        switch (this.dataset.tool) {
+        case "write":
+            this.#handleDrawEvent(event);
+            break;
+        case "select":
+            // TODO: Implement selection
+            break;
+        }
+    }
+
+    #handleDrawEvent(event) {
+        switch (this.dataset.pen) {
+        case "code":
+            this.#draw(event, this.#code_ctx);
+            break;
+        case "annotations":
+            this.#draw(event, this.#annotations_ctx);
+            break;
+        case "erase":
+            this.#code_ctx.globalCompositeOperation = "destination-out";
+            this.#draw(event, this.#code_ctx);
+            this.#code_ctx.globalCompositeOperation = "source-over";
+            this.#annotations_ctx.globalCompositeOperation = "destination-out";
+            this.#draw(event, this.#annotations_ctx);
+            this.#annotations_ctx.globalCompositeOperation = "source-over";
+            break;
+        }
+    }
+
+    /**
+     * Apply PointerEvent event to 2D context ctx.
+     */
+    #draw(event, ctx) {
+        if (event.type === "pointerdown") {
+            console.log("pointerdown");
+            this.#penDown(ctx, event.offsetX, event.offsetY);
+            return;
+        }
+
+        for (const e of event.getCoalescedEvents()) {
+            // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
+            ctx.lineTo(e.offsetX, e.offsetY);
+        }
+        ctx.stroke();
+    }
+
+    /**
+     * Start a new drawn line at (x, y) on ctx.
+     * Draw a dot at that point, which will appear even if the pointer doesn't move.
+     */
+    #penDown(ctx, x, y) {
+        this.#drawPoint(ctx, x, y);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    /** Draw a circle, diameter ctx.lineWidth at (x, y). */
+    #drawPoint(ctx, x, y) {
+        const circle = new Path2D();
+        // ctx.fillStyle = color;
+        // Radius must be half ctx.lineWidth so diameter matches lines.
+        circle.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
+        ctx.fill(circle);
     }
 
     /**
