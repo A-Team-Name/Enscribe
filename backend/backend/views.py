@@ -1,6 +1,6 @@
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 import json
 import requests
@@ -64,18 +64,56 @@ def execute(request: WSGIRequest) -> HttpResponse:
     ws.send(json.dumps(send_execute_request(code)))
 
     # Process response
-    output = []
+    # Return specific execution output if recognised format otherwise return entire response
+    output = {}
+    full_response = []
     while True:
         rsp = json.loads(ws.recv())
         print(rsp, flush=True)
         msg_type = rsp["msg_type"]
-        output.append(rsp)
+
+        if language == "python3":
+            if msg_type == "stream":
+                output["success"] = "true"
+                output["type"] = "text"
+                output["content"] = rsp["content"]["text"]
+
+            elif msg_type == "execute_result":
+                output["success"] = "true"
+                output["type"] = "text"
+                output["content"] = rsp["content"]["data"]["text/plain"]
+
+            elif msg_type == "error":
+                output["success"] = "false"
+                output["type"] = "ascii-text"
+                output["content"] = rsp["content"]["traceback"]
+
+        elif language == "dyalog_apl":
+            if msg_type == "execute_result":
+                output["success"] = "true"
+                output["type"] = "html"
+                output["content"] = rsp["content"]["data"]["text/html"]
+
+            if msg_type == "stream":
+                output["success"] = "false"
+                output["type"] = "text"
+                output["content"] = rsp["content"]["text"]
+
+        full_response.append(rsp)
         if msg_type == "execute_reply":
             break
 
+    if output == {}:
+        output["type"] = "http"
+        output["content"] = full_response
+
     ws.close()
-    context = {"input": code, "output": output}
-    return render(request, "index.html", context)
+    # context = {"input": code, "output": output}
+    # return render(request, "index.html", context)
+    request.session["language"] = language
+    request.session["input"] = code
+    request.session["output"] = output
+    return redirect("/")
     # return HttpResponse(output)
 
 

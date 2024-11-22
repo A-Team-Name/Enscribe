@@ -19,15 +19,15 @@
           <form method="post" action="execute/">
             {% csrf_token %}
             <label for="language">Language:</label>
-            <input name="language" type="text" value="python3"/>
+            <input name="language" type="text" value="{{request.session.language}}"/>
             <button>Send</button>
             <br/>
-            <textarea cols="80" id="code" name="code" rows="40">{{input}}</textarea>
+            <textarea cols="80" id="code" name="code" rows="40">{{request.session.input}}</textarea>
           </form>
         </div>
         <div class="pane">
           <p>Output:</p>
-          <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30">{{output | safe}}</textarea>
+          <textarea cols="80" id="jupyter-log" name="jupyter-log" rows="30">{{request.session.output | safe}}</textarea>
         </div>
       </div>
     </body>
