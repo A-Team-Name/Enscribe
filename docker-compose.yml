@@ -15,9 +15,7 @@ services:
 
   kernel:
     container_name: kernel
-    build:
-      context: ./kernels
-      dockerfile: dockerfile
+    image: ghcr.io/a-team-name/lambda-kernculus:latest
     volumes:
       - ./work:/home/jovyan/work
     networks:
