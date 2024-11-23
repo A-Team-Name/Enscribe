@@ -39,6 +39,7 @@ const whiteboard_template = `
     > * {
         /* Enable manual positioning with top and left CSS properties. */
         position: absolute;
+        cursor: auto;
     }
 }
 
@@ -49,10 +50,6 @@ const whiteboard_template = `
 
 :host([data-tool="pan"]) {
     cursor: grab;
-}
-
-#ui {
-    cursor: auto;
 }
 
 /* TODO: Hide cursor when we add pen and eraser previews */
