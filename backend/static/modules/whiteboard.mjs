@@ -1,3 +1,5 @@
+import { CodeBlock } from '/static/modules/code-block.mjs';
+
 const whiteboard_template = `
 <style>
 @import '/static/common.css';
@@ -90,6 +92,8 @@ class Whiteboard extends HTMLElement {
     #annotations_ctx;
     #background_ctx;
     #pointer_active;
+    #last_selection;
+    #writing;
 
     constructor() {
         super();
@@ -107,6 +111,8 @@ class Whiteboard extends HTMLElement {
         this.#code_ctx = this.#code.getContext("2d");
         this.#annotations_ctx = this.#annotations.getContext("2d");
         this.#background_ctx = this.#background.getContext("2d");
+        this.#writing = false;
+        this.#last_selection = null;
 
         this.#ui.addEventListener("pointerdown",
             (event) => this.#handlePointerDown(event));
@@ -132,6 +138,25 @@ class Whiteboard extends HTMLElement {
         }
     }
 
+    #handlePointerDown(event) {
+        switch (this.dataset.tool) {
+        case "erase":
+            let ctx = this.#activeDrawingContext();
+            ctx.globalCompositeOperation = "destination-out";
+            this.#penDown(ctx, event.offsetX, event.offsetY);
+        case "write":
+            this.#penDown(this.#activeDrawingContext(), event.offsetX, event.offsetY);
+            break;
+        case "select":
+            this.#createSelection(event.offsetX, event.offsetY);
+            break;
+        case "pan":
+            // Panning requires a dragging motion: do nothing.
+            break;
+        }
+
+    }
+
     /**
      * Decides what type of action to perform based on the PointerEvent received,
      * and the state of the whiteboard.
@@ -155,25 +180,50 @@ class Whiteboard extends HTMLElement {
             break;
         case "erase":
             let ctx = this.#activeDrawingContext();
-            ctx.globalCompositeOperation = "destination-out";
             this.#draw(event, ctx);
-            ctx.globalCompositeOperation = "source-over";
             break;
         case "select":
-            // TODO: Implement selection
+            if (this.#last_selection !== null)
+                this.#last_selection.resize(event);
             break;
         }
+    }
+
+    #handlePointerUp(event) {
+        switch (this.dataset.tool) {
+        case "erase":
+            this.#activeDrawingContext().globalCompositeOperation = "source-over";
+            this.#penUp();
+            break;
+        case "write":
+            this.#penUp();
+            break;
+        case "select":
+            if (this.#last_selection !== null) {
+                this.#last_selection.confirm();
+                this.#last_selection = null;
+                this.#enableAllBlocks();
+            }
+            break;
+        }
+    }
+
+    #createSelection(x, y) {
+        this.#disableAllBlocks();
+        this.#last_selection = document.createElement("code-block");
+        this.#last_selection.dataset.x = x;
+        this.#last_selection.dataset.y = y;
+        this.#last_selection.dataset.width = 0;
+        this.#last_selection.dataset.height = 0;
+        this.#ui.appendChild(this.#last_selection);
     }
 
     /**
      * Apply PointerEvent event to 2D context ctx.
      */
     #draw(event, ctx) {
-        if (event.type === "pointerdown") {
-            this.#penDown(ctx, event.offsetX, event.offsetY);
+        if (!this.#writing)
             return;
-        }
-
         for (const e of event.getCoalescedEvents()) {
             // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
             ctx.lineTo(e.offsetX, e.offsetY);
@@ -186,15 +236,33 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(ctx, x, y) {
+        this.#writing = true;
+        this.#disableAllBlocks();
         this.#drawPoint(ctx, x, y);
         ctx.beginPath();
         ctx.moveTo(x, y);
     }
 
+    #penUp() {
+        this.#writing = false;
+        this.#enableAllBlocks();
+    }
+
+    #enableAllBlocks() {
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            block.removeAttribute("disabled");
+        }
+    }
+
+    #disableAllBlocks() {
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            block.setAttribute("disabled", "");
+        }
+    }
+
     /** Draw a circle, diameter ctx.lineWidth at (x, y). */
     #drawPoint(ctx, x, y) {
         const circle = new Path2D();
-        // ctx.fillStyle = color;
         // Radius must be half ctx.lineWidth so diameter matches lines.
         circle.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
         ctx.fill(circle);
