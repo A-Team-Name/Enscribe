@@ -71,7 +71,7 @@ dialog, .ui-window {
     border: var(--thick-border) solid var(--ui-border-color);
     background-color: var(--ui-background-color);
     border-radius: 6px;
-    padding: 0.5rem;
+    padding: 0.25rem;
 }
 
 .ui-group {
@@ -95,6 +95,7 @@ dialog {
     align-self: center;
     width: min(30em, 80%);
     max-height: 80%;
+    padding: 0.5rem;
 
     &[open] {
         display: grid;
