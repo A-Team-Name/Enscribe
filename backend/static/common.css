@@ -45,6 +45,10 @@ button {
 
 /* || UI Classes */
 
+label {
+    user-select: none;
+}
+
 .selection {
     border: var(--thick-border) solid var(--ui-accent-color);
     &.tentative {
