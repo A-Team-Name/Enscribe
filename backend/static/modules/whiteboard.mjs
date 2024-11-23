@@ -157,7 +157,6 @@ class Whiteboard extends HTMLElement {
      */
     #draw(event, ctx) {
         if (event.type === "pointerdown") {
-            console.log("pointerdown");
             this.#penDown(ctx, event.offsetX, event.offsetY);
             return;
         }
