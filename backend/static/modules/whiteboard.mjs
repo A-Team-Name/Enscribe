@@ -43,6 +43,21 @@ const whiteboard_template = `
         position: absolute;
     }
 }
+
+/* Cursors */
+:host([data-tool="select"]) {
+    cursor: crosshair;
+}
+
+:host([data-tool="pan"]) {
+    cursor: grab;
+}
+
+#ui {
+    cursor: auto;
+}
+
+/* TODO: Hide cursor when we add pen and eraser previews */
 </style>
 <div id="container">
   <div id="surface">
