@@ -23,6 +23,8 @@ function linkInputToWhiteboardAttribute(input, attribute) {
 
 linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
                                "data-line-width");
+linkInputToWhiteboardAttribute(document.getElementById("eraser-width"),
+                               "data-eraser-width");
 document.getElementById("show-annotations")
     .addEventListener("change",
                       (event) => {

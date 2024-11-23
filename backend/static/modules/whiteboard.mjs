@@ -67,6 +67,7 @@ const whiteboard_template = `
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-line-width",
+        "data-eraser-width",
         "data-pen",
         "data-tool",
         "data-width",
@@ -140,6 +141,7 @@ class Whiteboard extends HTMLElement {
         case "erase":
             let ctx = this.#activeDrawingContext();
             ctx.globalCompositeOperation = "destination-out";
+            ctx.lineWidth = this.dataset.eraserWidth;
             this.#penDown(ctx, event.offsetX, event.offsetY);
         case "write":
             this.#penDown(this.#activeDrawingContext(), event.offsetX, event.offsetY);
@@ -189,7 +191,9 @@ class Whiteboard extends HTMLElement {
     #handlePointerUp(event) {
         switch (this.dataset.tool) {
         case "erase":
-            this.#activeDrawingContext().globalCompositeOperation = "source-over";
+            let ctx = this.#activeDrawingContext();
+            ctx.globalCompositeOperation = "source-over";
+            ctx.lineWidth = this.dataset.lineWidth;
             this.#penUp();
             break;
         case "write":
