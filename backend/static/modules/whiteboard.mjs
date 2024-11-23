@@ -130,13 +130,13 @@ class Whiteboard extends HTMLElement {
             return;
         }
 
-        if (this.dataset.tool === "pan") {
-            // Rely on default touch panning behaviour.
-            // TODO: Implement panning with mouse and pen
-            return;
-        }
-
         switch (this.dataset.tool) {
+        case "pan":
+            // We can rely on default panning behaviour for touch.
+            if (event.pointerType !== "touch") {
+                this.#container.scrollBy(-event.movementX, -event.movementY);
+            }
+            break;
         case "write":
             this.#draw(event, this.#activeDrawingContext());
             break;
