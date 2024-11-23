@@ -33,10 +33,6 @@ const whiteboard_template = `
     display: none;
 }
 #ui {
-    .clickable {
-        /* Move clickable UI elements above the touch input layer. */
-        z-index: 2;
-    }
     /* Immediate children of #ui are "floating" UI elements */
     > * {
         /* Enable manual positioning with top and left CSS properties. */
@@ -65,7 +61,6 @@ const whiteboard_template = `
     <canvas id="code"></canvas>
     <canvas id="annotations"></canvas>
     <div id="ui"></div>
-    <div id="input"></div>
   </div>
 </div>
 `;
@@ -88,7 +83,6 @@ class Whiteboard extends HTMLElement {
     #code;
     #annotations;
     #ui;
-    #input;
     #canvas_layers;
 
     // Drawing state
@@ -108,17 +102,21 @@ class Whiteboard extends HTMLElement {
         this.#code = shadowRoot.getElementById("code");
         this.#annotations = shadowRoot.getElementById("annotations");
         this.#ui = shadowRoot.getElementById("ui");
-        this.#input = shadowRoot.getElementById("input");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
 
         this.#code_ctx = this.#code.getContext("2d");
         this.#annotations_ctx = this.#annotations.getContext("2d");
         this.#background_ctx = this.#background.getContext("2d");
 
-        this.#input.addEventListener("pointerdown",
-            (event) => this.#handlePointerMove(event));
+        this.#ui.addEventListener("pointerdown",
+            (event) => this.#handlePointerDown(event));
 
-        this.#input.addEventListener("pointermove",
+        this.#ui.addEventListener("pointercancel",
+            (event) => this.#handlePointerUp(event));
+        this.#ui.addEventListener("pointerup",
+            (event) => this.#handlePointerUp(event));
+
+        this.#ui.addEventListener("pointermove",
             (event) => this.#handlePointerMove(event));
 
     }
