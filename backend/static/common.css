@@ -41,14 +41,17 @@ code {
 
 button {
     padding: 0.25rem 0.5rem;
-}
-
-button.run::before {
-    content: '▶';
-}
-
-button.close::before {
-    content: '❌';
+    &.icon {
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        &.run::before {
+            content: '▶';
+        }
+        &.close::before {
+            content: '❌';
+        }
+    }
 }
 
 /* || UI Classes */
