@@ -1,5 +1,4 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
-customElements.define("white-board", Whiteboard);
 
 const settingsDialog = document.getElementById("settings-dialog");
 const whiteboard = document.getElementById("whiteboard");
