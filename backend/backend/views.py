@@ -64,55 +64,67 @@ def execute(request: WSGIRequest) -> HttpResponse:
     ws.send(json.dumps(send_execute_request(code)))
 
     # Process response
-    # Return specific execution output if recognised format otherwise return entire response
-    output = {}
+    # Collect all the messages which constitute the actual code output
     full_response = []
     while True:
-        rsp = json.loads(ws.recv())
-        print(rsp, flush=True)
+        msg = ws.recv()
+        print(msg, flush=True)
+        rsp = json.loads(msg)
+        # print(rsp, flush=True)
         msg_type = rsp["msg_type"]
 
-        if language == "python3":
-            if msg_type == "stream":
-                output["success"] = "true"
-                output["type"] = "text"
-                output["content"] = rsp["content"]["text"]
+        output = None
+        match language:
+            case "python3":
+                match msg_type:
+                    case "stream":
+                        output = {
+                            "success": True,
+                            "type": "text",
+                            "content": rsp["content"]["text"],
+                        }
+                    case "execute_result":
+                        output = {
+                            "success": True,
+                            "type": "text",
+                            "content": rsp["content"]["data"]["text/plain"],
+                        }
+                    case "error":
+                        output = {
+                            "success": False,
+                            "type": "text",
+                            "content": rsp["content"]["traceback"],
+                        }
+            case "dyalog_apl":
+                match msg_type:
+                    case "execute_result":
+                        output = {
+                            "success": True,
+                            "type": "html",
+                            "content": rsp["content"]["data"]["text/html"],
+                        }
+                    case "stream":
+                        output = {
+                            "success": False,
+                            "type": "text",
+                            "content": rsp["content"]["text"],
+                        }
 
-            elif msg_type == "execute_result":
-                output["success"] = "true"
-                output["type"] = "text"
-                output["content"] = rsp["content"]["data"]["text/plain"]
-
-            elif msg_type == "error":
-                output["success"] = "false"
-                output["type"] = "ascii-text"
-                output["content"] = rsp["content"]["traceback"]
-
-        elif language == "dyalog_apl":
-            if msg_type == "execute_result":
-                output["success"] = "true"
-                output["type"] = "html"
-                output["content"] = rsp["content"]["data"]["text/html"]
-
-            if msg_type == "stream":
-                output["success"] = "false"
-                output["type"] = "text"
-                output["content"] = rsp["content"]["text"]
-
-        full_response.append(rsp)
+        if output:
+            full_response.append(output)
         if msg_type == "execute_reply":
             break
 
-    if output == {}:
-        output["type"] = "http"
-        output["content"] = full_response
+    # if output == {}:
+    #     output["type"] = "http"
+    #     output["content"] = full_response
 
     ws.close()
-    # context = {"input": code, "output": output}
+    # context = {"input": code, "output": output},
     # return render(request, "index.html", context)
     request.session["language"] = language
     request.session["input"] = code
-    request.session["output"] = output
+    request.session["output"] = json.dumps(full_response)
     return redirect("/")
     # return HttpResponse(output)
 
