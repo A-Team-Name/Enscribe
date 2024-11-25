@@ -92,7 +92,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
                     case "error":
                         output = {
                             "success": False,
-                            "type": "text",
+                            "type": "ansi-text",
                             "content": rsp["content"]["traceback"],
                         }
             case "dyalog_apl":
