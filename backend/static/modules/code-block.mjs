@@ -83,9 +83,9 @@ class CodeBlock extends HTMLElement {
             .addEventListener("click", () => this.#close());
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
-        this.#controls.addEventListener("pointerdown",
+        this.addEventListener("pointerdown",
             (event) => event.stopPropagation());
-        this.#controls.addEventListener("pointermove",
+        this.addEventListener("pointermove",
             (event) => event.stopPropagation());
     }
 
