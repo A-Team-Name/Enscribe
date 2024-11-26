@@ -26,6 +26,7 @@ const code_block_template = `
     grid-row: span 3;
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
 }
 
 #controls:not(:has(input[name="show-output"]:checked)) ~ * > #output {
