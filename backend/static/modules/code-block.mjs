@@ -3,10 +3,11 @@ const code_block_template = `
 @import '/static/common.css';
 :host {
     pointer-events: none;
-        display: grid;
+    display: grid;
     grid-template:
         "selection selection output"
         ".         controls  output"
+        ".         .         output"
         / 1fr auto auto;
 }
 #selection {
@@ -17,15 +18,18 @@ const code_block_template = `
     grid-area: controls;
 }
 
-#output, #text {
+#output-column {
     grid-column: output;
+    grid-row: span 3;
+    display: flex;
+    flex-direction: column;
 }
 
-#controls:not(:has(input[name="show-output"]:checked)) ~ #output {
+#controls:not(:has(input[name="show-output"]:checked)) ~ * > #output {
     display: none;
 }
 
-#controls:not(:has(input[name="show-text"]:checked)) ~ #text {
+#controls:not(:has(input[name="show-text"]:checked)) ~ * > #text {
     display: none;
 }
 
@@ -53,8 +57,10 @@ const code_block_template = `
   <label><input name="show-text" type="checkbox"/> Text</label>
   <button id="close" class="icon close"></button>
 </div>
-<textarea id="text" class="ui-window clickable">Program text</textarea>
-<textarea id="output" class="ui-window clickable">Output</textarea>
+<div id="output-column">
+  <textarea id="text" class="ui-window clickable">Program text</textarea>
+  <textarea id="output" class="ui-window clickable">Output</textarea>
+</div>
 `;
 
 class CodeBlock extends HTMLElement {
