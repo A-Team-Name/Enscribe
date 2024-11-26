@@ -77,7 +77,6 @@ class CodeBlock extends HTMLElement {
     ];
 
     #selection;
-    #controls;
 
     constructor() {
         super();
@@ -86,7 +85,6 @@ class CodeBlock extends HTMLElement {
         shadowRoot.innerHTML = code_block_template;
 
         this.#selection = shadowRoot.getElementById("selection");
-        this.#controls = shadowRoot.getElementById("controls");
 
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
