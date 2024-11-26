@@ -17,11 +17,15 @@ const code_block_template = `
     grid-area: controls;
 }
 
-#output {
-    grid-area: output;
+#output, #text {
+    grid-column: output;
 }
 
 #controls:not(:has(input[name="show-output"]:checked)) ~ #output {
+    display: none;
+}
+
+#controls:not(:has(input[name="show-text"]:checked)) ~ #text {
     display: none;
 }
 
@@ -46,8 +50,10 @@ const code_block_template = `
 <div id="controls" class="ui-window clickable">
   <button id="run" class="icon run"></button>
   <label><input name="show-output" type="checkbox"/> Output</label>
+  <label><input name="show-text" type="checkbox"/> Text</label>
   <button id="close" class="icon close"></button>
 </div>
+<textarea id="text" class="ui-window clickable">Program text</textarea>
 <div id="output" class="ui-window">Output</div>
 `;
 
