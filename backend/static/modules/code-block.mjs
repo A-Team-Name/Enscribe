@@ -54,7 +54,7 @@ const code_block_template = `
   <button id="close" class="icon close"></button>
 </div>
 <textarea id="text" class="ui-window clickable">Program text</textarea>
-<div id="output" class="ui-window">Output</div>
+<textarea id="output" class="ui-window clickable">Output</textarea>
 `;
 
 class CodeBlock extends HTMLElement {
