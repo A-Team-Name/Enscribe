@@ -2,8 +2,10 @@ const code_block_template = `
 <style>
 @import '/static/common.css';
 :host {
+   /* Allow pointer events to pass through unless explicitly enabled */
     pointer-events: none;
     display: grid;
+    /* Align controls to the bottom right of selection, and spread output down the right */
     grid-template:
         "selection selection output"
         ".         controls  output"
@@ -20,6 +22,7 @@ const code_block_template = `
 
 #output-column {
     grid-column: output;
+    /* spanning 3 rows lets #output-column extend past the second row without #controls moving */
     grid-row: span 3;
     display: flex;
     flex-direction: column;
