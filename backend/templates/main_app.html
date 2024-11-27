@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Enscribe</title>
+    <link href="/static/main_app.css" rel="stylesheet"/>
+  </head>
+  <body>
+    <header class="spaced-bar">
+      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+      <div class="spaced-bar">
+        <button id="save">Save</button>
+        <button id="new">New</button>
+        <button id="open">Open</button>
+      </div>
+
+      <fieldset class="spaced-bar">
+        <label>
+          <input id="tool-pan" type="radio" name="tool" value="pan">
+          Pan
+        </label>
+        <label>
+          <input id="tool-select" type="radio" name="tool" value="select" />
+          Select
+        </label>
+        <label>
+          <input id="tool-write" type="radio" name="tool" value="write" checked/>
+          Write
+        </label>
+        <label>
+          <input id="tool-erase" type="radio" name="tool" value="erase">
+          Erase
+        </label>
+      </fieldset>
+
+      <label>
+        Pen Width
+        <input id="pen-width" type="number"
+               value="10" min="3" max="20"
+               style="width: 2.5em"/>
+        (px)
+      </label>
+      <label>
+        Eraser Width
+        <input id="eraser-width" type="number"
+               value="20" min="5" max="30"
+               style="width: 2.5em"/>
+        (px)
+      </label>
+
+      <div class="spaced-bar">
+        <button id="undo" title="Undo">↩</button>
+        <button id="redo" title="Redo" disabled>↪</button>
+      </div>
+
+      <label>
+        <input id="show-annotations" type="checkbox" checked/>
+        Show Annotations
+      </label>
+      <fieldset class="spaced-bar">
+        <label>
+          <input id="pen-code" type="radio" name="pen" value="code" checked/>
+          Code
+        </label>
+        <label>
+          <input id="pen-annotations" type="radio" name="pen" value="annotations"/>
+          Annotation
+        </label>
+      </fieldset>
+      <div>
+        <button id="open-settings">
+          Settings
+        </button>
+      </div>
+    </header>
+    <main>
+      <white-board id="whiteboard"
+                   data-width="3000"
+                   data-height="3000"
+                   data-background="squares">
+      </white-board>
+    </main>
+    <dialog id="settings-dialog">
+      <h1>Settings</h1>
+      <form method="dialog" class="close">
+        <button class="close icon"></button>
+      </form>
+      <select name="theme">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </dialog>
+    <script src="/static/main_app.js" type="module" charset="utf-8"></script>
+  </body>
+</html>

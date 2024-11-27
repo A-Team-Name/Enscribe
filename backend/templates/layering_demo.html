@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Enscribe</title>
+    <link href="/static/main_app.css" rel="stylesheet"/>
+  </head>
+  <body>
+    <header class="spaced-bar">
+      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+      <div class="spaced-bar">
+        <button>Save</button>
+        <button>New</button>
+        <button>Open</button>
+      </div>
+
+      <fieldset class="spaced-bar">
+        <label>
+          <input id="interaction-mode-pan" type="radio" name="interaction-mode" value="pan" checked/>
+          Pan
+        </label>
+        <label>
+          <input id="interaction-mode-select" type="radio" name="interaction-mode" value="select" />
+          Select
+        </label>
+        <label>
+          <input id="interaction-mode-write" type="radio" name="interaction-mode" value="write" checked/>
+          Write
+        </label>
+      </fieldset>
+
+      <label>
+        Pen Width
+        <input id="pen-width" type="number"
+               value="20" min="5" max="30"
+               style="width: 2.5em"/>
+        (px)
+      </label>
+
+      <div class="spaced-bar">
+        <button title="Undo">↩</button>
+        <button title="Redo" disabled>↪</button>
+      </div>
+
+      <fieldset class="spaced-bar">
+        <legend>Pen</legend>
+        <label>
+          <input id="pen-mode-code" type="radio" name="pen-mode" value="code" checked/>
+          Code
+        </label>
+        <label>
+          <input id="pen-mode-annotation" type="radio" name="pen-mode" value="annotation"/>
+          Annotation
+        </label>
+        <label>
+          <input id="pen-mode-erase" type="radio" name="pen-mode" value="erase" checked/>
+          Erase
+        </label>
+      </fieldset>
+      <div>
+        <button>Settings</button>
+      </div>
+    </header>
+    <main>
+      <div id="whiteboard" style="width: 3000px; height: 3000px">
+        <!-- Children of #whiteboard are layers, ordered lowest to highest. -->
+        <canvas id="whiteboard-background" width="3000" height="3000"></canvas>
+        <canvas id="whiteboard-code" width="3000" height="3000"></canvas>
+        <canvas id="whiteboard-annotations" width="3000" height="3000"></canvas>
+        <!-- We may wish to encapsulate some parts, the drawing interface especially, into web components to separate functionality. -->
+        <div id="whiteboard-ui" style="width: 3000px; height: 3000px">
+          <div class="selection tentative" style="width: fit-content; top: 200px; left: 50px">
+            <p>Non-clickable UI.</p>
+            <pre><code>1 2 3 + 4 5 6</code></pre>
+          </div>
+          <div class="selection clickable" style="width: fit-content; top: 300px; left: 20px">
+            <p>Clickable UI.</p>
+            <pre><code>1 2 3 + 4 5 6</code></pre>
+          </div>
+        </div>
+        <div id="whiteboard-input" style="width: 3000px; height: 3000px"></div>
+      </div>
+    </main>
+    <script>
+      let ctx = document.getElementById("whiteboard-code").getContext("2d");
+      ctx.fillRect(25, 25, 100, 100);
+      ctx.fillRect(100, 100, 500, 10);
+      let ctx2 = document.getElementById("whiteboard-background").getContext("2d");
+      ctx2.fillStyle = getComputedStyle(document.body).getPropertyValue('--ui-accent-color');
+      ctx2.fillRect(12, 13, 20, 20);
+    </script>
+  </body>
+</html>
