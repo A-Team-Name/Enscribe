@@ -220,14 +220,20 @@ class Whiteboard extends HTMLElement {
     }
 
     /**
-     * Apply PointerEvent event to 2D context ctx.
+     * Draw with PointerEvent event on 2D context ctx.
      */
     #draw(event, ctx) {
         if (!this.#writing)
             return;
-        for (const e of event.getCoalescedEvents()) {
-            // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
-            ctx.lineTo(e.offsetX, e.offsetY);
+
+        // Safari only has support for getCoalescedEvents as of 18.2
+        if ("getCoalescedEvents" in event) {
+            for (const e of event.getCoalescedEvents()) {
+                // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
+                ctx.lineTo(e.offsetX, e.offsetY);
+            }
+        } else {
+            ctx.lineTo(event.offsetX, event.offsetY);
         }
         ctx.stroke();
     }
