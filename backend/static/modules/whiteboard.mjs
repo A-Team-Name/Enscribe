@@ -25,12 +25,6 @@ const whiteboard_template = `
         position: absolute;
     }
 }
-#code {
-    filter: url(/static/filters.svg#black);
-}
-#annotations {
-    filter: url(/static/filters.svg#blue);
-}
 :host([data-show-annotations="off"]) #annotations {
     display: none;
 }
@@ -101,8 +95,11 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#background = shadowRoot.getElementById("background");
+        this.#background.color = "#888888";
         this.#code = shadowRoot.getElementById("code");
+        this.#code.color = "#000000";
         this.#annotations = shadowRoot.getElementById("annotations");
+        this.#annotations.color = "#0000ff";
         this.#ui = shadowRoot.getElementById("ui");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
 
@@ -287,7 +284,7 @@ class Whiteboard extends HTMLElement {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.lineWidth = this.dataset.lineWidth;
-        ctx.fillStyle = ctx.strokeStyle = "#ffffff";
+        ctx.fillStyle = ctx.strokeStyle = canvas.color;
         canvas.ctx = ctx;
     }
 
