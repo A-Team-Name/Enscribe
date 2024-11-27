@@ -8,4 +8,6 @@ urlpatterns = [
     path("draw/", views.draw),
     path("app/", views.main_app),
     path("layering/", views.layering_demo),
+    path("execute/", views.execute),
+    path("image_to_text/", views.image_to_text),
 ]
