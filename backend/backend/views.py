@@ -1,6 +1,6 @@
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render  # , redirect
 
 import json
 import requests
@@ -40,8 +40,9 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
     url = base + "/api/kernels"
 
-    # Get execution language from frontend request
-    language = request.POST.get("language")
+    request_body = json.loads(request.body)
+    language = request_body["language"]
+    code = request_body["code"]
 
     # Get list of existing kernels
     response = requests.get(url, headers=headers)
@@ -64,9 +65,6 @@ def execute(request: WSGIRequest) -> HttpResponse:
         "ws://kernel:8888/api/kernels/" + active_kernel["id"] + "/channels",
         header=headers,
     )
-
-    # Get code from POST request body
-    code = request.POST.get("code")
 
     # Send code to the jupyter kernel
     ws.send(json.dumps(send_execute_request(code)))
@@ -130,11 +128,18 @@ def execute(request: WSGIRequest) -> HttpResponse:
     ws.close()
     # context = {"input": code, "output": output},
     # return render(request, "index.html", context)
-    request.session["language"] = language
-    request.session["input"] = code
-    request.session["output"] = json.dumps(full_response)
-    return redirect("/")
-    # return HttpResponse(output)
+    # request.session["language"] = language
+    # request.session["input"] = code
+    # request.session["output"] = json.dumps(full_response)
+    # return redirect("/")
+    return HttpResponse(
+        json.dumps(
+            {
+                "code": code,
+                "output": full_response,
+            }
+        )
+    )
 
 
 def image_to_text(request):

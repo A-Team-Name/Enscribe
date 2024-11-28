@@ -62,8 +62,8 @@ const code_block_template = `
   <button id="close" class="icon close"></button>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable">Program text</textarea>
-  <textarea id="output" class="ui-window clickable">Output</textarea>
+  <div id="text"   class="ui-window clickable"></div>
+  <div id="output" class="ui-window clickable"></div>
 </div>
 `;
 
@@ -87,8 +87,54 @@ class CodeBlock extends HTMLElement {
 
         this.#selection = shadowRoot.getElementById("selection");
 
-        shadowRoot.getElementById("close")
-            .addEventListener("click", () => this.#close());
+        const text   = shadowRoot.getElementById("text");
+        const output = shadowRoot.getElementById("output");
+
+        shadowRoot.getElementById("close").addEventListener("click",       () => this.#close());
+        shadowRoot.getElementById("run")  .addEventListener("click", async () => {
+
+            // see https://docs.djangoproject.com/en/5.1/howto/csrf/
+            // TODO: move this somewhere else so the cookies are only searched once
+            let name = "csrftoken";
+            let csrfToken = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        csrfToken = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            console.log("csrfToken:", csrfToken);
+
+            const response = await fetch("/execute/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    'X-CSRFToken':  csrfToken,
+                },
+                body: JSON.stringify({
+                    code:     "⎕←'Hello, world!'\n{(+⌿⍵)÷≢⍵}3 1 4 1 5 9\n", // TODO: send the image innit
+                    language: "dyalog_apl",
+                }),
+            });
+            const body = await response.json();
+            console.log(body);
+            text  .innerHTML = "<pre>" + body.code + "</pre>";
+            output.innerHTML = body.output
+                .map(({ success, type, content }) => {
+                    if (!success) return "<pre>ERROR</pre>";
+                    switch (type) {
+                        case "text": return "<pre>" + content   + "</pre>";
+                        case "html": return           content             ;
+                        default:     return "<pre>" + UNHANDLED + "</pre>";
+                    }
+                })
+                .join("\n")
+            ;
+        });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
