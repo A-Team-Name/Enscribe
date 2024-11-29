@@ -3,9 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render  # , redirect
 
 import json
-import requests
-from websocket import create_connection
-from backend.utils import send_execute_request
+from backend.utils import send_execute_request, start_or_use_existing_kernel
 
 from .forms import ImageForm
 
@@ -21,6 +19,8 @@ def draw(request: WSGIRequest) -> HttpResponse:
 
 
 def main_app(request: WSGIRequest) -> HttpResponse:
+    start_or_use_existing_kernel(request, "dyalog_apl")
+
     return render(request, "main_app.html")
 
 
@@ -29,42 +29,15 @@ def layering_demo(request: WSGIRequest) -> HttpResponse:
 
 
 def execute(request: WSGIRequest) -> HttpResponse:
-    # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
-    # The token is written on stdout when you start the notebook
-    base = "http://kernel:8888"
-    headers = {
-        "Authorization": "Token ",
-        "Cookie": request.headers["Cookie"],
-        "X-XSRFToken": request.COOKIES["_xsrf"],
-    }
-
-    url = base + "/api/kernels"
+    idle = False
+    reply = False
 
     request_body = json.loads(request.body)
     language = request_body["language"]
     code = request_body["code"]
 
-    # Get list of existing kernels
-    response = requests.get(url, headers=headers)
-
-    # Single user kernel management
-    # Use existing kernel if exists for execution language, otherwise start new kernel
-    existing_kernel = False
-    if response:
-        for kernel in json.loads(response.text):
-            if kernel["name"] == language:
-                active_kernel = kernel
-                existing_kernel = True
-
-    if not existing_kernel:
-        response = requests.post(url, headers=headers, json={"name": language})
-        active_kernel = json.loads(response.text)
-
-    # Create connection to jupyter kernel
-    ws = create_connection(
-        "ws://kernel:8888/api/kernels/" + active_kernel["id"] + "/channels",
-        header=headers,
-    )
+    # Start a kernel in desired language or connect to existing
+    ws = start_or_use_existing_kernel(request, language)
 
     # Send code to the jupyter kernel
     ws.send(json.dumps(send_execute_request(code)))
@@ -118,7 +91,20 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
         if output:
             full_response.append(output)
-        if msg_type == "execute_reply":
+
+        # Check the execution state of kernel
+        if msg_type == "status":
+            print(rsp["content"]["execution_state"])
+            try:
+                if rsp["content"]["execution_state"] == "idle":
+                    idle = True
+            except KeyError:
+                continue
+        elif msg_type == "execute_reply":
+            reply = True
+
+        # if execution_state is idle and execute_reply has been received then stop polling
+        if idle and reply:
             break
 
     # if output == {}:
