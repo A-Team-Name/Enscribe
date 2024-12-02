@@ -67,6 +67,23 @@ const code_block_template = `
 </div>
 `;
 
+let csrfToken = null;
+{
+    // see https://docs.djangoproject.com/en/5.1/howto/csrf/
+    let name = "csrftoken";
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                csrfToken = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    console.log("csrfToken:", csrfToken);
+}
+
 class CodeBlock extends HTMLElement {
     static observedAttributes = [
         "data-x",
@@ -92,23 +109,7 @@ class CodeBlock extends HTMLElement {
 
         shadowRoot.getElementById("close").addEventListener("click",       () => this.#close());
         shadowRoot.getElementById("run")  .addEventListener("click", async () => {
-
-            // see https://docs.djangoproject.com/en/5.1/howto/csrf/
-            // TODO: move this somewhere else so the cookies are only searched once
-            let name = "csrftoken";
-            let csrfToken = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        csrfToken = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            console.log("csrfToken:", csrfToken);
-
+            /* REAL CODE
             const response = await fetch("/execute/", {
                 method: "POST",
                 headers: {
@@ -116,8 +117,11 @@ class CodeBlock extends HTMLElement {
                     'X-CSRFToken':  csrfToken,
                 },
                 body: JSON.stringify({
-                    code:     "⎕←'Hello, world!'\n{(+⌿⍵)÷≢⍵}3 1 4 1 5 9\n", // TODO: send the image innit
+                    // TODO: send the image innit
+                    code:     "{(+⌿⍵)÷≢⍵}3 1 4 1 5 9",
                     language: "dyalog_apl",
+                    // code:     "print('Hello, world!')\n1+2+3\n",
+                    // language: "python3",
                 }),
             });
             const body = await response.json();
@@ -127,13 +131,17 @@ class CodeBlock extends HTMLElement {
                 .map(({ success, type, content }) => {
                     if (!success) return "<pre>ERROR</pre>";
                     switch (type) {
-                        case "text": return "<pre>" + content   + "</pre>";
-                        case "html": return           content             ;
-                        default:     return "<pre>" + UNHANDLED + "</pre>";
+                        case "text": return "<pre>" + content + "</pre>";
+                        case "html": return           content           ;
+                        default:     return "<pre>UNHANDLED</pre>";
                     }
                 })
                 .join("\n")
             ;
+            */
+            // BOTCH FOR DEMO
+            text  .innerHTML = "<pre>{(+⌿⍵)÷≢⍵}3 1 4 1 5 9</pre>";
+            output.innerHTML = "<pre>3.833333333</pre>";
         });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
