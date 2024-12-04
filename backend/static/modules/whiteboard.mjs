@@ -25,12 +25,6 @@ const whiteboard_template = `
         position: absolute;
     }
 }
-#code {
-    filter: url(/static/filters.svg#black);
-}
-#annotations {
-    filter: url(/static/filters.svg#blue);
-}
 :host([data-show-annotations="off"]) #annotations {
     display: none;
 }
@@ -101,8 +95,11 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#background = shadowRoot.getElementById("background");
+        this.#background.color = "#888888";
         this.#code = shadowRoot.getElementById("code");
+        this.#code.color = "#000000";
         this.#annotations = shadowRoot.getElementById("annotations");
+        this.#annotations.color = "#0000ff";
         this.#ui = shadowRoot.getElementById("ui");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
 
@@ -220,14 +217,20 @@ class Whiteboard extends HTMLElement {
     }
 
     /**
-     * Apply PointerEvent event to 2D context ctx.
+     * Draw with PointerEvent event on 2D context ctx.
      */
     #draw(event, ctx) {
         if (!this.#writing)
             return;
-        for (const e of event.getCoalescedEvents()) {
-            // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
-            ctx.lineTo(e.offsetX, e.offsetY);
+
+        // Safari only has support for getCoalescedEvents as of 18.2
+        if ("getCoalescedEvents" in event) {
+            for (const e of event.getCoalescedEvents()) {
+                // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
+                ctx.lineTo(e.offsetX, e.offsetY);
+            }
+        } else {
+            ctx.lineTo(event.offsetX, event.offsetY);
         }
         ctx.stroke();
     }
@@ -281,7 +284,7 @@ class Whiteboard extends HTMLElement {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.lineWidth = this.dataset.lineWidth;
-        ctx.fillStyle = ctx.strokeStyle = "#ffffff";
+        ctx.fillStyle = ctx.strokeStyle = canvas.color;
         canvas.ctx = ctx;
     }
 
