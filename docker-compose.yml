@@ -15,6 +15,7 @@ services:
 
   kernel:
     container_name: kernel
+    platform: ${KERNEL_PLATFORM}
     image: ghcr.io/a-team-name/lambda-kernculus:latest
     volumes:
       - ./work:/home/jovyan/work
