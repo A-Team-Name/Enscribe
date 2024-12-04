@@ -1,0 +1,41 @@
+@import '/static/common.css';
+:host {
+    /* Allow pointer events to pass through unless explicitly enabled */
+    pointer-events: none;
+    display: flex;
+    flex-direction: row;
+}
+#selection {
+    grid-area: selection;
+    resize:both;
+}
+#controls {
+    grid-area: controls;
+    width: max-content;
+}
+
+#output-column {
+    grid-column: output;
+    /* spanning 3 rows lets #output-column extend past the second row without #controls moving */
+    grid-row: span 3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.clickable {
+    pointer-events: auto;
+}
+
+:host([disabled]) {
+    opacity: 50%;
+    .clickable {
+        pointer-events: none;
+    }
+}
+
+:host([resizing]) {
+    :not(#selection) {
+        display: none;
+    }
+}

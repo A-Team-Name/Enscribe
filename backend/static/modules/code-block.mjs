@@ -1,66 +1,13 @@
 const code_block_template = `
-<style>
-@import '/static/common.css';
-:host {
-   /* Allow pointer events to pass through unless explicitly enabled */
-    pointer-events: none;
-    display: grid;
-    /* Align controls to the bottom right of selection, and spread output down the right */
-    grid-template:
-        "selection selection output"
-        ".         controls  output"
-        ".         .         output"
-        / 1fr auto auto;
-}
-#selection {
-    grid-area: selection;
-    resize:both;
-}
-#controls {
-    grid-area: controls;
-    width: max-content;
-}
-
-#output-column {
-    grid-column: output;
-    /* spanning 3 rows lets #output-column extend past the second row without #controls moving */
-    grid-row: span 3;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-#controls:not(:has(input[name="show-output"]:checked)) ~ * > #output {
-    display: none;
-}
-
-#controls:not(:has(input[name="show-text"]:checked)) ~ * > #text {
-    display: none;
-}
-
-.clickable {
-    pointer-events: auto;
-}
-
-:host([disabled]) {
-    opacity: 50%;
-    .clickable {
-        pointer-events: none;
-    }
-}
-
-:host([resizing]) {
-    :not(#selection) {
-        display: none;
-    }
-}
-</style>
+<link rel="stylesheet" href="/static/code_block.css">
+<div style="display: flex; flex-direction: column; align-items: right; width: max-content">
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="icon run"></button>
-  <label><input name="show-output" type="checkbox"/> Output</label>
+  <label><input name="show-output" type="checkbox" checked/> Output</label>
   <label><input name="show-text" type="checkbox"/> Text</label>
   <button id="close" class="icon close"></button>
+</div>
 </div>
 <div id="output-column">
   <textarea id="text" class="ui-window clickable">Program text</textarea>
