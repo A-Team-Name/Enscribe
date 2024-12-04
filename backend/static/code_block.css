@@ -3,13 +3,7 @@
     /* Allow pointer events to pass through unless explicitly enabled */
     pointer-events: none;
     display: flex;
-    flex-direction:
-        /* Align controls to the bottom right of selection, and spread output down the right */
-        grid-template:
-        "selection selection output"
-        ".         controls  output"
-        ".         .         output"
-        / 1fr auto auto;
+    flex-direction: row;
 }
 #selection {
     grid-area: selection;

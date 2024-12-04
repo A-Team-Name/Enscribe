@@ -1,11 +1,13 @@
 const code_block_template = `
 <link rel="stylesheet" href="/static/code_block.css">
+<div style="display: flex; flex-direction: column; align-items: right; width: max-content">
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="icon run"></button>
   <label><input name="show-output" type="checkbox" checked/> Output</label>
   <label><input name="show-text" type="checkbox"/> Text</label>
   <button id="close" class="icon close"></button>
+</div>
 </div>
 <div id="output-column">
   <textarea id="text" class="ui-window clickable">Program text</textarea>
