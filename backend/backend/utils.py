@@ -32,7 +32,7 @@ def start_or_use_existing_kernel(request, language):
     headers = {
         "Authorization": "Token ",
         "Cookie": request.headers["Cookie"],
-        "X-XSRFToken": request.COOKIES["_xsrf"],
+        # "X-XSRFToken": request.COOKIES["_xsrf"],
     }
 
     url = base + "/api/kernels"
