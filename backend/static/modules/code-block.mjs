@@ -18,6 +18,7 @@ const code_block_template = `
 }
 #controls {
     grid-area: controls;
+    width: max-content;
 }
 
 #output-column {
