@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,flask,django,node
 
 .DS_STORE
+backend/public_static/
 
 ### Django ###
 *.log
