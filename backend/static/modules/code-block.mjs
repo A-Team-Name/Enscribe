@@ -5,7 +5,7 @@ const code_block_template = `
 <div id="controls" class="ui-window clickable">
   <button id="run" class="icon run"></button>
   <label><input name="show-output" type="checkbox" checked/> Output</label>
-  <label><input name="show-text" type="checkbox"/> Text</label>
+  <label><input name="show-text" type="checkbox" checked/> Text</label>
   <button id="close" class="icon close"></button>
 </div>
 </div>
