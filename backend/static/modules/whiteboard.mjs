@@ -80,9 +80,9 @@ class Whiteboard extends HTMLElement {
     // Drawing state
     #code_ctx;
     #annotations_ctx;
-    /** Previous X coordinate offset of a pointerdown on the whiteboard */
+    /** Starting X coordinate of most recent panning event */
     #start_x;
-    /** Previous Y coordinate offset of a pointerdown event on the whiteboard */
+    /** Starting Y coordinate of most recent panning event */
     #start_y;
     #background_ctx;
     #pointer_active;
@@ -157,8 +157,6 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerDown(event) {
-        this.#start_x = event.offsetX;
-        this.#start_y = event.offsetY;
         switch (this.#eventAction(event)) {
         case "erase":
             let ctx = this.#activeDrawingContext();
@@ -172,7 +170,8 @@ class Whiteboard extends HTMLElement {
             this.#createSelection(event.offsetX, event.offsetY);
             break;
         case "pan":
-            // Panning requires a dragging motion: do nothing.
+            this.#start_x = event.offsetX;
+            this.#start_y = event.offsetY;
             break;
         }
 
