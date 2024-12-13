@@ -37,3 +37,7 @@ for (const radio of document.querySelectorAll("input[name='pen']")) {
 for (const radio of document.querySelectorAll("input[name='tool']")) {
     linkInputToWhiteboardAttribute(radio, "data-tool");
 }
+
+for (const option of document.querySelectorAll("input[name='touch-action']")) {
+    linkInputToWhiteboardAttribute(option, "data-touch-action");
+}
