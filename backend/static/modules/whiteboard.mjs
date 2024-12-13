@@ -151,6 +151,12 @@ class Whiteboard extends HTMLElement {
             } else {
                 return this.dataset.tool;
             }
+        case "mouse":
+            // Middle-click to scroll
+            if (event.buttons & 4)
+                return "pan";
+            else
+                return this.dataset.tool;
         default:
             return this.dataset.tool;
         }
