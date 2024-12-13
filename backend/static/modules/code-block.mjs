@@ -64,8 +64,8 @@ class CodeBlock extends HTMLElement {
      */
     resize(event) {
         this.setAttribute("resizing", "");
-        this.dataset.x = (event.offsetX < this.#anchor_x) ? event.offsetX : this.#anchor_x;
-        this.dataset.y = (event.offsetY < this.#anchor_y) ? event.offsetY : this.#anchor_y;
+        this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
+        this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
         this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
         this.dataset.height = Math.abs(event.offsetY - this.#anchor_y);
     }
