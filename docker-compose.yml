@@ -2,12 +2,12 @@ services:
   api:
     container_name: api
     build:
-      context: ./backend
+      context: .
       dockerfile: dockerfile
     ports:
-      - "5000:5000"
+      - "${PORT:-5000}:${PORT:-5000}"
     volumes:
-      - ./backend/:/backend/
+      - ./app/:/app/
     networks:
       - kernel_bridge
     env_file:

@@ -29,13 +29,19 @@ This will launch the application locally and is accessible at `localhost:5000`.
 Alternatively you can install the requirements yourself and run using python locally. This project uses poetry for package management.
 - `git clone ...`
 - `pip install poetry` - one time only!
-- `cd backend`
 - `poetry install`
+- `cd app`
 - `poetry run python app.py`
+
+### Handwriting Server - Not Currently Implemented
+The handwriting server is not dockerisable (24GB Image!!!)
+Because of this, we instead run the server locally (or in production in puma-01).
+You need to specify the HANDWRITING_URL as an env variables (including port)
+e.g. HANDWRITING_URL=localhost:5555
+
 
 ### pre-commit
 If you are contributing to this project we would greatly appreciate you setup our pre-commit hook to ensure you are following our formatting standard. This can be done easily:
-- `cd backend`
 - `poetry install` - If not already done¬
 - `poetry run pre-commit install`
 
