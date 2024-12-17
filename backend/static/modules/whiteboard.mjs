@@ -152,9 +152,12 @@ class Whiteboard extends HTMLElement {
                 return this.dataset.tool;
             }
         case "mouse":
-            // Middle-click to scroll
             if (event.buttons & 4)
+                // Middle-click to scroll
                 return "pan";
+            else if (event.buttons & 2)
+                // Ignore right click to prevent the application from starting a line when it shouldn't.
+                return "none";
             else
                 return this.dataset.tool;
         default:
