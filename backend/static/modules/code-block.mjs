@@ -25,7 +25,12 @@ class CodeBlock extends HTMLElement {
         "resizing",
     ];
 
+    /** The region of the whiteboard that is selected for evaluation. */
     #selection;
+    /** X coordinate where selection started. */
+    #anchor_x;
+    /** Y coordinate where selection started. */
+    #anchor_y;
 
     constructor() {
         super();
@@ -43,11 +48,15 @@ class CodeBlock extends HTMLElement {
             (event) => event.stopPropagation());
         this.addEventListener("pointermove",
             (event) => event.stopPropagation());
+
+        this.#anchor_x = this.#anchor_y = 0;
     }
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
         this.setAttribute("resizing", "");
+        this.#anchor_x = this.dataset.x;
+        this.#anchor_y = this.dataset.y;
     }
 
     /**
@@ -55,9 +64,10 @@ class CodeBlock extends HTMLElement {
      */
     resize(event) {
         this.setAttribute("resizing", "");
-        let rect = this.#selection.getBoundingClientRect();
-        this.dataset.width = event.clientX - rect.x;
-        this.dataset.height = event.clientY - rect.y;
+        this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
+        this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
+        this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
+        this.dataset.height = Math.abs(event.offsetY - this.#anchor_y);
     }
 
     /**
