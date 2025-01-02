@@ -85,10 +85,24 @@
       <form method="dialog" class="close">
         <button class="close icon"></button>
       </form>
-      <select name="theme">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+      <label>
+        Theme:
+        <select name="theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+      <fieldset>
+        <legend>Touch Behaviour</legend>
+        <label>
+          <input type="radio" name="touch-action" value="pan" checked/>
+          Pan
+        </label>
+        <label>
+          <input type="radio" name="touch-action" value="auto"/>
+          Auto (match pen and mouse)
+        </label>
+      </fieldset>
     </dialog>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>

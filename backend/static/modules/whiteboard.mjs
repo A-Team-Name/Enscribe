@@ -9,9 +9,6 @@ const whiteboard_template = `
     width: 100%;
     height: 100%;
 }
-:host([data-tool="pan"]) #container {
-    touch-action: pan-x pan-y;
-}
 #surface {
     display: block;
     position: relative;
@@ -68,6 +65,7 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
+        "data-touch-action",
     ];
 
     // DOM elements
@@ -82,6 +80,10 @@ class Whiteboard extends HTMLElement {
     // Drawing state
     #code_ctx;
     #annotations_ctx;
+    /** Starting X coordinate of most recent panning event */
+    #start_x;
+    /** Starting Y coordinate of most recent panning event */
+    #start_y;
     #background_ctx;
     #pointer_active;
     #last_selection;
@@ -103,6 +105,8 @@ class Whiteboard extends HTMLElement {
         this.#ui = shadowRoot.getElementById("ui");
         this.#canvas_layers = [this.#background, this.#code, this.#annotations];
 
+        this.#start_x = 0;
+        this.#start_y = 0;
         this.#code_ctx = this.#code.getContext("2d");
         this.#annotations_ctx = this.#annotations.getContext("2d");
         this.#background_ctx = this.#background.getContext("2d");
@@ -133,8 +137,36 @@ class Whiteboard extends HTMLElement {
         }
     }
 
+    /**
+     * Determine the type of action a pointer event should cause.
+     * Takes this.dataset.tool, this.dataset.touchAction and event.pointerType into account.
+     */
+    #eventAction(event) {
+        if (!event.isPrimary)
+            return "none";
+        switch (event.pointerType) {
+        case "touch":
+            if (this.dataset.touchAction === "pan") {
+                return "pan";
+            } else {
+                return this.dataset.tool;
+            }
+        case "mouse":
+            if (event.buttons & 4)
+                // Middle-click to scroll
+                return "pan";
+            else if (event.buttons & 2)
+                // Ignore right click to prevent the application from starting a line when it shouldn't.
+                return "none";
+            else
+                return this.dataset.tool;
+        default:
+            return this.dataset.tool;
+        }
+    }
+
     #handlePointerDown(event) {
-        switch (this.dataset.tool) {
+        switch (this.#eventAction(event)) {
         case "erase":
             let ctx = this.#activeDrawingContext();
             ctx.globalCompositeOperation = "destination-out";
@@ -147,7 +179,8 @@ class Whiteboard extends HTMLElement {
             this.#createSelection(event.offsetX, event.offsetY);
             break;
         case "pan":
-            // Panning requires a dragging motion: do nothing.
+            this.#start_x = event.offsetX;
+            this.#start_y = event.offsetY;
             break;
         }
 
@@ -158,18 +191,14 @@ class Whiteboard extends HTMLElement {
      * and the state of the whiteboard.
      */
     #handlePointerMove(event) {
-        event.preventDefault();
         if (event.buttons === 0) {
             // The input is not active: do nothing.
             return;
         }
 
-        switch (this.dataset.tool) {
+        switch (this.#eventAction(event)) {
         case "pan":
-            // We can rely on default panning behaviour for touch.
-            if (event.pointerType !== "touch") {
-                this.#container.scrollBy(-event.movementX, -event.movementY);
-            }
+            this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
             break;
         case "write":
             this.#draw(event, this.#activeDrawingContext());
@@ -186,7 +215,7 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerUp(event) {
-        switch (this.dataset.tool) {
+        switch (this.#eventAction(event)) {
         case "erase":
             let ctx = this.#activeDrawingContext();
             ctx.globalCompositeOperation = "source-over";
