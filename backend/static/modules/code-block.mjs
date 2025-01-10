@@ -3,10 +3,10 @@ const code_block_template = `
 <div style="display: flex; flex-direction: column; align-items: right; width: max-content">
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
-  <button id="run" class="icon run"></button>
-  <label><input name="show-output" type="checkbox" checked/> Output</label>
-  <label><input name="show-text" type="checkbox"/> Text</label>
-  <button id="close" class="icon close"></button>
+  <button id="run" class="material-symbols-outlined">play_arrow</button>
+  <label class="material-symbols-outlined"><input name="show-output" type="checkbox" checked/>output</label>
+  <label class="material-symbols-outlined"><input name="show-text" type="checkbox"/>text_fields</label>
+  <button id="close" class="material-symbols-outlined">close</button>
 </div>
 </div>
 <div id="output-column">
