@@ -166,6 +166,8 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerDown(event) {
+        if (event.isPrimary)
+            event.target.setPointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
             let ctx = this.#activeDrawingContext();
@@ -215,6 +217,8 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerUp(event) {
+        if (event.isPrimary)
+            event.target.releasePointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
             let ctx = this.#activeDrawingContext();
