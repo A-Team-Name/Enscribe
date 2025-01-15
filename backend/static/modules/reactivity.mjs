@@ -1,6 +1,8 @@
 /**
  * Add an event listener to input that calls callback(input)
- * when it receives the given event, and initially if appropriate
+ * when it receives the given event, and initially if appropriate.
+ * The input can be an iterable collection of elements,
+ * or a string that will be passed to document.querySelectorAll
  */
 let onEvent = (eventType, input, callback) => {
     let setup = (input) => {
