@@ -12,8 +12,8 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" style="display:none" class="ui-window clickable">Program text</textarea>
-  <textarea id="output" style="display:none" class="ui-window clickable">Output</textarea>
+  <textarea id="text" class="ui-window clickable">Program text</textarea>
+  <textarea id="output" class="ui-window clickable">Output</textarea>
 </div>
 `;
 
