@@ -58,10 +58,10 @@ const whiteboard_template = `
 
 function rectanglesOverlapping(a, b) {
     return !(
-        a.right < b.left
-            || a.left > b.right
-            || a.bottom < b.top
-            || a.top > b.bottom
+      a.right < b.left ||
+      a.left > b.right ||
+      a.bottom < b.top ||
+      a.top > b.bottom
     );
 }
 
@@ -407,6 +407,16 @@ class Whiteboard extends HTMLElement {
         case "select":
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
+
+                let new_bounds = this.#last_selection.getBoundingSelectionRect();
+                for (const block of this.#ui.querySelectorAll("code-block")) {
+                    if (block === this.#last_selection)
+                        continue;
+                    if (rectanglesOverlapping(new_bounds, block.getBoundingClientRect())) {
+                        block.remove();
+                    }
+                }
+
                 this.#last_selection = null;
                 this.#enableAllBlocks();
             }
