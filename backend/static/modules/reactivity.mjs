@@ -7,7 +7,7 @@
 let onEvent = (eventType, input, callback) => {
     let setup = (input) => {
         input.addEventListener(eventType, () => callback(input));
-        if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
+        if (input.type !== "radio" || input.checked)
             callback(input);
     }
     if (typeof(input) === "string") {
