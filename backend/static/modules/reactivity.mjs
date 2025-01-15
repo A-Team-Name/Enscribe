@@ -1,16 +1,39 @@
 /**
- * Add a "change" event listener to input that calls callback(value) with the new value of the input
- * when it changes, and with the initial value.
+ * Add an event listener to input that calls callback(input)
+ * when it receives the given event, and initially if appropriate
  */
-function setupReactiveInput(input, callback) {
-    input.addEventListener(
-        "change",
-        (event) => {
-            callback(event.target.value);
-        }
-    );
-    if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
-        callback(input.value);
+let sync = (eventType, input, callback) => {
+    let setup = (input) => {
+        input.addEventListener(eventType, () => callback(input));
+        if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
+            callback(input);
+    }
+    if (typeof(input) === "string") {
+        input = document.querySelectorAll(input);
+    }
+
+    if (input?.[Symbol.iterator]) {
+        input.forEach(setup);
+    } else {
+        setup(input);
+    }
 }
 
-export { setupReactiveInput };
+let inputValue = (input) => {
+    switch (input.type) {
+    case "checkbox":
+        if (!input.checked && input.value === "on") {
+            return "off"
+        } else {
+            return input.value
+        }
+    default:
+        return input.value
+    }
+}
+
+function setAttribute(element, attribute) {
+    return (input) => element.setAttribute(attribute, inputValue(input));
+}
+
+export { sync, setAttribute };
