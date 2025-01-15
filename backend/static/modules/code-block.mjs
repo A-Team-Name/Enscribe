@@ -1,17 +1,19 @@
+import { onEvent } from '/static/modules/reactivity.mjs';
+
 const code_block_template = `
 <link rel="stylesheet" href="/static/code_block.css">
 <div style="display: flex; flex-direction: column; align-items: right; width: max-content">
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
-  <label class="material-symbols-outlined"><input name="show-output" type="checkbox" checked/>output</label>
-  <label class="material-symbols-outlined"><input name="show-text" type="checkbox"/>text_fields</label>
+  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
+  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="close" class="material-symbols-outlined">close</button>
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable">Program text</textarea>
-  <textarea id="output" class="ui-window clickable">Output</textarea>
+  <textarea id="text" style="display:none" class="ui-window clickable">Program text</textarea>
+  <textarea id="output" style="display:none" class="ui-window clickable">Output</textarea>
 </div>
 `;
 
@@ -39,6 +41,14 @@ class CodeBlock extends HTMLElement {
         shadowRoot.innerHTML = code_block_template;
 
         this.#selection = shadowRoot.getElementById("selection");
+
+        let programText = shadowRoot.getElementById("text");
+        onEvent("change", shadowRoot.getElementById("show-text"),
+            (show) => programText.style["display"] = show.checked ? "block" : "none");
+
+        let programOutput = shadowRoot.getElementById("output");
+        onEvent("change", shadowRoot.getElementById("show-output"),
+            (show) => programOutput.style["display"] = show.checked ? "block" : "none");
 
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
