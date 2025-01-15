@@ -1,5 +1,5 @@
 /* || Font, Variable etc. Definitions */
-
+@import 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
 @font-face {
     font-family: bqn386;
     src: url("/static/BQN386.ttf");
@@ -10,14 +10,25 @@
     --default-background-color: white;
     --ui-accent-color: #10A608;
     --ui-border-color: color-mix(in hsl, var(--default-background-color), grey 40%);
+    --ui-focus-color: color-mix(in hsl, var(--default-background-color), grey 30%);
     --ui-background-color: color-mix(in hsl, var(--default-background-color), grey 10%);
     --ui-output-color: #ff0000;
     --writing-code-color: #000000;
     --writing-annotation-color: #0000ff;
 
     /* Sizes and Shapes */
-    --thin-border: 0.2em;
+    --thin-border: 0.2rem;
     --thick-border: calc(2 * var(--thin-border));
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark only;
+        --default-background-color: black;
+        *:not(:disabled) {
+            color: white;
+        }
+    }
 }
 
 /* || CSS Reset & Global Style */
@@ -33,30 +44,35 @@ body {
     font-family: Verdana, sans-serif;
     font-size: 12pt;
     background-color: var(--default-background-color);
+    transition: color 0.25s ease-in;
+    transition: background-color 0.25s ease-in;
 }
 
 code {
     font-family: bqn386;
 }
 
-button {
+button, select {
+    background-color: var(--ui-background-color);
+    border: 0.1rem solid var(--ui-border-color);
+    border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
-    &.icon {
-        padding: 0;
-        width: 24px;
-        height: 24px;
-        &.run::before {
-            content: '▶';
-        }
-        &.close::before {
-            content: '❌';
-        }
+    &:hover {
+        background-color: var(--ui-focus-color);
+    }
+    &.material-symbols-outlined {
+        border-radius: 1rem;
     }
 }
 
 /* || UI Classes */
 
 label {
+    user-select: none;
+}
+
+.material-symbols-outlined {
+    /* The text names of icons shouldn't be selectable when not visible */
     user-select: none;
 }
 
@@ -73,6 +89,10 @@ dialog, .ui-window {
     border-radius: 6px;
     padding: 0.25rem;
 }
+dialog::backdrop {
+    backdrop-filter: blur(0.1rem);
+}
+
 
 .ui-group {
     padding: 0.5rem;
