@@ -1,4 +1,5 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
+import { setupReactiveInput } from '/static/modules/reactivity.mjs';
 
 const settingsDialog = document.getElementById("settings-dialog");
 const whiteboard = document.getElementById("whiteboard");
@@ -6,25 +7,10 @@ const whiteboard = document.getElementById("whiteboard");
 document.getElementById("open-settings")
     .addEventListener("click", () => settingsDialog.showModal());
 
-/**
- * Add a "change" event listener to input that will set the given attribute of
- * whiteboard to event.target.value.
- */
-function linkInputToWhiteboardAttribute(input, attribute) {
-    input.addEventListener(
-        "change",
-        (event) => {
-            whiteboard.setAttribute(attribute, event.target.value);
-        }
-    );
-    if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
-        whiteboard.setAttribute(attribute, input.value);
-}
-
-linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
-                               "data-line-width");
-linkInputToWhiteboardAttribute(document.getElementById("eraser-width"),
-                               "data-eraser-width");
+setupReactiveInput(document.getElementById("pen-width"),
+                   (value) => whiteboard.setAttribute("data-line-width", value));
+setupReactiveInput(document.getElementById("eraser-width"),
+                   (value) => whiteboard.setAttribute("data-eraser-width", value));
 document.getElementById("show-annotations")
     .addEventListener("change",
                       (event) => {
@@ -32,12 +18,12 @@ document.getElementById("show-annotations")
                                                   event.target.checked ? "on" : "off");
                       })
 for (const radio of document.querySelectorAll("input[name='pen']")) {
-    linkInputToWhiteboardAttribute(radio, "data-pen");
+    setupReactiveInput(radio, (value) => whiteboard.setAttribute("data-pen", value));
 }
 for (const radio of document.querySelectorAll("input[name='tool']")) {
-    linkInputToWhiteboardAttribute(radio, "data-tool");
+    setupReactiveInput(radio, (value) => whiteboard.setAttribute("data-tool", value));
 }
 
 for (const option of document.querySelectorAll("input[name='touch-action']")) {
-    linkInputToWhiteboardAttribute(option, "data-touch-action");
+    setupReactiveInput(option, (value) => whiteboard.setAttribute("data-touch-action", value));
 }
