@@ -9,27 +9,33 @@
     <header class="spaced-bar">
       <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
       <div class="spaced-bar">
-        <button id="save">Save</button>
-        <button id="new">New</button>
-        <button id="open">Open</button>
+        <button class="material-symbols-outlined" title="Save Notebook" id="save">
+          save
+        </button>
+        <button class="material-symbols-outlined" title="New Notebook" id="new">
+          note_add
+        </button>
+        <button class="material-symbols-outlined" title="Open Notebook" id="open">
+          folder_open
+        </button>
       </div>
 
       <fieldset class="spaced-bar">
-        <label>
-          <input id="tool-pan" type="radio" name="tool" value="pan">
-          Pan
+        <input id="tool-pan" type="radio" name="tool" value="pan">
+        <label title="Pan" for="tool-pan" class="material-symbols-outlined">
+          drag_pan
         </label>
-        <label>
-          <input id="tool-select" type="radio" name="tool" value="select" />
-          Select
+        <input id="tool-select" type="radio" name="tool" value="select" />
+        <label for="tool-select" class="material-symbols-outlined">
+          select
         </label>
-        <label>
-          <input id="tool-write" type="radio" name="tool" value="write" checked/>
-          Write
+        <input id="tool-write" type="radio" name="tool" value="write" checked/>
+        <label for="tool-write" class="material-symbols-outlined">
+          edit
         </label>
-        <label>
-          <input id="tool-erase" type="radio" name="tool" value="erase">
-          Erase
+        <input id="tool-erase" type="radio" name="tool" value="erase">
+        <label for="tool-erase" class="material-symbols-outlined">
+          ink_eraser
         </label>
       </fieldset>
 
@@ -49,8 +55,8 @@
       </label>
 
       <div class="spaced-bar">
-        <button id="undo" title="Undo">↩</button>
-        <button id="redo" title="Redo" disabled>↪</button>
+        <button id="undo" title="Undo" class="material-symbols-outlined">undo</button>
+        <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
       </div>
 
       <label>
@@ -83,15 +89,8 @@
     <dialog id="settings-dialog">
       <h1>Settings</h1>
       <form method="dialog" class="close">
-        <button class="close icon"></button>
+        <button class="material-symbols-outlined">close</button>
       </form>
-      <label>
-        Theme:
-        <select name="theme">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
       <fieldset>
         <legend>Touch Behaviour</legend>
         <label>

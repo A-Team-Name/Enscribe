@@ -1,12 +1,5 @@
 @import './common.css';
 
-:root:has(select[name="theme"] > option[value="dark"]:checked) {
-    --default-background-color: black;
-    * {
-        color: white;
-    }
-}
-
 /* || UI Elements */
 header {
     padding: 0.5em;

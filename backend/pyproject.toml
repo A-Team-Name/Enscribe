@@ -4,10 +4,11 @@ version = "0.1.0"
 description = "Backend service for \"A Team Name\"'s 4th year project"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-django = "^5.1.2"
+django = "^5.1.4"
 gunicorn = "^23.0.0"
 python-dotenv = "^1.0.1"
 whitenoise = "^6.8.2"
