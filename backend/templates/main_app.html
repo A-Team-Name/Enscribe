@@ -102,6 +102,10 @@
           Auto (match pen and mouse)
         </label>
       </fieldset>
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+      </form>
     </dialog>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>
