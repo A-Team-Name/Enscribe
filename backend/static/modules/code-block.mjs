@@ -81,6 +81,13 @@ class CodeBlock extends HTMLElement {
     }
 
     /**
+     * Get the bounding client rect of the selection (viewport coordinates)
+     */
+    getBoundingSelectionRect() {
+        return this.#selection.getBoundingClientRect();
+    }
+
+    /**
      * Lock in the current size of the selection and make interactible.
      */
     confirm() {
