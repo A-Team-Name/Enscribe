@@ -14,6 +14,7 @@ services:
       - .env
 
   kernel:
+    # TO WORK: The JUPYTER_URL in .env must be set to the container_name
     container_name: kernel
     platform: ${KERNEL_PLATFORM}
     image: ghcr.io/a-team-name/lambda-kernculus:latest

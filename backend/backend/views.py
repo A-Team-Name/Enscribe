@@ -2,6 +2,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 import json
 import requests
@@ -24,7 +25,7 @@ def index(request: WSGIRequest) -> HttpResponse:
 def execute(request: WSGIRequest) -> HttpResponse:
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
-    base = "http://kernel:8888"
+    base = f"https://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
     headers = {
         "Authorization": "Token ",
         "Cookie": request.headers["Cookie"],
@@ -54,7 +55,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
     # Create connection to jupyter kernel
     ws = create_connection(
-        "ws://kernel:8888/api/kernels/" + active_kernel["id"] + "/channels",
+        f"ws://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}/api/kernels/{active_kernel['id']}/channels",
         header=headers,
     )
 

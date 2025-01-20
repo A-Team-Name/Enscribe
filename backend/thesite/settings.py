@@ -100,6 +100,15 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
+} if DEBUG else {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.getenv("MYSQL_NAME"),
+        "USER": os.getenv("MYSQL_USER"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD"),
+        "HOST": os.getenv("MYSQL_HOST"),
+        "PORT": os.getenv("MYSQL_PORT"),
+    }
 }
 
 
@@ -163,3 +172,13 @@ EMAIL_HOST_USER = os.getenv("EMAIL_ADDRESS")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 SITE_ID = 1
+
+# Jupyter Configuration
+
+JUPYTER_URL = os.getenv("JUPYTER_URL")
+JUPYTER_PORT = os.getenv("JUPYTER_PORT")
+
+# Handwriting server configuration
+
+HANDWRITING_URL = os.getenv("HANDWRITING_URL")
+HANDWRITING_PORT = os.getenv("HANDWRITING_PORT")
