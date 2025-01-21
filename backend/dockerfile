@@ -2,14 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /backend
 
+RUN pip install poetry
+
+RUN apt-get update && apt-get install -y default-libmysqlclient-dev pkg-config build-essential && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
-RUN pip install poetry
+RUN chmod +x ./entrypoint.sh
 
 RUN poetry config virtualenvs.create false
 
 RUN poetry install
-
-RUN chmod +x ./entrypoint.sh
 
 ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
