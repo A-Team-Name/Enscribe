@@ -51,6 +51,7 @@ ALLOWED_HOSTS = (
 CSRF_TRUSTED_ORIGINS = [
     "https://enscribe.containers.uwcs.co.uk",
     "https://enscribe-dev.containers.uwcs.co.uk",
+    "https://enscribe.dcs.warwick.ac.uk",
 ]
 
 # Application definition
