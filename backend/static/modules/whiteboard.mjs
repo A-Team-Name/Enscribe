@@ -1,4 +1,5 @@
 import { CodeBlock } from '/static/modules/code-block.mjs';
+import { onEvent } from '/static/modules/reactivity.mjs';
 
 const whiteboard_template = `
 <style>
@@ -46,14 +47,114 @@ const whiteboard_template = `
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
 <div id="container">
+  <canvas id="contents">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
   <div id="surface">
-    <canvas id="background"></canvas>
-    <canvas id="code"></canvas>
-    <canvas id="annotations"></canvas>
     <div id="ui"></div>
   </div>
 </div>
 `;
+
+function rectanglesOverlapping(a, b) {
+    return !(
+      a.right < b.left ||
+      a.left > b.right ||
+      a.bottom < b.top ||
+      a.top > b.bottom
+    );
+}
+
+/// Computes a rectangle that perfectly fits a and b
+function rectangleUnion(a, b) {
+    return {
+        right: Math.max(a.right, b.right),
+        left: Math.min(a.left, b.left),
+        top: Math.min(a.top, b.top),
+        bottom: Math.max(a.bottom, b.bottom),
+    };
+}
+
+/// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
+function pointBoundingRect(point, radius) {
+    return {
+        right: point.y - radius,
+        left: point.y + radius,
+        top: point.x - radius,
+        bottom: point.x + radius,
+    };
+}
+
+class Line {
+    constructor(color, lineWidth, start) {
+        this.color = color;
+        this.lineWidth = lineWidth;
+        this.points = [start];
+        this.boundingRect = pointBoundingRect(start, lineWidth/2);
+    }
+
+    addPoint(point) {
+        this.points.push(point);
+        this.boundingRect = rectangleUnion(this.boundingRect,
+            pointBoundingRect(point, lineWidth/2));
+    }
+
+    /// Draw this line in the given context, mapped within the given clip rectangle
+    draw(ctx, clip) {
+        if (!rectanglesOverlapping(this.boundingRect, clip)) {
+            // The line lies outside the clip rectangle, so don't draw it.
+            return;
+        }
+        if (points.length == 1) {
+            // Render a single-point "line" as a point.
+            ctx.fillStyle = this.color;
+            const circle = new Path2D();
+            circle.arc(points[0].x - clip.left, points[0].y - clip.top, this.lineWidth / 2, 0, 2 * Math.PI);
+            ctx.fill(circle);
+        } else {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x - clip.left, points[0].y - clip.top);
+            for (var i = 1; i < points.length; i += 1) {
+                ctx.lineTo(points[i].x - clip.left, points[i].y - clip.top, points[i].y + offset.y);
+            }
+            ctx.stroke();
+        }
+    }
+}
+
+class Layer {
+    constructor(name, color, is_code) {
+        this.name = name;
+        /// Contents of the layer
+        this.lines = [];
+        /// Color for new lines
+        this.color = color;
+        /// Thickness for new lines
+        this.lineWidth = 3;
+        this.is_code = is_code;
+    }
+
+    // Draw the contents of this layer in the given context, bounded to the given clip rectangle
+    draw(ctx, clip) {
+        // lines is a sparse array, so we must use "in" rather than "of"
+        // TODO: in doesn't work, very sad
+        for (const line in this.lines) {
+            console.log(line);
+            line.draw(ctx, clip);
+        }
+    }
+
+    // Add a new line starting at point start
+    newLine(start) {
+        debugger;
+        this.lines.push(new Line(this.color, this.lineWidth, start));
+    }
+
+    // Extend the last line on the Layer to point
+    extendLine(point) {
+        this.lines[this.lines.length - 1].addPoint(point);
+    }
+}
 
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
@@ -71,45 +172,38 @@ class Whiteboard extends HTMLElement {
     // DOM elements
     #container;
     #surface;
-    #background;
-    #code;
-    #annotations;
     #ui;
-    #canvas_layers;
 
     // Drawing state
-    #code_ctx;
-    #annotations_ctx;
+    #ctx;
     /** Starting X coordinate of most recent panning event */
     #start_x;
     /** Starting Y coordinate of most recent panning event */
     #start_y;
-    #background_ctx;
     #pointer_active;
     #last_selection;
     #writing;
 
     constructor() {
         super();
-
         const shadowRoot = this.attachShadow({mode: 'closed'});
         shadowRoot.innerHTML = whiteboard_template;
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
-        this.#background = shadowRoot.getElementById("background");
-        this.#background.color = "#888888";
-        this.#code = shadowRoot.getElementById("code");
-        this.#code.color = "#000000";
-        this.#annotations = shadowRoot.getElementById("annotations");
-        this.#annotations.color = "#0000ff";
         this.#ui = shadowRoot.getElementById("ui");
-        this.#canvas_layers = [this.#background, this.#code, this.#annotations];
+        this.#ctx = shadowRoot.getElementById("contents").getContext("2d");
+        this.#ctx.lineCap = "round";
+        this.#ctx.lineJoin = "round";
+
+
+        this.layers = [
+            new Layer("Code", "light-dark(black, white)", true),
+            new Layer("Annotations", "blue", false)
+        ];
+        this.active_layer = 0;
 
         this.#start_x = 0;
         this.#start_y = 0;
-        this.#code_ctx = this.#code.getContext("2d");
-        this.#annotations_ctx = this.#annotations.getContext("2d");
-        this.#background_ctx = this.#background.getContext("2d");
         this.#writing = false;
         this.#last_selection = null;
 
@@ -132,11 +226,7 @@ class Whiteboard extends HTMLElement {
      * Get the "active" canvas drawing context, based on the data-pen attribute.
      */
     #activeDrawingContext() {
-        if (this.dataset.pen === "code") {
-            return this.#code_ctx;
-        } else {
-            return this.#annotations_ctx;
-        }
+        return this.#ctx;
     }
 
     /**
@@ -175,9 +265,9 @@ class Whiteboard extends HTMLElement {
             let ctx = this.#activeDrawingContext();
             ctx.globalCompositeOperation = "destination-out";
             ctx.lineWidth = this.dataset.eraserWidth;
-            this.#penDown(ctx, event.offsetX, event.offsetY);
+            this.#penDown(event.offsetX, event.offsetY);
         case "write":
-            this.#penDown(this.#activeDrawingContext(), event.offsetX, event.offsetY);
+            this.#penDown(event.offsetX, event.offsetY);
             break;
         case "select":
             this.#createSelection(event.offsetX, event.offsetY);
@@ -205,11 +295,11 @@ class Whiteboard extends HTMLElement {
             this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
             break;
         case "write":
-            this.#draw(event, this.#activeDrawingContext());
+            this.#draw(event);
             break;
         case "erase":
             let ctx = this.#activeDrawingContext();
-            this.#draw(event, ctx);
+            this.#draw(event);
             break;
         case "select":
             if (this.#last_selection !== null)
@@ -254,37 +344,41 @@ class Whiteboard extends HTMLElement {
     /**
      * Draw with PointerEvent event on 2D context ctx.
      */
-    #draw(event, ctx) {
+    #draw(event) {
         if (!this.#writing)
             return;
-
+        let point = {x: 0, y: 0};
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
             for (const e of event.getCoalescedEvents()) {
                 // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
-                ctx.lineTo(e.offsetX, e.offsetY);
+                point.x = e.offsetX;
+                point.y = e.offsetY;
+                this.layers[this.active_layer].extendLine(point);
             }
         } else {
-            ctx.lineTo(event.offsetX, event.offsetY);
+            point.x = event.offsetX;
+            point.y = event.offsetY;
+            this.layers[this.active_layer].extendLine(point);
         }
-        ctx.stroke();
+        this.render();
     }
 
     /**
      * Start a new drawn line at (x, y) on ctx.
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
-    #penDown(ctx, x, y) {
+    #penDown(x, y) {
         this.#writing = true;
         this.#disableAllBlocks();
-        this.#drawPoint(ctx, x, y);
-        ctx.beginPath();
-        ctx.moveTo(x, y);
+        this.layers[this.active_layer].newLine({y: y, x: x});
+        this.render();
     }
 
     #penUp() {
         this.#writing = false;
         this.#enableAllBlocks();
+        this.render();
     }
 
     #enableAllBlocks() {
@@ -338,9 +432,15 @@ class Whiteboard extends HTMLElement {
     #resize() {
         this.#surface.style["width"] = this.dataset.width + "px";
         this.#surface.style["height"] = this.dataset.height + "px";
-        for (const c of this.#canvas_layers) {
-            this.#resizeCanvasLayer(c);
-        }
+
+    }
+
+    /// Handle a change in the size of the visible region of the whiteboard.
+    #resizeCanvas() {
+        let container_bounds = this.#container.getBoundingClientRect();
+        this.#ctx.canvas.width = container_bounds.width;
+        this.#ctx.canvas.height = container_bounds.height;
+        this.render();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -348,8 +448,8 @@ class Whiteboard extends HTMLElement {
             return;
         switch (name) {
         case "data-line-width":
-            for (const c of this.#canvas_layers) {
-                this.#configureCanvasLayer(c);
+            for (var l of this.layers) {
+                l.lineWidth = this.dataset.lineWidth;
             }
             break;
         case "data-width":
@@ -361,7 +461,30 @@ class Whiteboard extends HTMLElement {
             break;
         }
     }
+
+    /// Compute the region of the whiteboard surface that intersects the canvas
+    clipRegion() {
+        let surface_bounds = this.#surface.getBoundingClientRect();
+        let canvas_bounds = this.#ctx.canvas.getBoundingClientRect();
+        let clip = {
+            top: canvas_bounds.top - surface_bounds.top,
+            left: canvas_bounds.left - surface_bounds.left,
+        };
+        clip.bottom = clip.top + this.#ctx.canvas.height;
+        clip.right = clip.left + this.#ctx.canvas.width;
+        return clip;
+    }
+
+    /// Re-draw the entire whiteboard contents (minimise calls to this)
+    render() {
+        this.#ctx.clearRect(0, 0, this.#ctx.canvas.width, this.#ctx.canvas.height);
+        let clip = this.clipRegion();
+
+        for (const layer of this.layers) {
+            layer.draw(this.#ctx, clip);
+        }
+    }
 }
 customElements.define("white-board", Whiteboard);
 
-export { Whiteboard };
+export { Whiteboard, Layer };
