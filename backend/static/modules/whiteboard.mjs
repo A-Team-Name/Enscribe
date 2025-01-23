@@ -10,6 +10,9 @@ const whiteboard_template = `
     width: 100%;
     height: 100%;
 }
+#lower {
+    position: absolute;
+}
 #surface {
     display: block;
     position: relative;
@@ -46,8 +49,8 @@ const whiteboard_template = `
 
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
+<canvas id="lower">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
-  <canvas id="contents">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
   <div id="surface">
     <div id="ui"></div>
   </div>
@@ -76,10 +79,10 @@ function rectangleUnion(a, b) {
 /// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
 function pointBoundingRect(point, radius) {
     return {
-        right: point.y - radius,
-        left: point.y + radius,
-        top: point.x - radius,
-        bottom: point.x + radius,
+        right: point.x - radius,
+        left: point.x + radius,
+        top: point.y - radius,
+        bottom: point.y + radius,
     };
 }
 
@@ -93,8 +96,14 @@ class Line {
 
     addPoint(point) {
         this.points.push(point);
-        this.boundingRect = rectangleUnion(this.boundingRect,
-            pointBoundingRect(point, lineWidth/2));
+    }
+
+    recomputeBoundingRect() {
+        let lineWidth2 = this.lineWidth/2;
+        this.boundingRect = pointBoundingRect(this.points[0], lineWidth2);
+        for (var i = 1; i < this.points.length; i += 1) {
+            this.boundingRect = rectangleUnion(this.boundingRect, pointBoundingRect(this.points[i], lineWidth2));
+        }
     }
 
     /// Draw this line in the given context, mapped within the given clip rectangle
@@ -103,19 +112,21 @@ class Line {
             // The line lies outside the clip rectangle, so don't draw it.
             return;
         }
-        if (points.length == 1) {
+        if (this.points.length == 1) {
             // Render a single-point "line" as a point.
             ctx.fillStyle = this.color;
             const circle = new Path2D();
-            circle.arc(points[0].x - clip.left, points[0].y - clip.top, this.lineWidth / 2, 0, 2 * Math.PI);
+            circle.arc(
+                this.points[0].x - clip.left, this.points[0].y - clip.top,
+                this.lineWidth / 2, 0, 2 * Math.PI);
             ctx.fill(circle);
         } else {
             ctx.strokeStyle = this.color;
             ctx.lineWidth = this.lineWidth;
             ctx.beginPath();
-            ctx.moveTo(points[0].x - clip.left, points[0].y - clip.top);
-            for (var i = 1; i < points.length; i += 1) {
-                ctx.lineTo(points[i].x - clip.left, points[i].y - clip.top, points[i].y + offset.y);
+            ctx.moveTo(this.points[0].x - clip.left, this.points[0].y - clip.top);
+            for (var i = 1; i < this.points.length; i += 1) {
+                ctx.lineTo(this.points[i].x - clip.left, this.points[i].y - clip.top);
             }
             ctx.stroke();
         }
@@ -134,25 +145,29 @@ class Layer {
         this.is_code = is_code;
     }
 
-    // Draw the contents of this layer in the given context, bounded to the given clip rectangle
+    /// Draw the contents of this layer in the given context, bounded to the given clip rectangle
     draw(ctx, clip) {
         // lines is a sparse array, so we must use "in" rather than "of"
-        // TODO: in doesn't work, very sad
-        for (const line in this.lines) {
-            console.log(line);
-            line.draw(ctx, clip);
+        for (const i in this.lines) {
+            this.lines[i].draw(ctx, clip);
         }
     }
 
-    // Add a new line starting at point start
-    newLine(start) {
-        debugger;
+    /// Add a new line starting at point start, ready to draw directly on ctx
+    newLine(ctx, start) {
         this.lines.push(new Line(this.color, this.lineWidth, start));
+        ctx.lineWidth = this.lineWidth;
+        ctx.strokeStyle = ctx.fillStyle = this.color;
     }
 
-    // Extend the last line on the Layer to point
+    /// Extend the last line on the Layer to point
     extendLine(point) {
         this.lines[this.lines.length - 1].addPoint(point);
+    }
+
+    /// Mark the last line as complete
+    completeLine() {
+        this.lines[this.lines.length -1].recomputeBoundingRect();
     }
 }
 
@@ -175,7 +190,7 @@ class Whiteboard extends HTMLElement {
     #ui;
 
     // Drawing state
-    #ctx;
+    #lower;
     /** Starting X coordinate of most recent panning event */
     #start_x;
     /** Starting Y coordinate of most recent panning event */
@@ -220,13 +235,21 @@ class Whiteboard extends HTMLElement {
 
         this.#ui.addEventListener("dblclick",
             (event) => event.preventDefault());
+
+        this.#container.addEventListener("scroll", () => this.render());
+    }
+
+    connectedCallback() {
+        this.#resizeCanvas();
+        window.addEventListener("resize",
+            () => this.#resizeCanvas());
     }
 
     /**
      * Get the "active" canvas drawing context, based on the data-pen attribute.
      */
     #activeDrawingContext() {
-        return this.#ctx;
+        return this.#lower;
     }
 
     /**
@@ -347,19 +370,15 @@ class Whiteboard extends HTMLElement {
     #draw(event) {
         if (!this.#writing)
             return;
-        let point = {x: 0, y: 0};
+        let active = this.layers[this.active_layer];
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
-            for (const e of event.getCoalescedEvents()) {
-                // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
-                point.x = e.offsetX;
-                point.y = e.offsetY;
-                this.layers[this.active_layer].extendLine(point);
+            let coa = event.getCoalescedEvents();
+            for (const e of coa) {
+                active.extendLine({x: e.offsetX, y: e.offsetY});
             }
         } else {
-            point.x = event.offsetX;
-            point.y = event.offsetY;
-            this.layers[this.active_layer].extendLine(point);
+            active.extendLine({x: e.offsetX, y: e.offsetY});
         }
         this.render();
     }
@@ -371,14 +390,17 @@ class Whiteboard extends HTMLElement {
     #penDown(x, y) {
         this.#writing = true;
         this.#disableAllBlocks();
-        this.layers[this.active_layer].newLine({y: y, x: x});
+        this.layers[this.active_layer].newLine(this.#lower, {y: y, x: x});
         this.render();
     }
 
     #penUp() {
-        this.#writing = false;
-        this.#enableAllBlocks();
-        this.render();
+        if (this.#writing) {
+            this.#writing = false;
+            this.layers[this.active_layer].completeLine();
+            this.#enableAllBlocks();
+            this.render();
+        }
     }
 
     #enableAllBlocks() {
@@ -401,45 +423,16 @@ class Whiteboard extends HTMLElement {
         ctx.fill(circle);
     }
 
-    /**
-     * Configures a canvas layer for drawing according to our needs.
-     * This includes:
-     *   line style settings,
-     *   a white pen colour, which we can then apply SVG filters to,
-     *   the attribute ctx for convenient access to its 2D drawing context.
-     */
-    #configureCanvasLayer(canvas) {
-        let ctx = canvas.getContext("2d");
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.lineWidth = this.dataset.lineWidth;
-        ctx.fillStyle = ctx.strokeStyle = canvas.color;
-        canvas.ctx = ctx;
-    }
-
-    /**
-     * Resize a canvas layer, ideally while retaining its contents.
-     * Updates the size of 'canvas' to match 'this'.
-     * Refreshes the configuration, which is lost upon resizing.
-     */
-    #resizeCanvasLayer(canvas) {
-        // TODO: Retain contents
-        canvas.width = this.dataset.width;
-        canvas.height = this.dataset.height;
-        this.#configureCanvasLayer(canvas);
-    }
-
-    #resize() {
+    #resizeSurface() {
         this.#surface.style["width"] = this.dataset.width + "px";
         this.#surface.style["height"] = this.dataset.height + "px";
-
     }
 
     /// Handle a change in the size of the visible region of the whiteboard.
     #resizeCanvas() {
-        let container_bounds = this.#container.getBoundingClientRect();
-        this.#ctx.canvas.width = container_bounds.width;
-        this.#ctx.canvas.height = container_bounds.height;
+        let container_bounds = this.getBoundingClientRect();
+        this.#lower.canvas.width = container_bounds.width;
+        this.#lower.canvas.height = container_bounds.height;
         this.render();
     }
 
@@ -454,7 +447,7 @@ class Whiteboard extends HTMLElement {
             break;
         case "data-width":
         case "data-height":
-            this.#resize();
+            this.#resizeSurface();
             break;
         case "data-background":
             // TODO: Draw a background pattern
@@ -463,25 +456,27 @@ class Whiteboard extends HTMLElement {
     }
 
     /// Compute the region of the whiteboard surface that intersects the canvas
-    clipRegion() {
-        let surface_bounds = this.#surface.getBoundingClientRect();
-        let canvas_bounds = this.#ctx.canvas.getBoundingClientRect();
+    #clipRegion() {
+        let ui_bounds = this.#ui.getBoundingClientRect();
+        let canvas_bounds = this.#lower.canvas.getBoundingClientRect();
         let clip = {
-            top: canvas_bounds.top - surface_bounds.top,
-            left: canvas_bounds.left - surface_bounds.left,
+            top: canvas_bounds.top - ui_bounds.top,
+            left: canvas_bounds.left - ui_bounds.left,
         };
-        clip.bottom = clip.top + this.#ctx.canvas.height;
-        clip.right = clip.left + this.#ctx.canvas.width;
+        clip.bottom = clip.top + this.#lower.canvas.height;
+        clip.right = clip.left + this.#lower.canvas.width;
         return clip;
     }
 
     /// Re-draw the entire whiteboard contents (minimise calls to this)
     render() {
-        this.#ctx.clearRect(0, 0, this.#ctx.canvas.width, this.#ctx.canvas.height);
-        let clip = this.clipRegion();
+        this.#lower.clearRect(0, 0, this.#lower.canvas.width, this.#lower.canvas.height);
+        this.#lower.lineCap = "round";
+        this.#lower.lineJoin = "round";
+        let clip = this.#clipRegion();
 
         for (const layer of this.layers) {
-            layer.draw(this.#ctx, clip);
+            layer.draw(this.#lower, clip);
         }
     }
 }
