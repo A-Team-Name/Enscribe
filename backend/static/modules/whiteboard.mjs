@@ -60,10 +60,20 @@ const whiteboard_template = `
 
 function rectanglesOverlapping(a, b) {
     return !(
-      a.right < b.left ||
-      a.left > b.right ||
-      a.bottom < b.top ||
-      a.top > b.bottom
+        a.right < b.left
+            || a.left > b.right
+            || a.bottom < b.top
+            || a.top > b.bottom
+    );
+}
+
+/// Computes whether point is in rect
+function pointInRect(point, rect) {
+    return !(
+        rect.right < point.x
+            || rect.left > point.x
+            || rect.bottom < point.y
+            || rect.top > point.y
     );
 }
 
@@ -78,10 +88,10 @@ function rectangleUnion(a, b) {
 }
 
 /// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
-function pointBoundingRect(point, radius) {
+function circleBoundingRect(point, radius) {
     return {
-        right: point.x - radius,
-        left: point.x + radius,
+        right: point.x + radius,
+        left: point.x - radius,
         top: point.y - radius,
         bottom: point.y + radius,
     };
@@ -112,7 +122,7 @@ class Line {
         this.color = color;
         this.lineWidth = lineWidth;
         this.points = [start];
-        this.boundingRect = pointBoundingRect(start, lineWidth/2);
+        this.boundingRect = circleBoundingRect(start, lineWidth/2);
     }
 
     addPoint(point) {
@@ -121,9 +131,9 @@ class Line {
 
     recomputeBoundingRect() {
         let lineWidth2 = this.lineWidth/2;
-        this.boundingRect = pointBoundingRect(this.points[0], lineWidth2);
+        this.boundingRect = circleBoundingRect(this.points[0], lineWidth2);
         for (var i = 1; i < this.points.length; i += 1) {
-            this.boundingRect = rectangleUnion(this.boundingRect, pointBoundingRect(this.points[i], lineWidth2));
+            this.boundingRect = rectangleUnion(this.boundingRect, circleBoundingRect(this.points[i], lineWidth2));
         }
     }
 
@@ -183,6 +193,23 @@ class Layer {
     /// Mark the last line as complete
     completeLine() {
         this.lines[this.lines.length -1].recomputeBoundingRect();
+    }
+
+    /// Erase lines with vertices intersecting circle centre (x, y), of given radius
+    erase(x, y, radius) {
+        let radius2 = radius ** 2;
+        let eraserBoundingRect = circleBoundingRect({y, x}, radius);
+        for (const i in this.lines) {
+            if (rectanglesOverlapping(eraserBoundingRect, this.lines[i].boundingRect)) {
+                let intersectionThreshold = radius2 + ((this.lines[i].lineWidth / 2) ** 2);
+                for (const point of this.lines[i].points) {
+                    if ((point.x - x) ** 2 + (point.y - y) ** 2 <= intersectionThreshold) {
+                        delete this.lines[i];
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -299,7 +326,9 @@ class Whiteboard extends HTMLElement {
             event.target.setPointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
-            this.#penDown(event.offsetX, event.offsetY);
+            this.#erase(event.offsetX, event.offsetY);
+            this.render();
+            break;
         case "write":
             this.#penDown(event.offsetX, event.offsetY);
             break;
@@ -311,7 +340,27 @@ class Whiteboard extends HTMLElement {
             this.#start_y = event.offsetY;
             break;
         }
+        this.#drawCursor(event);
+    }
 
+    #drawCursor(event) {
+        // Show a preview of the cursor position
+        if (event.isPrimary) {
+            let active = this.layers[this.active_layer];
+            let clip = this.#clipRegion();
+            switch (this.dataset.tool) {
+            case "write":
+                this.#lower.fillStyle = interpretColor(active.color);
+                fillCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                    active.lineWidth/2);
+                break;
+            case "erase":
+                this.#lower.strokeStyle = interpretColor(active.color);
+                this.#lower.lineWidth = 1;
+                strokeCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                    this.dataset.eraserWidth/2);
+            }
+        }
     }
 
     /**
@@ -330,7 +379,7 @@ class Whiteboard extends HTMLElement {
                 this.#draw(event);
                 break;
             case "erase":
-                this.#draw(event);
+                this.#erase(event.offsetX, event.offsetY);
                 break;
             case "select":
                 if (this.#last_selection !== null)
@@ -340,24 +389,7 @@ class Whiteboard extends HTMLElement {
         }
 
         this.render();
-
-        // Show a preview of the cursor position
-        if (event.isPrimary) {
-            let active = this.layers[this.active_layer];
-            let clip = this.#clipRegion();
-            switch (this.dataset.tool) {
-            case "write":
-                this.#lower.fillStyle = interpretColor(active.color);
-                fillCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
-                    active.lineWidth/2);
-                break;
-            case "erase":
-                this.#lower.strokeStyle = interpretColor(active.color);
-                this.#lower.lineWidth = 1;
-                strokeCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
-                    this.dataset.eraserWidth/2);
-            }
-        }
+        this.#drawCursor(event);
     }
 
     #handlePointerUp(event) {
@@ -425,6 +457,11 @@ class Whiteboard extends HTMLElement {
             this.layers[this.active_layer].completeLine();
             this.#enableAllBlocks();
         }
+    }
+
+    #erase(x, y) {
+        console.log("erasing")
+        this.layers[this.active_layer].erase(x, y, parseInt(this.dataset.eraserWidth)/2);
     }
 
     #enableAllBlocks() {
