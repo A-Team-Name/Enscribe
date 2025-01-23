@@ -465,9 +465,7 @@ class Whiteboard extends HTMLElement {
             return;
         switch (name) {
         case "data-line-width":
-            for (var l of this.layers) {
-                l.lineWidth = this.dataset.lineWidth;
-            }
+            this.layers[this.active_layer].lineWidth = this.dataset.lineWidth;
             break;
         case "data-width":
         case "data-height":
@@ -480,6 +478,7 @@ class Whiteboard extends HTMLElement {
             for (var i = 0; i < this.layers.length; i += 1) {
                 if (newValue === this.layers[i].name) {
                     this.active_layer = i;
+                    this.dataset.lineWidth = this.layers[i].lineWidth;
                     break;
                 }
             }
