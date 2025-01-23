@@ -10,6 +10,6 @@ document.getElementById("open-settings")
 onEvent("change", "#pen-width", setAttribute(whiteboard, "data-line-width"));
 onEvent("change", "#eraser-width", setAttribute(whiteboard, "data-eraser-width"));
 onEvent("change", "#show-annotations", setAttribute(whiteboard, "data-show-annotations"));
-onEvent("change", "input[name='pen']", setAttribute(whiteboard, "data-pen"));
+onEvent("change", "input[name='layer']", setAttribute(whiteboard, "data-layer"));
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
 onEvent("change", "input[name='touch-action']", setAttribute(whiteboard, "data-touch-action"));

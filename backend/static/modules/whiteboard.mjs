@@ -184,7 +184,7 @@ class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-line-width",
         "data-eraser-width",
-        "data-pen",
+        "data-layer",
         "data-tool",
         "data-width",
         "data-height",
@@ -223,8 +223,8 @@ class Whiteboard extends HTMLElement {
             .addEventListener("change", () => setTimeout(() => { this.render() }));
 
         this.layers = [
-            new Layer("Code", "auto", true),
-            new Layer("Annotations", "blue", false)
+            new Layer("code", "auto", true),
+            new Layer("annotations", "blue", false)
         ];
         this.active_layer = 0;
 
@@ -448,6 +448,13 @@ class Whiteboard extends HTMLElement {
         case "data-background":
             // TODO: Draw a background pattern
             break;
+        case "data-layer":
+            for (var i = 0; i < this.layers.length; i += 1) {
+                if (newValue === this.layers[i].name) {
+                    this.active_layer = i;
+                    break;
+                }
+            }
         }
     }
 
