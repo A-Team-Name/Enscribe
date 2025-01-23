@@ -259,13 +259,6 @@ class Whiteboard extends HTMLElement {
     }
 
     /**
-     * Get the "active" canvas drawing context, based on the data-pen attribute.
-     */
-    #activeDrawingContext() {
-        return this.#lower;
-    }
-
-    /**
      * Determine the type of action a pointer event should cause.
      * Takes this.dataset.tool, this.dataset.touchAction and event.pointerType into account.
      */
@@ -298,9 +291,6 @@ class Whiteboard extends HTMLElement {
             event.target.setPointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
-            let ctx = this.#activeDrawingContext();
-            ctx.globalCompositeOperation = "destination-out";
-            ctx.lineWidth = this.dataset.eraserWidth;
             this.#penDown(event.offsetX, event.offsetY);
         case "write":
             this.#penDown(event.offsetX, event.offsetY);
@@ -334,7 +324,6 @@ class Whiteboard extends HTMLElement {
             this.#draw(event);
             break;
         case "erase":
-            let ctx = this.#activeDrawingContext();
             this.#draw(event);
             break;
         case "select":
@@ -349,9 +338,6 @@ class Whiteboard extends HTMLElement {
             event.target.releasePointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
-            let ctx = this.#activeDrawingContext();
-            ctx.globalCompositeOperation = "source-over";
-            ctx.lineWidth = this.dataset.lineWidth;
             this.#penUp();
             break;
         case "write":
