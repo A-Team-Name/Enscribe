@@ -87,8 +87,19 @@ function pointBoundingRect(point, radius) {
 }
 
 class Line {
+    #updateAutoColor(event) {
+        this.color = event.matches ? "white" : "black";
+        console.log("updated", this.color);
+    }
     constructor(color, lineWidth, start) {
-        this.color = color;
+        if (color === "auto") {
+            const prefers_dark = window.matchMedia('(prefers-color-scheme: dark)');
+            this.#updateAutoColor(prefers_dark);
+            prefers_dark.addEventListener("change", (event) => this.#updateAutoColor(event));
+
+        } else {
+            this.color = color;
+        }
         this.lineWidth = lineWidth;
         this.points = [start];
         this.boundingRect = pointBoundingRect(start, lineWidth/2);
@@ -206,13 +217,15 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#ui = shadowRoot.getElementById("ui");
-        this.#ctx = shadowRoot.getElementById("contents").getContext("2d");
-        this.#ctx.lineCap = "round";
-        this.#ctx.lineJoin = "round";
+        this.#lower = shadowRoot.getElementById("lower").getContext("2d");
+        this.#lower.lineCap = "round";
+        this.#lower.lineJoin = "round";
 
+        window.matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener("change", () => setTimeout(() => { this.render() }));
 
         this.layers = [
-            new Layer("Code", "light-dark(black, white)", true),
+            new Layer("Code", "auto", true),
             new Layer("Annotations", "blue", false)
         ];
         this.active_layer = 0;
