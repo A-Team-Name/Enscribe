@@ -398,7 +398,6 @@ class Whiteboard extends HTMLElement {
             this.#writing = false;
             this.layers[this.active_layer].completeLine();
             this.#enableAllBlocks();
-            this.render();
         }
     }
 
