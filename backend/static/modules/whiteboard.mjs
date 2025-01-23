@@ -164,11 +164,9 @@ class Layer {
         }
     }
 
-    /// Add a new line starting at point start, ready to draw directly on ctx
-    newLine(ctx, start) {
+    /// Add a new line starting at point start
+    newLine(start) {
         this.lines.push(new Line(this.color, this.lineWidth, start));
-        ctx.lineWidth = this.lineWidth;
-        ctx.strokeStyle = ctx.fillStyle = this.color;
     }
 
     /// Extend the last line on the Layer to point
@@ -389,7 +387,7 @@ class Whiteboard extends HTMLElement {
     #penDown(x, y) {
         this.#writing = true;
         this.#disableAllBlocks();
-        this.layers[this.active_layer].newLine(this.#lower, {y: y, x: x});
+        this.layers[this.active_layer].newLine({y: y, x: x});
         this.render();
     }
 
