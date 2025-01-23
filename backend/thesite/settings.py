@@ -42,13 +42,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_ENV") == "development"
 
-ALLOWED_HOSTS = [
-    "enscribe.containers.uwcs.co.uk",
-    "enscribe-dev.containers.uwcs.co.uk",
-    "enscribe.dcs.warwick.ac.uk",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS")
 
 if DEBUG:
     ALLOWED_HOSTS += [
