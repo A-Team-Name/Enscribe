@@ -46,6 +46,8 @@ ALLOWED_HOSTS = [
     "enscribe.containers.uwcs.co.uk",
     "enscribe-dev.containers.uwcs.co.uk",
     "enscribe.dcs.warwick.ac.uk",
+    "localhost",
+    "127.0.0.1",
 ]
 
 if DEBUG:
