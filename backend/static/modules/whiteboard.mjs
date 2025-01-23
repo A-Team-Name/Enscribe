@@ -26,9 +26,6 @@ const whiteboard_template = `
         position: absolute;
     }
 }
-:host([data-show-annotations="off"]) #annotations {
-    display: none;
-}
 #ui {
     /* Immediate children of #ui are "floating" UI elements */
     > * {
@@ -486,6 +483,10 @@ class Whiteboard extends HTMLElement {
                     break;
                 }
             }
+            break;
+        case "data-show-annotations":
+            this.render();
+            break;
         }
     }
 
@@ -510,7 +511,8 @@ class Whiteboard extends HTMLElement {
         let clip = this.#clipRegion();
 
         for (const layer of this.layers) {
-            layer.draw(this.#lower, clip);
+            if (layer.is_code || this.dataset.showAnnotations === "on")
+                layer.draw(this.#lower, clip);
         }
     }
 }
