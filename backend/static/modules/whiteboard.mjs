@@ -47,6 +47,10 @@ const whiteboard_template = `
     cursor: grab;
 }
 
+:host([data-tool="write"]), :host([data-tool="erase"]) {
+    cursor: none;
+}
+
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
 <canvas id="lower">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
@@ -86,20 +90,29 @@ function pointBoundingRect(point, radius) {
     };
 }
 
-class Line {
-    #updateAutoColor(event) {
-        this.color = event.matches ? "white" : "black";
-        console.log("updated", this.color);
-    }
-    constructor(color, lineWidth, start) {
-        if (color === "auto") {
-            const prefers_dark = window.matchMedia('(prefers-color-scheme: dark)');
-            this.#updateAutoColor(prefers_dark);
-            prefers_dark.addEventListener("change", (event) => this.#updateAutoColor(event));
+function fillCircle(ctx, x, y, radius) {
+    const circle = new Path2D();
+    circle.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill(circle);
+}
 
-        } else {
-            this.color = color;
-        }
+function strokeCircle(ctx, x, y, radius) {
+    const circle = new Path2D();
+    circle.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.stroke(circle);
+}
+
+function interpretColor(color) {
+    if (color === "auto") {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "white" : "black";
+    } else {
+        return color;
+    }
+}
+
+class Line {
+    constructor(color, lineWidth, start) {
+        this.color = color;
         this.lineWidth = lineWidth;
         this.points = [start];
         this.boundingRect = pointBoundingRect(start, lineWidth/2);
@@ -125,14 +138,10 @@ class Line {
         }
         if (this.points.length == 1) {
             // Render a single-point "line" as a point.
-            ctx.fillStyle = this.color;
-            const circle = new Path2D();
-            circle.arc(
-                this.points[0].x - clip.left, this.points[0].y - clip.top,
-                this.lineWidth / 2, 0, 2 * Math.PI);
-            ctx.fill(circle);
+            ctx.fillStyle = interpretColor(this.color);
+            fillCircle(ctx, this.points[0].x - clip.left, this.points[0].y - clip.top, this.lineWidth/2);
         } else {
-            ctx.strokeStyle = this.color;
+            ctx.strokeStyle = interpretColor(this.color);
             ctx.lineWidth = this.lineWidth;
             ctx.beginPath();
             ctx.moveTo(this.points[0].x - clip.left, this.points[0].y - clip.top);
@@ -247,6 +256,10 @@ class Whiteboard extends HTMLElement {
         this.#ui.addEventListener("dblclick",
             (event) => event.preventDefault());
 
+        // Clear the "preview" cursor
+        this.#ui.addEventListener("pointerleave",
+            () => this.render());
+
         this.#container.addEventListener("scroll", () => this.render());
     }
 
@@ -309,25 +322,44 @@ class Whiteboard extends HTMLElement {
      * and the state of the whiteboard.
      */
     #handlePointerMove(event) {
-        if (event.buttons === 0) {
-            // The input is not active: do nothing.
-            return;
+        if (event.buttons !== 0) {
+            // A button is pressed, so some action must be taken
+
+            switch (this.#eventAction(event)) {
+            case "pan":
+                this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
+                break;
+            case "write":
+                this.#draw(event);
+                break;
+            case "erase":
+                this.#draw(event);
+                break;
+            case "select":
+                if (this.#last_selection !== null)
+                    this.#last_selection.resize(event);
+                break;
+            }
         }
 
-        switch (this.#eventAction(event)) {
-        case "pan":
-            this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
-            break;
-        case "write":
-            this.#draw(event);
-            break;
-        case "erase":
-            this.#draw(event);
-            break;
-        case "select":
-            if (this.#last_selection !== null)
-                this.#last_selection.resize(event);
-            break;
+        this.render();
+
+        // Show a preview of the cursor position
+        if (event.isPrimary) {
+            let active = this.layers[this.active_layer];
+            let clip = this.#clipRegion();
+            switch (this.dataset.tool) {
+            case "write":
+                this.#lower.fillStyle = interpretColor(active.color);
+                fillCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                    active.lineWidth/2);
+                break;
+            case "erase":
+                this.#lower.strokeStyle = interpretColor(active.color);
+                this.#lower.lineWidth = 1;
+                strokeCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                    this.dataset.eraserWidth/2);
+            }
         }
     }
 
@@ -377,7 +409,6 @@ class Whiteboard extends HTMLElement {
         } else {
             active.extendLine({x: e.offsetX, y: e.offsetY});
         }
-        this.render();
     }
 
     /**
