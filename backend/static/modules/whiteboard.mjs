@@ -1,5 +1,4 @@
 import { CodeBlock } from '/static/modules/code-block.mjs';
-import { onEvent } from '/static/modules/reactivity.mjs';
 
 const whiteboard_template = `
 <style>
