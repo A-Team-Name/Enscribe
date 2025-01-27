@@ -13,7 +13,7 @@ onEvent("change", "#show-annotations", setAttribute(whiteboard, "data-show-annot
 onEvent("change", "input[name='layer']", setAttribute(whiteboard, "data-layer"));
 onEvent("change", "input[name='layer']",
         () => {
-            document.getElementById("pen-width").value = whiteboard.dataset.lineWidth;
+            document.getElementById("pen-width").value = whiteboard.active_layer.lineWidth;
         });
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
 onEvent("change", "input[name='touch-action']", setAttribute(whiteboard, "data-touch-action"));

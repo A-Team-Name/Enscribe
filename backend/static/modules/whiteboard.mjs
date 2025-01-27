@@ -214,7 +214,6 @@ class Layer {
 
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
-        "data-line-width",
         "data-eraser-width",
         "data-layer",
         "data-tool",
@@ -258,7 +257,7 @@ class Whiteboard extends HTMLElement {
             new Layer("code", "auto", true),
             new Layer("annotations", "blue", false)
         ];
-        this.active_layer = 0;
+        this.active_layer = this.layers[0];
 
         this.#start_x = 0;
         this.#start_y = 0;
@@ -345,7 +344,7 @@ class Whiteboard extends HTMLElement {
     #drawCursor(event) {
         // Show a preview of the cursor position
         if (event.isPrimary) {
-            let active = this.layers[this.active_layer];
+            let active = this.active_layer;
             let clip = this.#clipRegion();
             switch (this.dataset.tool) {
             case "write":
@@ -427,7 +426,7 @@ class Whiteboard extends HTMLElement {
     #draw(event) {
         if (!this.#writing)
             return;
-        let active = this.layers[this.active_layer];
+        let active = this.active_layer;
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
             let coa = event.getCoalescedEvents();
@@ -446,21 +445,21 @@ class Whiteboard extends HTMLElement {
     #penDown(x, y) {
         this.#writing = true;
         this.#disableAllBlocks();
-        this.layers[this.active_layer].newLine({y: y, x: x});
+        this.active_layer.newLine({y: y, x: x});
         this.render();
     }
 
     #penUp() {
         if (this.#writing) {
             this.#writing = false;
-            this.layers[this.active_layer].completeLine();
+            this.active_layer.completeLine();
             this.#enableAllBlocks();
         }
     }
 
     #erase(x, y) {
         console.log("erasing")
-        this.layers[this.active_layer].erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+        this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
     }
 
     #enableAllBlocks() {
@@ -500,9 +499,6 @@ class Whiteboard extends HTMLElement {
         if (oldValue === newValue)
             return;
         switch (name) {
-        case "data-line-width":
-            this.layers[this.active_layer].lineWidth = this.dataset.lineWidth;
-            break;
         case "data-width":
         case "data-height":
             this.#resizeSurface();
@@ -513,8 +509,7 @@ class Whiteboard extends HTMLElement {
         case "data-layer":
             for (var i = 0; i < this.layers.length; i += 1) {
                 if (newValue === this.layers[i].name) {
-                    this.active_layer = i;
-                    this.dataset.lineWidth = this.layers[i].lineWidth;
+                    this.active_layer = this.layers[i];
                     break;
                 }
             }
