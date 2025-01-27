@@ -9,7 +9,7 @@ const whiteboard_template = `
     width: 100%;
     height: 100%;
 }
-#lower {
+#drawing {
     position: absolute;
 }
 #surface {
@@ -49,7 +49,7 @@ const whiteboard_template = `
 
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
-<canvas id="lower">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
+<canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
     <div id="ui"></div>
@@ -231,7 +231,7 @@ class Whiteboard extends HTMLElement {
     #ui;
 
     // Drawing state
-    #lower;
+    #drawing;
     /** Starting X coordinate of most recent panning event */
     #start_x;
     /** Starting Y coordinate of most recent panning event */
@@ -247,9 +247,9 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#ui = shadowRoot.getElementById("ui");
-        this.#lower = shadowRoot.getElementById("lower").getContext("2d");
-        this.#lower.lineCap = "round";
-        this.#lower.lineJoin = "round";
+        this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
+        this.#drawing.lineCap = "round";
+        this.#drawing.lineJoin = "round";
 
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
@@ -349,14 +349,14 @@ class Whiteboard extends HTMLElement {
             let clip = this.#clipRegion();
             switch (this.dataset.tool) {
             case "write":
-                this.#lower.fillStyle = interpretColor(active.color);
-                fillCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                this.#drawing.fillStyle = interpretColor(active.color);
+                fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     active.lineWidth/2);
                 break;
             case "erase":
-                this.#lower.strokeStyle = interpretColor(active.color);
-                this.#lower.lineWidth = 1;
-                strokeCircle(this.#lower, event.offsetX - clip.left, event.offsetY - clip.top,
+                this.#drawing.strokeStyle = interpretColor(active.color);
+                this.#drawing.lineWidth = 1;
+                strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.dataset.eraserWidth/2);
             }
         }
@@ -491,8 +491,8 @@ class Whiteboard extends HTMLElement {
     /// Handle a change in the size of the visible region of the whiteboard.
     #resizeCanvas() {
         let container_bounds = this.getBoundingClientRect();
-        this.#lower.canvas.width = container_bounds.width;
-        this.#lower.canvas.height = container_bounds.height;
+        this.#drawing.canvas.width = container_bounds.width;
+        this.#drawing.canvas.height = container_bounds.height;
         this.render();
     }
 
@@ -528,26 +528,26 @@ class Whiteboard extends HTMLElement {
     /// Compute the region of the whiteboard surface that intersects the canvas
     #clipRegion() {
         let ui_bounds = this.#ui.getBoundingClientRect();
-        let canvas_bounds = this.#lower.canvas.getBoundingClientRect();
+        let canvas_bounds = this.#drawing.canvas.getBoundingClientRect();
         let clip = {
             top: canvas_bounds.top - ui_bounds.top,
             left: canvas_bounds.left - ui_bounds.left,
         };
-        clip.bottom = clip.top + this.#lower.canvas.height;
-        clip.right = clip.left + this.#lower.canvas.width;
+        clip.bottom = clip.top + this.#drawing.canvas.height;
+        clip.right = clip.left + this.#drawing.canvas.width;
         return clip;
     }
 
     /// Re-draw the entire whiteboard contents (minimise calls to this)
     render() {
-        this.#lower.clearRect(0, 0, this.#lower.canvas.width, this.#lower.canvas.height);
-        this.#lower.lineCap = "round";
-        this.#lower.lineJoin = "round";
+        this.#drawing.clearRect(0, 0, this.#drawing.canvas.width, this.#drawing.canvas.height);
+        this.#drawing.lineCap = "round";
+        this.#drawing.lineJoin = "round";
         let clip = this.#clipRegion();
 
         for (const layer of this.layers) {
             if (layer.is_code || this.dataset.showAnnotations === "on")
-                layer.draw(this.#lower, clip);
+                layer.draw(this.#drawing, clip);
         }
     }
 }
