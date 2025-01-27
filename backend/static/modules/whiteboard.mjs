@@ -344,16 +344,15 @@ class Whiteboard extends HTMLElement {
     #drawCursor(event) {
         // Show a preview of the cursor position
         if (event.isPrimary) {
-            let active = this.active_layer;
             let clip = this.#clipRegion();
             switch (this.dataset.tool) {
             case "write":
-                this.#drawing.fillStyle = interpretColor(active.color);
+                this.#drawing.fillStyle = interpretColor(this.active_layer.color);
                 fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
-                    active.lineWidth/2);
+                    this.active_layer.lineWidth/2);
                 break;
             case "erase":
-                this.#drawing.strokeStyle = interpretColor(active.color);
+                this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
                 this.#drawing.lineWidth = 1;
                 strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.dataset.eraserWidth/2);
@@ -426,15 +425,14 @@ class Whiteboard extends HTMLElement {
     #draw(event) {
         if (!this.#writing)
             return;
-        let active = this.active_layer;
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
             let coa = event.getCoalescedEvents();
             for (const e of coa) {
-                active.extendLine({x: e.offsetX, y: e.offsetY});
+                this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
             }
         } else {
-            active.extendLine({x: e.offsetX, y: e.offsetY});
+            this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
         }
     }
 
