@@ -275,6 +275,12 @@ class Whiteboard extends HTMLElement {
         this.#ui.addEventListener("pointermove",
             (event) => this.#handlePointerMove(event));
 
+        this.#ui.addEventListener("touchstart",
+            (event) => {
+                if (event.target.id === "ui")
+                    event.preventDefault();
+            });
+
         this.#ui.addEventListener("dblclick",
             (event) => event.preventDefault());
 
@@ -432,7 +438,7 @@ class Whiteboard extends HTMLElement {
                 this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
             }
         } else {
-            this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
+            this.active_layer.extendLine({x: event.offsetX, y: event.offsetY});
         }
     }
 
