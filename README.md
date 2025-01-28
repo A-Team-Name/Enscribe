@@ -10,7 +10,12 @@ The only thing you need to do is create a .env file in the outermost directory o
 ```env
 DJANGO_ENV='development'
 SECRET_KEY='...'
-PORT=...
+PORT='...'
+EMAIL_ADDRESS='...' # Email account for application (for password reset)
+EMAIL_PASSWORD='...' # App password for email account
+JUPYTER_URL='...' # URL of jupter server
+JUPYTER_PORT='...' # Port of jupter server
+JUPYTER_TOKEN='...' # Authentication token of jupter server
 ```
 Replace the ... with some random string. Django can generate a key for you with the following CLI command:
 ```bash
@@ -40,6 +45,15 @@ If you are contributing to this project we would greatly appreciate you setup ou
 - `poetry run pre-commit install`
 
 Now whenever you attempt to commit, our ruff formatting checks will be ran automatically.
+
+### Jupyter 
+To start up a local jupyter server:
+
+`jupyter server --ServerApp.disable_check_xsrf=True`
+
+Set the environment variables using the url from the command output which follows the format:
+
+`http://JUPYTER_URL:JUPYTER_PORT/?token=JUPYTER_TOKEN`
 
 ## Frontend Implementation Notes
 ### User Interface DOM Layout
