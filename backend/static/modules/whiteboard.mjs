@@ -4,7 +4,6 @@ const whiteboard_template = `
 <style>
 @import '/static/common.css';
 #container {
-    touch-action: none;
     overflow: scroll;
     width: 100%;
     height: 100%;
@@ -221,7 +220,6 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
-        "data-touch-action",
     ];
 
     // DOM elements
@@ -277,7 +275,7 @@ class Whiteboard extends HTMLElement {
 
         this.#ui.addEventListener("touchstart",
             (event) => {
-                if (event.target.id === "ui")
+                if (this.#writing)
                     event.preventDefault();
             });
 
@@ -299,18 +297,15 @@ class Whiteboard extends HTMLElement {
 
     /**
      * Determine the type of action a pointer event should cause.
-     * Takes this.dataset.tool, this.dataset.touchAction and event.pointerType into account.
+     * Takes this.dataset.tool and event.pointerType into account.
      */
     #eventAction(event) {
         if (!event.isPrimary)
             return "none";
         switch (event.pointerType) {
         case "touch":
-            if (this.dataset.touchAction === "pan") {
-                return "pan";
-            } else {
-                return this.dataset.tool;
-            }
+            // We no longer attempt to handle touch events ourselves, at all
+            return "none";
         case "mouse":
             if (event.buttons & 4)
                 // Middle-click to scroll
@@ -326,8 +321,11 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerDown(event) {
+        event.preventDefault();
         if (event.isPrimary)
             event.target.setPointerCapture(event.pointerId);
+        if (event.pointerType !== "touch")
+            this.#writing = true;
         switch (this.#eventAction(event)) {
         case "erase":
             this.#erase(event.offsetX, event.offsetY);
@@ -373,8 +371,9 @@ class Whiteboard extends HTMLElement {
     #handlePointerMove(event) {
         if (event.buttons !== 0) {
             // A button is pressed, so some action must be taken
-
-            switch (this.#eventAction(event)) {
+            let action = this.#eventAction(event);
+            // if (event.pointerType !== "touch")
+            switch (action) {
             case "pan":
                 this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
                 break;
@@ -413,6 +412,7 @@ class Whiteboard extends HTMLElement {
             }
             break;
         }
+        this.#writing = false;
     }
 
     #createSelection(x, y) {
@@ -447,7 +447,6 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(x, y) {
-        this.#writing = true;
         this.#disableAllBlocks();
         this.active_layer.newLine({y: y, x: x});
         this.render();
@@ -455,7 +454,6 @@ class Whiteboard extends HTMLElement {
 
     #penUp() {
         if (this.#writing) {
-            this.#writing = false;
             this.active_layer.completeLine();
             this.#enableAllBlocks();
         }

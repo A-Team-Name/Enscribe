@@ -91,17 +91,6 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      <fieldset>
-        <legend>Touch Behaviour</legend>
-        <label>
-          <input type="radio" name="touch-action" value="pan" checked/>
-          Pan
-        </label>
-        <label>
-          <input type="radio" name="touch-action" value="auto"/>
-          Auto (match pen and mouse)
-        </label>
-      </fieldset>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>
