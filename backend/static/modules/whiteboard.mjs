@@ -275,6 +275,12 @@ class Whiteboard extends HTMLElement {
         this.#ui.addEventListener("pointermove",
             (event) => this.#handlePointerMove(event));
 
+        this.#ui.addEventListener("touchstart",
+            (event) => event.preventDefault());
+
+        this.#ui.addEventListener("click",
+            (event) => event.preventDefault());
+
         this.#ui.addEventListener("dblclick",
             (event) => event.preventDefault());
 
