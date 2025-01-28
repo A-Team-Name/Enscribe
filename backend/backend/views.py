@@ -1,6 +1,6 @@
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 
@@ -30,15 +30,16 @@ def index(request: WSGIRequest) -> HttpResponse:
     return render(request, "main_app.html")
 
 
-@login_required
+# @login_required
+@csrf_exempt
 def execute(request: WSGIRequest) -> HttpResponse:
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
-    base = f"https://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
+    base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
     headers = {
-        "Authorization": "Token ",
+        "Authorization": "Token {settings.JUPYTER_TOKEN}",
         "Cookie": request.headers["Cookie"],
-        "X-XSRFToken": request.COOKIES["_xsrf"],
+        # "X-XSRFToken": request.COOKIES["_xsrf"], # Safe to disable this when using token
     }
 
     url = base + "/api/kernels"
@@ -79,9 +80,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
     full_response = []
     while True:
         msg = ws.recv()
-        print(msg, flush=True)
         rsp = json.loads(msg)
-        # print(rsp, flush=True)
         msg_type = rsp["msg_type"]
 
         output = None
@@ -126,17 +125,9 @@ def execute(request: WSGIRequest) -> HttpResponse:
         if msg_type == "execute_reply":
             break
 
-    # if output == {}:
-    #     output["type"] = "http"
-    #     output["content"] = full_response
-
     ws.close()
-    # context = {"input": code, "output": output},
-    # return render(request, "index.html", context)
-    request.session["language"] = language
-    request.session["input"] = code
-    request.session["output"] = json.dumps(full_response)
-    return redirect("/")
+
+    return JsonResponse({"output_stream": full_response})
     # return HttpResponse(output)
 
 
@@ -230,9 +221,12 @@ def image_to_text(request):
 
             predictions_dict = construct_predictions_dict(code_block)
 
-            request.session["predicted_text"] = code_block.predicted_text
-            request.session["predictions"] = predictions_dict
-            return redirect("/")
+            return JsonResponse(
+                {
+                    "predicted_text": code_block.predicted_text,
+                    "predictions": predictions_dict,
+                }
+            )
 
     else:
         form = ImageForm()

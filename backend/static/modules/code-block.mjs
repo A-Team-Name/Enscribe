@@ -6,6 +6,7 @@ const code_block_template = `
   <button id="run" class="material-symbols-outlined">play_arrow</button>
   <label class="material-symbols-outlined"><input name="show-output" type="checkbox" checked/>output</label>
   <label class="material-symbols-outlined"><input name="show-text" type="checkbox"/>text_fields</label>
+  <input type="file" id="fileInput" accept="image/*" enctype="multipart/form-data"/> <!-- REMOVE THIS WHEN SCREEN CAPTURING CODE BLOCK -->
   <button id="close" class="material-symbols-outlined">close</button>
 </div>
 </div>
@@ -43,6 +44,16 @@ class CodeBlock extends HTMLElement {
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
+        // Post screen capture image to '/image_to_text' when run button is clicked
+        shadowRoot.getElementById("run")
+            .addEventListener("click", () => {
+
+                this.transcribeCodeBlockImage(shadowRoot)
+                this.executeTranscribedCode(shadowRoot)
+                
+            });
+
+
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
             (event) => event.stopPropagation());
@@ -50,6 +61,52 @@ class CodeBlock extends HTMLElement {
             (event) => event.stopPropagation());
 
         this.#anchor_x = this.#anchor_y = 0;
+    }
+
+    transcribeCodeBlockImage(shadowRoot) {
+        // Replace with screen capture code
+        const fileInput = shadowRoot.getElementById("fileInput");
+        const image_file = fileInput.files[0]; 
+
+        // Put the screen capture image into FormData object
+        const imageFormData = new FormData();
+        imageFormData.append("img", image_file); // Add the image file to the form data
+        imageFormData.append("name", "image_unique_id");
+
+        fetch("/image_to_text/", {
+          method: "POST",
+          body: imageFormData,
+            })
+            .then((rsp) => rsp.json())
+            .then((json) => {
+                shadowRoot.getElementById("text").value = json.predicted_text;
+            })
+            .catch((error) => console.error("Error:", error));
+    }
+
+    executeTranscribedCode(shadowRoot) {
+        // Put the execution language and code to be executed into FormData object 
+        const executeFormData = new FormData();
+        executeFormData.append("language", "python3");
+        executeFormData.append("code", "print('hello world')\nx=1+2\nprint(x)");
+
+          fetch("/execute/", {
+            method: "POST",
+            body: executeFormData,
+            credentials: 'include',
+          })
+            .then((rsp) => rsp.json())
+            .then((json) => {
+                var output = "";
+                // Loop through each line of output from /execute response 
+                for (const line of json.output_stream) {
+                    // success = line.success
+                    // content_type = line.type
+                    output += line.content
+                }
+                shadowRoot.getElementById("output").value = output;
+            })
+            .catch((error) => console.error("Error:", error));
     }
 
     connectedCallback() {
