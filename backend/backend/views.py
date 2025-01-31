@@ -9,14 +9,10 @@ import requests
 from websocket import create_connection
 from backend.utils import send_execute_request
 
-from .forms import ImageForm
 
 import onnxruntime
 import numpy as np
 from PIL import Image
-
-from django.views.decorators.csrf import csrf_exempt
-
 
 from .models import CharacterPrediction, TopPredictions, CodeBlockPrediction
 
@@ -30,8 +26,7 @@ def index(request: WSGIRequest) -> HttpResponse:
     return render(request, "main_app.html")
 
 
-# @login_required
-@csrf_exempt
+@login_required
 def execute(request: WSGIRequest) -> HttpResponse:
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
@@ -48,7 +43,15 @@ def execute(request: WSGIRequest) -> HttpResponse:
     language = request.POST.get("language")
 
     # Get list of existing kernels
-    response = requests.get(url, headers=headers)
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        output = {
+            "success": False,
+            "type": "text",
+            "content": "Jupyter Server Error",
+        }
+        return JsonResponse({"output_stream": [output]})
 
     # Single user kernel management
     # Use existing kernel if exists for execution language, otherwise start new kernel
@@ -131,90 +134,85 @@ def execute(request: WSGIRequest) -> HttpResponse:
     # return HttpResponse(output)
 
 
-# @login_required
-@csrf_exempt
+@login_required
 def image_to_text(request):
     if request.method == "POST":
-        form = ImageForm(request.POST, request.FILES)
+        image = request.FILES["img"]
+        img_file = Image.open(image)
 
-        if form.is_valid():
-            form.save()
-            image = form.cleaned_data["img"]
-            img_file = Image.open(image)
+        # Initialise CodeBlockPrediction Object
+        code_block = CodeBlockPrediction()
+        code_block.save()
 
-            # Initialise CodeBlockPrediction Object
-            code_block = CodeBlockPrediction()
-            code_block.save()
+        # Load the ONNX model
+        session = onnxruntime.InferenceSession("models/allcnn2d_untrained.onnx")
 
-            # Load the ONNX model
-            session = onnxruntime.InferenceSession("models/allcnn2d_untrained.onnx")
+        # Prepare input data
+        img_array = np.asarray(img_file)
+        input_image = img_array.astype(np.float32)
 
-            # Prepare input data
-            img_array = np.asarray(img_file)
-            input_image = img_array.astype(np.float32)
-
-            # Example image
-            input_image = np.random.random(
-                (
-                    1,  # batch: stack as many images as you like here
-                    1,  # channels: needs to be 1 (grayscale), pixels are 1.0 or 0.0
-                    64,  # height: fixed to 64 pixels for now
-                    64,  # width: fixed to 64 pixels for now
-                )
-            ).astype(np.float32)
-
-            # Run inference
-            inputs: list[onnxruntime.NodeArg] = session.get_inputs()
-            outputs: list[onnxruntime.NodeArg] = session.get_outputs()
-
-            input_name: list[str] = inputs[0].name
-            output_names: list[str] = [out.name for out in outputs]
-
-            softmax: np.ndarray
-            softmax_ordered: np.ndarray
-            logits: np.ndarray
-
-            logits, softmax, softmax_ordered = session.run(
-                output_names, {input_name: input_image}
+        # Example image
+        input_image = np.random.random(
+            (
+                1,  # batch: stack as many images as you like here
+                1,  # channels: needs to be 1 (grayscale), pixels are 1.0 or 0.0
+                64,  # height: fixed to 64 pixels for now
+                64,  # width: fixed to 64 pixels for now
             )
+        ).astype(np.float32)
 
-            # logits.shape is shape (batch, character) for all character labels
-            # softmax.shape is shape (batch, character) for all character labels
-            # softmax_ordered is shape (batch, character, [label index, label prob, unicode character value])
+        # Run inference
+        inputs: list[onnxruntime.NodeArg] = session.get_inputs()
+        outputs: list[onnxruntime.NodeArg] = session.get_outputs()
 
-            # character dim is 44 (there are 44 character labels)
-            # label index is from 0 to 44 (corresponding to each ordered label index)
-            # label prob is a softmaxed probability for this label prediction
-            # unicode character value is the unicode character for this prediction
+        input_name: list[str] = inputs[0].name
+        output_names: list[str] = [out.name for out in outputs]
 
-            # 2D Array of top predicted characters for each position
-            top_characters: list[list[str]] = [
-                [
-                    chr(int(softmax_ordered[batch_i, i, 2]))
-                    for i in range(softmax_ordered.shape[1])
-                ]
-                for batch_i in range(softmax_ordered.shape[0])
+        softmax: np.ndarray
+        softmax_ordered: np.ndarray
+        logits: np.ndarray
+
+        logits, softmax, softmax_ordered = session.run(
+            output_names, {input_name: input_image}
+        )
+
+        # logits.shape is shape (batch, character) for all character labels
+        # softmax.shape is shape (batch, character) for all character labels
+        # softmax_ordered is shape (batch, character, [label index, label prob, unicode character value])
+
+        # character dim is 44 (there are 44 character labels)
+        # label index is from 0 to 44 (corresponding to each ordered label index)
+        # label prob is a softmaxed probability for this label prediction
+        # unicode character value is the unicode character for this prediction
+
+        # 2D Array of top predicted characters for each position
+        top_characters: list[list[str]] = [
+            [
+                chr(int(softmax_ordered[batch_i, i, 2]))
+                for i in range(softmax_ordered.shape[1])
             ]
+            for batch_i in range(softmax_ordered.shape[0])
+        ]
 
-            # 2D array of corresponding probabilities
-            top_character_probs: list[list[float]] = softmax_ordered[:, :, 1].tolist()
+        # 2D array of corresponding probabilities
+        top_character_probs: list[list[float]] = softmax_ordered[:, :, 1].tolist()
 
-            # Loop through each position in string
-            for i in range(len(top_characters)):
-                # Create a TopPredictions object for position i in the current code block
-                prediction_set = TopPredictions(code_block=code_block, position=i)
-                prediction_set.save()
+        # Loop through each position in string
+        for i in range(len(top_characters)):
+            # Create a TopPredictions object for position i in the current code block
+            prediction_set = TopPredictions(code_block=code_block, position=i)
+            prediction_set.save()
 
-                # Loop through top 3 predicted characters for that position
-                for j in range(0, 3):
-                    # Create a CharacterPrediction object storing the character, its probability and its ranking
-                    character_prediction = CharacterPrediction(
-                        prediction_set=prediction_set,
-                        character=top_characters[i][j],
-                        probability=top_character_probs[i][j],
-                        rank=j + 1,
-                    )
-                    character_prediction.save()
+            # Loop through top 3 predicted characters for that position
+            for j in range(0, 3):
+                # Create a CharacterPrediction object storing the character, its probability and its ranking
+                character_prediction = CharacterPrediction(
+                    prediction_set=prediction_set,
+                    character=top_characters[i][j],
+                    probability=top_character_probs[i][j],
+                    rank=j + 1,
+                )
+                character_prediction.save()
 
             code_block.predicted_text = create_predicted_code_block(code_block)
             code_block.save()
@@ -228,8 +226,6 @@ def image_to_text(request):
                 }
             )
 
-    else:
-        form = ImageForm()
     return HttpResponse("upload failed")
 
 

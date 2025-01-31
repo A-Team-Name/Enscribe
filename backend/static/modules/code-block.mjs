@@ -16,6 +16,8 @@ const code_block_template = `
 </div>
 `;
 
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
 class CodeBlock extends HTMLElement {
     static observedAttributes = [
         "data-x",
@@ -40,6 +42,7 @@ class CodeBlock extends HTMLElement {
         shadowRoot.innerHTML = code_block_template;
 
         this.#selection = shadowRoot.getElementById("selection");
+
 
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
@@ -76,6 +79,9 @@ class CodeBlock extends HTMLElement {
         fetch("/image_to_text/", {
           method: "POST",
           body: imageFormData,
+          headers: {
+            "X-CSRFTOKEN" : csrftoken
+          }
             })
             .then((rsp) => rsp.json())
             .then((json) => {
@@ -94,6 +100,9 @@ class CodeBlock extends HTMLElement {
             method: "POST",
             body: executeFormData,
             credentials: 'include',
+            headers: {
+                "X-CSRFTOKEN" : csrftoken
+              }
           })
             .then((rsp) => rsp.json())
             .then((json) => {
