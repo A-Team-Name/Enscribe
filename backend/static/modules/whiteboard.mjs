@@ -4,10 +4,12 @@ const whiteboard_template = `
 <style>
 @import '/static/common.css';
 #container {
-    touch-action: none;
     overflow: scroll;
     width: 100%;
     height: 100%;
+}
+#drawing {
+    position: absolute;
 }
 #surface {
     display: block;
@@ -21,9 +23,6 @@ const whiteboard_template = `
     > * {
         position: absolute;
     }
-}
-:host([data-show-annotations="off"]) #annotations {
-    display: none;
 }
 #ui {
     /* Immediate children of #ui are "floating" UI elements */
@@ -43,73 +42,223 @@ const whiteboard_template = `
     cursor: grab;
 }
 
+:host([data-tool="write"]), :host([data-tool="erase"]) {
+    cursor: none;
+}
+
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
+<canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
-    <canvas id="background"></canvas>
-    <canvas id="code"></canvas>
-    <canvas id="annotations"></canvas>
     <div id="ui"></div>
   </div>
 </div>
 `;
 
+function rectanglesOverlapping(a, b) {
+    return !(
+        a.right < b.left
+            || a.left > b.right
+            || a.bottom < b.top
+            || a.top > b.bottom
+    );
+}
+
+/// Computes whether point is in rect
+function pointInRect(point, rect) {
+    return !(
+        rect.right < point.x
+            || rect.left > point.x
+            || rect.bottom < point.y
+            || rect.top > point.y
+    );
+}
+
+/// Computes a rectangle that perfectly fits a and b
+function rectangleUnion(a, b) {
+    return {
+        right: Math.max(a.right, b.right),
+        left: Math.min(a.left, b.left),
+        top: Math.min(a.top, b.top),
+        bottom: Math.max(a.bottom, b.bottom),
+    };
+}
+
+/// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
+function circleBoundingRect(point, radius) {
+    return {
+        right: point.x + radius,
+        left: point.x - radius,
+        top: point.y - radius,
+        bottom: point.y + radius,
+    };
+}
+
+function fillCircle(ctx, x, y, radius) {
+    const circle = new Path2D();
+    circle.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill(circle);
+}
+
+function strokeCircle(ctx, x, y, radius) {
+    const circle = new Path2D();
+    circle.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.stroke(circle);
+}
+
+function interpretColor(color) {
+    if (color === "auto") {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "white" : "black";
+    } else {
+        return color;
+    }
+}
+
+class Line {
+    constructor(color, lineWidth, start) {
+        this.color = color;
+        this.lineWidth = lineWidth;
+        this.points = [start];
+        this.boundingRect = circleBoundingRect(start, lineWidth/2);
+    }
+
+    addPoint(point) {
+        this.points.push(point);
+    }
+
+    recomputeBoundingRect() {
+        let lineWidth2 = this.lineWidth/2;
+        this.boundingRect = circleBoundingRect(this.points[0], lineWidth2);
+        for (var i = 1; i < this.points.length; i += 1) {
+            this.boundingRect = rectangleUnion(this.boundingRect, circleBoundingRect(this.points[i], lineWidth2));
+        }
+    }
+
+    /// Draw this line in the given context, mapped within the given clip rectangle
+    draw(ctx, clip) {
+        if (!rectanglesOverlapping(this.boundingRect, clip)) {
+            // The line lies outside the clip rectangle, so don't draw it.
+            return;
+        }
+        if (this.points.length == 1) {
+            // Render a single-point "line" as a point.
+            ctx.fillStyle = interpretColor(this.color);
+            fillCircle(ctx, this.points[0].x - clip.left, this.points[0].y - clip.top, this.lineWidth/2);
+        } else {
+            ctx.strokeStyle = interpretColor(this.color);
+            ctx.lineWidth = this.lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(this.points[0].x - clip.left, this.points[0].y - clip.top);
+            for (var i = 1; i < this.points.length; i += 1) {
+                ctx.lineTo(this.points[i].x - clip.left, this.points[i].y - clip.top);
+            }
+            ctx.stroke();
+        }
+    }
+}
+
+class Layer {
+    constructor(name, color, is_code) {
+        this.name = name;
+        /// Contents of the layer
+        this.lines = [];
+        /// Color for new lines
+        this.color = color;
+        /// Thickness for new lines
+        this.lineWidth = 3;
+        this.is_code = is_code;
+    }
+
+    /// Draw the contents of this layer in the given context, bounded to the given clip rectangle
+    draw(ctx, clip) {
+        // lines is a sparse array, so we must use "in" rather than "of"
+        for (const i in this.lines) {
+            this.lines[i].draw(ctx, clip);
+        }
+    }
+
+    /// Add a new line starting at point start
+    newLine(start) {
+        this.lines.push(new Line(this.color, this.lineWidth, start));
+    }
+
+    /// Extend the last line on the Layer to point
+    extendLine(point) {
+        this.lines[this.lines.length - 1].addPoint(point);
+    }
+
+    /// Mark the last line as complete
+    completeLine() {
+        this.lines[this.lines.length -1].recomputeBoundingRect();
+    }
+
+    /// Erase lines with vertices intersecting circle centre (x, y), of given radius
+    erase(x, y, radius) {
+        let radius2 = radius ** 2;
+        let eraserBoundingRect = circleBoundingRect({y, x}, radius);
+        for (const i in this.lines) {
+            if (rectanglesOverlapping(eraserBoundingRect, this.lines[i].boundingRect)) {
+                let intersectionThreshold = radius2 + ((this.lines[i].lineWidth / 2) ** 2);
+                for (const point of this.lines[i].points) {
+                    if ((point.x - x) ** 2 + (point.y - y) ** 2 <= intersectionThreshold) {
+                        delete this.lines[i];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
-        "data-line-width",
         "data-eraser-width",
-        "data-pen",
+        "data-layer",
         "data-tool",
         "data-width",
         "data-height",
         "data-background",
         "data-show-annotations",
-        "data-touch-action",
     ];
 
     // DOM elements
     #container;
     #surface;
-    #background;
-    #code;
-    #annotations;
     #ui;
-    #canvas_layers;
 
     // Drawing state
-    #code_ctx;
-    #annotations_ctx;
+    #drawing;
     /** Starting X coordinate of most recent panning event */
     #start_x;
     /** Starting Y coordinate of most recent panning event */
     #start_y;
-    #background_ctx;
     #pointer_active;
     #last_selection;
     #writing;
 
     constructor() {
         super();
-
         const shadowRoot = this.attachShadow({mode: 'closed'});
         shadowRoot.innerHTML = whiteboard_template;
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
-        this.#background = shadowRoot.getElementById("background");
-        this.#background.color = "#888888";
-        this.#code = shadowRoot.getElementById("code");
-        this.#code.color = "#000000";
-        this.#annotations = shadowRoot.getElementById("annotations");
-        this.#annotations.color = "#0000ff";
         this.#ui = shadowRoot.getElementById("ui");
-        this.#canvas_layers = [this.#background, this.#code, this.#annotations];
+        this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
+        this.#drawing.lineCap = "round";
+        this.#drawing.lineJoin = "round";
+
+        window.matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener("change", () => setTimeout(() => { this.render() }));
+
+        this.layers = [
+            new Layer("code", "auto", true),
+            new Layer("annotations", "blue", false)
+        ];
+        this.active_layer = this.layers[0];
 
         this.#start_x = 0;
         this.#start_y = 0;
-        this.#code_ctx = this.#code.getContext("2d");
-        this.#annotations_ctx = this.#annotations.getContext("2d");
-        this.#background_ctx = this.#background.getContext("2d");
         this.#writing = false;
         this.#last_selection = null;
 
@@ -124,35 +273,39 @@ class Whiteboard extends HTMLElement {
         this.#ui.addEventListener("pointermove",
             (event) => this.#handlePointerMove(event));
 
+        this.#ui.addEventListener("touchstart",
+            (event) => {
+                if (this.#writing)
+                    event.preventDefault();
+            });
+
         this.#ui.addEventListener("dblclick",
             (event) => event.preventDefault());
+
+        // Clear the "preview" cursor
+        this.#ui.addEventListener("pointerleave",
+            () => this.render());
+
+        this.#container.addEventListener("scroll", () => this.render());
     }
 
-    /**
-     * Get the "active" canvas drawing context, based on the data-pen attribute.
-     */
-    #activeDrawingContext() {
-        if (this.dataset.pen === "code") {
-            return this.#code_ctx;
-        } else {
-            return this.#annotations_ctx;
-        }
+    connectedCallback() {
+        this.#resizeCanvas();
+        window.addEventListener("resize",
+            () => this.#resizeCanvas());
     }
 
     /**
      * Determine the type of action a pointer event should cause.
-     * Takes this.dataset.tool, this.dataset.touchAction and event.pointerType into account.
+     * Takes this.dataset.tool and event.pointerType into account.
      */
     #eventAction(event) {
         if (!event.isPrimary)
             return "none";
         switch (event.pointerType) {
         case "touch":
-            if (this.dataset.touchAction === "pan") {
-                return "pan";
-            } else {
-                return this.dataset.tool;
-            }
+            // We no longer attempt to handle touch events ourselves, at all
+            return "none";
         case "mouse":
             if (event.buttons & 4)
                 // Middle-click to scroll
@@ -168,16 +321,18 @@ class Whiteboard extends HTMLElement {
     }
 
     #handlePointerDown(event) {
+        event.preventDefault();
         if (event.isPrimary)
             event.target.setPointerCapture(event.pointerId);
+        if (event.pointerType !== "touch")
+            this.#writing = true;
         switch (this.#eventAction(event)) {
         case "erase":
-            let ctx = this.#activeDrawingContext();
-            ctx.globalCompositeOperation = "destination-out";
-            ctx.lineWidth = this.dataset.eraserWidth;
-            this.#penDown(ctx, event.offsetX, event.offsetY);
+            this.#erase(event.offsetX, event.offsetY);
+            this.render();
+            break;
         case "write":
-            this.#penDown(this.#activeDrawingContext(), event.offsetX, event.offsetY);
+            this.#penDown(event.offsetX, event.offsetY);
             break;
         case "select":
             this.#createSelection(event.offsetX, event.offsetY);
@@ -187,7 +342,26 @@ class Whiteboard extends HTMLElement {
             this.#start_y = event.offsetY;
             break;
         }
+        this.#drawCursor(event);
+    }
 
+    #drawCursor(event) {
+        // Show a preview of the cursor position
+        if (event.isPrimary) {
+            let clip = this.#clipRegion();
+            switch (this.dataset.tool) {
+            case "write":
+                this.#drawing.fillStyle = interpretColor(this.active_layer.color);
+                fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
+                    this.active_layer.lineWidth/2);
+                break;
+            case "erase":
+                this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
+                this.#drawing.lineWidth = 1;
+                strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
+                    this.dataset.eraserWidth/2);
+            }
+        }
     }
 
     /**
@@ -195,27 +369,29 @@ class Whiteboard extends HTMLElement {
      * and the state of the whiteboard.
      */
     #handlePointerMove(event) {
-        if (event.buttons === 0) {
-            // The input is not active: do nothing.
-            return;
+        if (event.buttons !== 0) {
+            // A button is pressed, so some action must be taken
+            let action = this.#eventAction(event);
+            // if (event.pointerType !== "touch")
+            switch (action) {
+            case "pan":
+                this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
+                break;
+            case "write":
+                this.#draw(event);
+                break;
+            case "erase":
+                this.#erase(event.offsetX, event.offsetY);
+                break;
+            case "select":
+                if (this.#last_selection !== null)
+                    this.#last_selection.resize(event);
+                break;
+            }
         }
 
-        switch (this.#eventAction(event)) {
-        case "pan":
-            this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
-            break;
-        case "write":
-            this.#draw(event, this.#activeDrawingContext());
-            break;
-        case "erase":
-            let ctx = this.#activeDrawingContext();
-            this.#draw(event, ctx);
-            break;
-        case "select":
-            if (this.#last_selection !== null)
-                this.#last_selection.resize(event);
-            break;
-        }
+        this.render();
+        this.#drawCursor(event);
     }
 
     #handlePointerUp(event) {
@@ -223,9 +399,6 @@ class Whiteboard extends HTMLElement {
             event.target.releasePointerCapture(event.pointerId);
         switch (this.#eventAction(event)) {
         case "erase":
-            let ctx = this.#activeDrawingContext();
-            ctx.globalCompositeOperation = "source-over";
-            ctx.lineWidth = this.dataset.lineWidth;
             this.#penUp();
             break;
         case "write":
@@ -239,6 +412,7 @@ class Whiteboard extends HTMLElement {
             }
             break;
         }
+        this.#writing = false;
     }
 
     #createSelection(x, y) {
@@ -254,37 +428,40 @@ class Whiteboard extends HTMLElement {
     /**
      * Draw with PointerEvent event on 2D context ctx.
      */
-    #draw(event, ctx) {
+    #draw(event) {
         if (!this.#writing)
             return;
-
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
-            for (const e of event.getCoalescedEvents()) {
-                // TODO: This has a performance hitch in firefox for large whiteboards (e.g. 5000x5000)
-                ctx.lineTo(e.offsetX, e.offsetY);
+            let coa = event.getCoalescedEvents();
+            for (const e of coa) {
+                this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
             }
         } else {
-            ctx.lineTo(event.offsetX, event.offsetY);
+            this.active_layer.extendLine({x: event.offsetX, y: event.offsetY});
         }
-        ctx.stroke();
     }
 
     /**
      * Start a new drawn line at (x, y) on ctx.
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
-    #penDown(ctx, x, y) {
-        this.#writing = true;
+    #penDown(x, y) {
         this.#disableAllBlocks();
-        this.#drawPoint(ctx, x, y);
-        ctx.beginPath();
-        ctx.moveTo(x, y);
+        this.active_layer.newLine({y: y, x: x});
+        this.render();
     }
 
     #penUp() {
-        this.#writing = false;
-        this.#enableAllBlocks();
+        if (this.#writing) {
+            this.active_layer.completeLine();
+            this.#enableAllBlocks();
+        }
+    }
+
+    #erase(x, y) {
+        console.log("erasing")
+        this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
     }
 
     #enableAllBlocks() {
@@ -307,61 +484,70 @@ class Whiteboard extends HTMLElement {
         ctx.fill(circle);
     }
 
-    /**
-     * Configures a canvas layer for drawing according to our needs.
-     * This includes:
-     *   line style settings,
-     *   a white pen colour, which we can then apply SVG filters to,
-     *   the attribute ctx for convenient access to its 2D drawing context.
-     */
-    #configureCanvasLayer(canvas) {
-        let ctx = canvas.getContext("2d");
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.lineWidth = this.dataset.lineWidth;
-        ctx.fillStyle = ctx.strokeStyle = canvas.color;
-        canvas.ctx = ctx;
-    }
-
-    /**
-     * Resize a canvas layer, ideally while retaining its contents.
-     * Updates the size of 'canvas' to match 'this'.
-     * Refreshes the configuration, which is lost upon resizing.
-     */
-    #resizeCanvasLayer(canvas) {
-        // TODO: Retain contents
-        canvas.width = this.dataset.width;
-        canvas.height = this.dataset.height;
-        this.#configureCanvasLayer(canvas);
-    }
-
-    #resize() {
+    #resizeSurface() {
         this.#surface.style["width"] = this.dataset.width + "px";
         this.#surface.style["height"] = this.dataset.height + "px";
-        for (const c of this.#canvas_layers) {
-            this.#resizeCanvasLayer(c);
-        }
+    }
+
+    /// Handle a change in the size of the visible region of the whiteboard.
+    #resizeCanvas() {
+        let container_bounds = this.getBoundingClientRect();
+        this.#drawing.canvas.width = container_bounds.width;
+        this.#drawing.canvas.height = container_bounds.height;
+        this.render();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue)
             return;
         switch (name) {
-        case "data-line-width":
-            for (const c of this.#canvas_layers) {
-                this.#configureCanvasLayer(c);
-            }
-            break;
         case "data-width":
         case "data-height":
-            this.#resize();
+            this.#resizeSurface();
             break;
         case "data-background":
             // TODO: Draw a background pattern
             break;
+        case "data-layer":
+            for (var i = 0; i < this.layers.length; i += 1) {
+                if (newValue === this.layers[i].name) {
+                    this.active_layer = this.layers[i];
+                    break;
+                }
+            }
+            break;
+        case "data-show-annotations":
+            this.render();
+            break;
+        }
+    }
+
+    /// Compute the region of the whiteboard surface that intersects the canvas
+    #clipRegion() {
+        let ui_bounds = this.#ui.getBoundingClientRect();
+        let canvas_bounds = this.#drawing.canvas.getBoundingClientRect();
+        let clip = {
+            top: canvas_bounds.top - ui_bounds.top,
+            left: canvas_bounds.left - ui_bounds.left,
+        };
+        clip.bottom = clip.top + this.#drawing.canvas.height;
+        clip.right = clip.left + this.#drawing.canvas.width;
+        return clip;
+    }
+
+    /// Re-draw the entire whiteboard contents (minimise calls to this)
+    render() {
+        this.#drawing.clearRect(0, 0, this.#drawing.canvas.width, this.#drawing.canvas.height);
+        this.#drawing.lineCap = "round";
+        this.#drawing.lineJoin = "round";
+        let clip = this.#clipRegion();
+
+        for (const layer of this.layers) {
+            if (layer.is_code || this.dataset.showAnnotations === "on")
+                layer.draw(this.#drawing, clip);
         }
     }
 }
 customElements.define("white-board", Whiteboard);
 
-export { Whiteboard };
+export { Whiteboard, Layer };

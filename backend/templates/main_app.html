@@ -65,11 +65,11 @@
       </label>
       <fieldset class="spaced-bar">
         <label>
-          <input id="pen-code" type="radio" name="pen" value="code" checked/>
+          <input id="layer-code" type="radio" name="layer" value="code" checked/>
           Code
         </label>
         <label>
-          <input id="pen-annotations" type="radio" name="pen" value="annotations"/>
+          <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
           Annotation
         </label>
       </fieldset>
@@ -81,8 +81,8 @@
     </header>
     <main>
       <white-board id="whiteboard"
-                   data-width="3000"
-                   data-height="3000"
+                   data-width="10000"
+                   data-height="10000"
                    data-background="squares">
       </white-board>
     </main>
@@ -91,17 +91,6 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      <fieldset>
-        <legend>Touch Behaviour</legend>
-        <label>
-          <input type="radio" name="touch-action" value="pan" checked/>
-          Pan
-        </label>
-        <label>
-          <input type="radio" name="touch-action" value="auto"/>
-          Auto (match pen and mouse)
-        </label>
-      </fieldset>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>

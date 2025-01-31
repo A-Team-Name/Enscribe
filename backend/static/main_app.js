@@ -1,4 +1,5 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
+import { onEvent, setAttribute } from '/static/modules/reactivity.mjs';
 
 const settingsDialog = document.getElementById("settings-dialog");
 const whiteboard = document.getElementById("whiteboard");
@@ -6,38 +7,13 @@ const whiteboard = document.getElementById("whiteboard");
 document.getElementById("open-settings")
     .addEventListener("click", () => settingsDialog.showModal());
 
-/**
- * Add a "change" event listener to input that will set the given attribute of
- * whiteboard to event.target.value.
- */
-function linkInputToWhiteboardAttribute(input, attribute) {
-    input.addEventListener(
-        "change",
-        (event) => {
-            whiteboard.setAttribute(attribute, event.target.value);
-        }
-    );
-    if ((input.type !== "radio" && input.type !== "checkbox") || input.checked)
-        whiteboard.setAttribute(attribute, input.value);
-}
-
-linkInputToWhiteboardAttribute(document.getElementById("pen-width"),
-                               "data-line-width");
-linkInputToWhiteboardAttribute(document.getElementById("eraser-width"),
-                               "data-eraser-width");
-document.getElementById("show-annotations")
-    .addEventListener("change",
-                      (event) => {
-                          whiteboard.setAttribute("data-show-annotations",
-                                                  event.target.checked ? "on" : "off");
-                      })
-for (const radio of document.querySelectorAll("input[name='pen']")) {
-    linkInputToWhiteboardAttribute(radio, "data-pen");
-}
-for (const radio of document.querySelectorAll("input[name='tool']")) {
-    linkInputToWhiteboardAttribute(radio, "data-tool");
-}
-
-for (const option of document.querySelectorAll("input[name='touch-action']")) {
-    linkInputToWhiteboardAttribute(option, "data-touch-action");
-}
+onEvent("change", "#pen-width",
+        (input) => { whiteboard.active_layer.lineWidth = input.value; });
+onEvent("change", "#eraser-width", setAttribute(whiteboard, "data-eraser-width"));
+onEvent("change", "#show-annotations", setAttribute(whiteboard, "data-show-annotations"));
+onEvent("change", "input[name='layer']", setAttribute(whiteboard, "data-layer"));
+onEvent("change", "input[name='layer']",
+        () => {
+            document.getElementById("pen-width").value = whiteboard.active_layer.lineWidth;
+        });
+onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
