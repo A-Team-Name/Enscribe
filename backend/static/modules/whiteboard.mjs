@@ -150,9 +150,10 @@ class Layer {
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
-    /// Mark the last line as complete
+    /// Mark the last line as complete and return a reference to it.
     completeLine() {
         this.lines[this.lines.length -1].recomputeBoundingRect();
+        return this.lines[this.lines.length -1];
     }
 
     /// Erase lines with vertices intersecting circle centre (x, y), of given radius
@@ -426,7 +427,10 @@ class Whiteboard extends HTMLElement {
 
     #penUp() {
         if (this.#writing) {
-            this.active_layer.completeLine();
+            let line = this.active_layer.completeLine();
+            for (const block of this.#ui.querySelectorAll("code-block")) {
+                block.notifyUpdate(line.boundingRect);
+            }
             this.#enableAllBlocks();
         }
     }

@@ -1,4 +1,5 @@
 import { onEvent } from '/static/modules/reactivity.mjs';
+import { rectanglesOverlapping } from '/static/modules/shapeUtils.mjs';
 
 const code_block_template = `
 <link rel="stylesheet" href="/static/code_block.css">
@@ -97,6 +98,21 @@ class CodeBlock extends HTMLElement {
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
             this.#close();
+        }
+    }
+
+    /**
+     * Notify the code block of an update in the given rectangular region of the whiteboard/page.
+     * The region is in whiteboard space
+     */
+    notifyUpdate(region) {
+        let my_region = {
+            left: parseInt(this.dataset.x), top: parseInt(this.dataset.y),
+            right: parseInt(this.dataset.x) + parseInt(this.dataset.width),
+            bottom: parseInt(this.dataset.y) + parseInt(this.dataset.height)
+        };
+        if (rectanglesOverlapping(region, my_region)) {
+            this.setAttribute("state", "stale");
         }
     }
 
