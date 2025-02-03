@@ -24,7 +24,7 @@ class CodeBlock extends HTMLElement {
         "data-width",
         "data-height",
         "disabled",
-        "resizing",
+        "state",
     ];
 
     /** The region of the whiteboard that is selected for evaluation. */
@@ -63,17 +63,19 @@ class CodeBlock extends HTMLElement {
     }
 
     connectedCallback() {
-        // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("resizing", "");
         this.#anchor_x = this.dataset.x;
         this.#anchor_y = this.dataset.y;
+
+        // Hide the UI initially so it doesn't flash up before the first pointermove event
+        this.setAttribute("state", "stale");
     }
 
     /**
      * Resize the block in response to a pointer movement event
      */
     resize(event) {
-        this.setAttribute("resizing", "");
+        this.setAttribute("state", "resizing");
+        console.log(this.getAttribute("state"));
         this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
         this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
         this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
@@ -91,7 +93,7 @@ class CodeBlock extends HTMLElement {
      * Lock in the current size of the selection and make interactible.
      */
     confirm() {
-        this.removeAttribute("resizing");
+        this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
             this.#close();

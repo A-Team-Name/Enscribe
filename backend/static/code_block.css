@@ -34,7 +34,7 @@
     }
 }
 
-:host([resizing]) {
+:host([state="resizing"]) {
     :not(#selection) {
         display: none;
     }
