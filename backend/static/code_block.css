@@ -14,6 +14,14 @@
     width: max-content;
 }
 
+#select-language {
+    position: relative;
+    width: max-content;
+    &[open] {
+        display: flex;
+    }
+}
+
 #output-column {
     grid-column: output;
     /* spanning 3 rows lets #output-column extend past the second row without #controls moving */

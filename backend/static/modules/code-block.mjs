@@ -9,7 +9,11 @@ const code_block_template = `
   <button id="run" class="material-symbols-outlined">play_arrow</button>
   <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
   <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
+  <button id="language-switch">
+    <img height="24" src="/static/logos/apl.svg" alt="APL"/>
+  </button>
   <button id="close" class="material-symbols-outlined">close</button>
+  <dialog id="select-language" class="clickable"></dialog>
 </div>
 </div>
 <div id="output-column">
@@ -19,6 +23,21 @@ const code_block_template = `
 `;
 
 class CodeBlock extends HTMLElement {
+    static languages = {
+        "python3": {
+            "logo": "/static/logos/python.svg",
+            "name": "Python 3",
+        },
+        "apl": {
+            "logo": "/static/logos/apl.svg",
+            "name": "APL",
+        },
+        "lambda-calculus": {
+            "logo": "/static/logos/lambda.svg",
+            "name": "λ Calculus",
+        }
+    };
+
     static observedAttributes = [
         "data-x",
         "data-y",
@@ -26,6 +45,7 @@ class CodeBlock extends HTMLElement {
         "data-height",
         "disabled",
         "state",
+        "language",
     ];
 
     /** The region of the whiteboard that is selected for evaluation. */
@@ -34,6 +54,10 @@ class CodeBlock extends HTMLElement {
     #anchor_x;
     /** Y coordinate where selection started. */
     #anchor_y;
+
+    /** Icon showing the logo for this block's language. */
+    #language_logo;
+    #language_button;
 
     constructor() {
         super();
@@ -50,6 +74,30 @@ class CodeBlock extends HTMLElement {
         let programOutput = shadowRoot.getElementById("output");
         onEvent("change", shadowRoot.getElementById("show-output"),
             (show) => programOutput.style["display"] = show.checked ? "block" : "none");
+
+        this.#language_logo = shadowRoot.querySelector("#language-switch > img");
+
+        // Set up language switching UI.
+        let select_language = shadowRoot.getElementById("select-language");
+        this.#language_button = shadowRoot.querySelector("#language-switch");
+        this.#language_button.addEventListener("click",
+            () => select_language.show());
+        // Generate buttons for each language.
+        for (const language in CodeBlock.languages) {
+            let lang_props = CodeBlock.languages[language];
+            let language_label = document.createElement('button');
+            language_label.title = lang_props.name;
+            language_label.popoverTargetAction = "hide";
+            language_label.popoverTargetElement = select_language;
+            language_label.innerHTML = `
+            <img height="24" src="${lang_props.logo}" alt="${lang_props.name}"/>`;
+            select_language.appendChild(language_label);
+            language_label.addEventListener("click",
+                () => {
+                    this.setAttribute("language", language);
+                    select_language.close();
+                });
+        }
 
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
@@ -138,6 +186,11 @@ class CodeBlock extends HTMLElement {
         case "data-height":
             this.#selection.style["height"] = newValue + "px";
             break;
+        case "language":
+            // Display language in controls box.
+            let newLanguage = CodeBlock.languages[newValue];
+            this.#language_logo.src = newLanguage.logo;
+            this.#language_logo.alt = newLanguage.name;
         }
     }
 }
