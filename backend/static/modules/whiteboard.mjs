@@ -534,6 +534,7 @@ class Whiteboard extends HTMLElement {
         clip.bottom = clip.top + this.#drawing.canvas.height;
         clip.right = clip.left + this.#drawing.canvas.width;
         return clip;
+    }
 
     /**
      * Generate an image containing the whiteboard/page contents within clip
