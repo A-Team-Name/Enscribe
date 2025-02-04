@@ -6,11 +6,9 @@
     flex-direction: row;
 }
 #selection {
-    grid-area: selection;
     resize:both;
 }
 #controls {
-    grid-area: controls;
     width: max-content;
 }
 
@@ -23,9 +21,6 @@
 }
 
 #output-column {
-    grid-column: output;
-    /* spanning 3 rows lets #output-column extend past the second row without #controls moving */
-    grid-row: span 3;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
