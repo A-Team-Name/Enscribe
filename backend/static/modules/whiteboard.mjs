@@ -157,20 +157,24 @@ class Layer {
     }
 
     /// Erase lines with vertices intersecting circle centre (x, y), of given radius
+    /// Returns the lines that were erased.
     erase(x, y, radius) {
         let radius2 = radius ** 2;
+        let erased = [];
         let eraserBoundingRect = circleBoundingRect({y, x}, radius);
         for (const i in this.lines) {
             if (rectanglesOverlapping(eraserBoundingRect, this.lines[i].boundingRect)) {
                 let intersectionThreshold = radius2 + ((this.lines[i].lineWidth / 2) ** 2);
                 for (const point of this.lines[i].points) {
                     if ((point.x - x) ** 2 + (point.y - y) ** 2 <= intersectionThreshold) {
+                        erased.push(this.lines[i]);
                         delete this.lines[i];
                         break;
                     }
                 }
             }
         }
+        return erased;
     }
 }
 
@@ -437,7 +441,14 @@ class Whiteboard extends HTMLElement {
 
     #erase(x, y) {
         console.log("erasing")
-        this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+        let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+        if (this.active_layer.is_code) {
+            for (const line of erased) {
+                for (const block of this.#ui.querySelectorAll("code-block")) {
+                    block.notifyUpdate(line.boundingRect);
+                }
+            }
+        }
     }
 
     #enableAllBlocks() {
