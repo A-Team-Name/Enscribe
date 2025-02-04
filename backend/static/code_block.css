@@ -6,6 +6,8 @@
     flex-direction: row;
 }
 #selection {
+    /* Include border in the dimensions/area of the selection. */
+    box-sizing: border-box;
     resize:both;
 }
 #controls {
