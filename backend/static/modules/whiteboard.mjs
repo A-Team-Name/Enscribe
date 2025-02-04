@@ -156,8 +156,10 @@ class Layer {
         return this.lines[this.lines.length -1];
     }
 
-    /// Erase lines with vertices intersecting circle centre (x, y), of given radius
-    /// Returns the lines that were erased.
+    /**
+     * Erase lines with vertices intersecting circle centre (x, y), of given radius.
+     * @returns Array<Line> - the lines that were erased
+     */
     erase(x, y, radius) {
         let radius2 = radius ** 2;
         let erased = [];
@@ -215,7 +217,7 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
-        // Default default language
+        // Default default language (used on hard reload)
         this.dataset.defaultLanguage = "python3";
 
         window.matchMedia('(prefers-color-scheme: dark)')
@@ -427,6 +429,8 @@ class Whiteboard extends HTMLElement {
     #penUp() {
         if (this.#writing) {
             let line = this.active_layer.completeLine();
+
+            // Update any blocks the line intersected.
             for (const block of this.#ui.querySelectorAll("code-block")) {
                 block.notifyUpdate(line.boundingRect);
             }
@@ -437,6 +441,8 @@ class Whiteboard extends HTMLElement {
     #erase(x, y) {
         console.log("erasing")
         let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+
+        // Update any blocks that contained erased lines.
         if (this.active_layer.is_code) {
             for (const line of erased) {
                 for (const block of this.#ui.querySelectorAll("code-block")) {

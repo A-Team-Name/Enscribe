@@ -67,6 +67,7 @@ class CodeBlock extends HTMLElement {
 
         this.#selection = shadowRoot.getElementById("selection");
 
+        // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
         onEvent("change", shadowRoot.getElementById("show-text"),
             (show) => programText.style["display"] = show.checked ? "block" : "none");
@@ -75,9 +76,9 @@ class CodeBlock extends HTMLElement {
         onEvent("change", shadowRoot.getElementById("show-output"),
             (show) => programOutput.style["display"] = show.checked ? "block" : "none");
 
+        // Set up language switching UI.
         this.#language_logo = shadowRoot.querySelector("#language-switch > img");
 
-        // Set up language switching UI.
         let select_language = shadowRoot.getElementById("select-language");
         this.#language_button = shadowRoot.querySelector("#language-switch");
         this.#language_button.addEventListener("click",
@@ -99,9 +100,11 @@ class CodeBlock extends HTMLElement {
                 });
         }
 
+        // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
+        // On run, we perform text recognition, so the block is no longer stale.
         shadowRoot.getElementById("run")
             .addEventListener("click", async () => {
                 this.setAttribute("state", "executed");
@@ -117,16 +120,17 @@ class CodeBlock extends HTMLElement {
     }
 
     connectedCallback() {
+        // Hide the UI initially so it doesn't flash up before the first pointermove event
+        this.setAttribute("state", "resizing");
         this.#anchor_x = this.dataset.x;
         this.#anchor_y = this.dataset.y;
-
-        this.setAttribute("state", "stale");
     }
 
     /**
      * Resize the block in response to a pointer movement event
      */
     resize(event) {
+        // Move back into resizing state if it wasn't there already.
         this.setAttribute("state", "resizing");
         console.log(this.getAttribute("state"));
         this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
@@ -136,7 +140,9 @@ class CodeBlock extends HTMLElement {
     }
 
     /**
-     * Get the bounding client rect of the selection (viewport coordinates)
+     * Get the bounding client rect of the selection (viewport coordinates).
+     * This includes the border of the selection.
+     * @returns DOMRect - viewport bounds of selection
      */
     getBoundingSelectionRect() {
         return this.#selection.getBoundingClientRect();
@@ -146,6 +152,7 @@ class CodeBlock extends HTMLElement {
      * Lock in the current size of the selection and make interactible.
      */
     confirm() {
+        // We haven't run text recognition yet: stale.
         this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
@@ -155,9 +162,10 @@ class CodeBlock extends HTMLElement {
 
     /**
      * Notify the code block of an update in the given rectangular region of the whiteboard/page.
-     * The region is in whiteboard space
+     * @param {DOMRect} region - The updated region in whiteboard space
      */
     notifyUpdate(region) {
+        // Make the block stale if the update intersects it.
         let my_region = {
             left: parseInt(this.dataset.x), top: parseInt(this.dataset.y),
             right: parseInt(this.dataset.x) + parseInt(this.dataset.width),
