@@ -54,6 +54,11 @@ class CodeBlock extends HTMLElement {
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
+        shadowRoot.getElementById("run")
+            .addEventListener("click", async () => {
+                this.setAttribute("state", "executed");
+            });
+
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
             (event) => event.stopPropagation());
@@ -67,7 +72,6 @@ class CodeBlock extends HTMLElement {
         this.#anchor_x = this.dataset.x;
         this.#anchor_y = this.dataset.y;
 
-        // Hide the UI initially so it doesn't flash up before the first pointermove event
         this.setAttribute("state", "stale");
     }
 

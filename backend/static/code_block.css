@@ -39,3 +39,8 @@
         display: none;
     }
 }
+:host([state="stale"]) {
+    .selection {
+        border-style: dashed;
+    }
+}
