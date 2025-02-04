@@ -37,4 +37,32 @@ function circleBoundingRect(point, radius) {
     };
 }
 
-export { rectanglesOverlapping, pointInRect, rectangleUnion, circleBoundingRect };
+/**
+ * Compute the distance between two points, squared
+ * @param {DOMPoint} a
+ * @param {DOMPoint} b
+ * @returns DOMPoint - distance between a and b
+ */
+function distance2(a, b) {
+    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+}
+
+/**
+ * @param {DOMPoint} point_a
+ * @param {float} radius_a
+ * @param {DOMPoint} point_b
+ * @param {float} radius_b
+ * @returns bool - whether circles a and b overlap
+ */
+function circlesOverlapping(point_a, radius_a, point_b, radius_b) {
+    return distance2(point_a, point_b) <= (radius_a ** 2 + radius_b ** 2);
+}
+
+export {
+    rectanglesOverlapping,
+    pointInRect,
+    rectangleUnion,
+    circleBoundingRect,
+    distance2,
+    circlesOverlapping
+};

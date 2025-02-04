@@ -1,5 +1,5 @@
 import { CodeBlock } from '/static/modules/code-block.mjs';
-import { rectanglesOverlapping, pointInRect, rectangleUnion, circleBoundingRect } from '/static/modules/shapeUtils.mjs';
+import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
 
 const whiteboard_template = `
 <style>
@@ -161,14 +161,15 @@ class Layer {
      * @returns Array<Line> - the lines that were erased
      */
     erase(x, y, radius) {
-        let radius2 = radius ** 2;
         let erased = [];
-        let eraserBoundingRect = circleBoundingRect({y, x}, radius);
+        let eraserPoint = new DOMPoint(x, y);
+        let eraserBoundingRect = circleBoundingRect(eraserPoint, radius);
         for (const i in this.lines) {
+            // Do bounding box tests as a first pass for efficiency.
             if (rectanglesOverlapping(eraserBoundingRect, this.lines[i].boundingRect)) {
-                let intersectionThreshold = radius2 + ((this.lines[i].lineWidth / 2) ** 2);
+                let linePointRadius = (this.lines[i].lineWidth / 2);
                 for (const point of this.lines[i].points) {
-                    if ((point.x - x) ** 2 + (point.y - y) ** 2 <= intersectionThreshold) {
+                    if (circlesOverlapping(eraserPoint, radius, point, linePointRadius)) {
                         erased.push(this.lines[i]);
                         delete this.lines[i];
                         break;
