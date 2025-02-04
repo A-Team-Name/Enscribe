@@ -6,12 +6,11 @@ const code_block_template = `
   <button id="run" class="material-symbols-outlined">play_arrow</button>
   <label class="material-symbols-outlined"><input name="show-output" type="checkbox" checked/>output</label>
   <label class="material-symbols-outlined"><input name="show-text" type="checkbox"/>text_fields</label>
-  <input type="file" id="fileInput" accept="image/*" enctype="multipart/form-data"/> <!-- REMOVE THIS WHEN SCREEN CAPTURING CODE BLOCK -->
   <button id="close" class="material-symbols-outlined">close</button>
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable">Program text</textarea>
+  <textarea id="text" class="ui-window clickable">print('hello world')\nx=1+2\nprint(x)</textarea>
   <textarea id="output" class="ui-window clickable">Output</textarea>
 </div>
 `;
@@ -26,6 +25,7 @@ class CodeBlock extends HTMLElement {
         "data-height",
         "disabled",
         "resizing",
+        "language",
     ];
 
     /** The region of the whiteboard that is selected for evaluation. */
@@ -34,6 +34,10 @@ class CodeBlock extends HTMLElement {
     #anchor_x;
     /** Y coordinate where selection started. */
     #anchor_y;
+    /** Predicted text representation of code. */
+    #text;
+    /* Code evaluation result from server. */
+    #output;
 
     constructor() {
         super();
@@ -42,18 +46,19 @@ class CodeBlock extends HTMLElement {
         shadowRoot.innerHTML = code_block_template;
 
         this.#selection = shadowRoot.getElementById("selection");
-
+        this.#text = shadowRoot.getElementById("text");
+        this.#output = shadowRoot.getElementById("output");
 
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
         // Post screen capture image to '/image_to_text' when run button is clicked
         shadowRoot.getElementById("run")
-            .addEventListener("click", () => {
+            .addEventListener("click", async () => {
 
-                this.transcribeCodeBlockImage(shadowRoot)
-                this.executeTranscribedCode(shadowRoot)
-                
+                await this.transcribeCodeBlockImage();
+                this.executeTranscribedCode();
+
             });
 
 
@@ -64,56 +69,56 @@ class CodeBlock extends HTMLElement {
             (event) => event.stopPropagation());
 
         this.#anchor_x = this.#anchor_y = 0;
+        /// A reference to the whiteboard this selection is on, used for image extraction.
+        this.whiteboard = null;
     }
 
-    transcribeCodeBlockImage(shadowRoot) {
-        // Replace with screen capture code
-        const fileInput = shadowRoot.getElementById("fileInput");
-        const image_file = fileInput.files[0]; 
+    async transcribeCodeBlockImage() {
+        let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
 
         // Put the screen capture image into FormData object
         const imageFormData = new FormData();
-        imageFormData.append("img", image_file); // Add the image file to the form data
+        imageFormData.append("img", selectionContents); // Add the image file to the form data
         imageFormData.append("name", "image_unique_id");
 
-        fetch("/image_to_text/", {
-          method: "POST",
-          body: imageFormData,
-          headers: {
-            "X-CSRFTOKEN" : csrftoken
-          }
-            })
+        return fetch("/image_to_text/", {
+            method: "POST",
+            body: imageFormData,
+            headers: {
+                "X-CSRFTOKEN" : csrftoken
+            }
+        })
             .then((rsp) => rsp.json())
             .then((json) => {
-                shadowRoot.getElementById("text").value = json.predicted_text;
+                this.#text.value = json.predicted_text;
             })
             .catch((error) => console.error("Error:", error));
     }
 
-    executeTranscribedCode(shadowRoot) {
-        // Put the execution language and code to be executed into FormData object 
+    executeTranscribedCode() {
+        // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
-        executeFormData.append("language", "python3");
-        executeFormData.append("code", "print('hello world')\nx=1+2\nprint(x)");
+        executeFormData.append("language", this.getAttribute("language"));
+        executeFormData.append("code", this.#text.value);
 
-          fetch("/execute/", {
+        fetch("/execute/", {
             method: "POST",
             body: executeFormData,
             credentials: 'include',
             headers: {
                 "X-CSRFTOKEN" : csrftoken
-              }
-          })
+            }
+        })
             .then((rsp) => rsp.json())
             .then((json) => {
                 var output = "";
-                // Loop through each line of output from /execute response 
+                // Loop through each line of output from /execute response
                 for (const line of json.output_stream) {
                     // success = line.success
                     // content_type = line.type
                     output += line.content
                 }
-                shadowRoot.getElementById("output").value = output;
+                this.#output.value = output;
             })
             .catch((error) => console.error("Error:", error));
     }
@@ -121,6 +126,10 @@ class CodeBlock extends HTMLElement {
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
         this.setAttribute("resizing", "");
+        if (!this.hasAttribute("language")) {
+            // TODO: Implement a better language selection policy.
+            this.setAttribute("language", "python3");
+        }
         this.#anchor_x = this.dataset.x;
         this.#anchor_y = this.dataset.y;
     }
