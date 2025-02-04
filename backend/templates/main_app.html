@@ -91,6 +91,14 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
+      <div>
+        <label>Default Language</label>
+        <select id="default-language" name="default-language">
+          <option value="python3">Python</option>
+          <option value="apl">APL</option>
+          <option value="lambda-calculus">λ Calculus</option>
+        </select>
+      </div>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>

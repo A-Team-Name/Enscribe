@@ -187,6 +187,7 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
+        "data-default-language"
     ];
 
     // DOM elements
@@ -214,6 +215,8 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+        // Default default language
+        this.dataset.defaultLanguage = "python3";
 
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
@@ -389,6 +392,8 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.y = y;
         this.#last_selection.dataset.width = 0;
         this.#last_selection.dataset.height = 0;
+        this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
+
         this.#ui.appendChild(this.#last_selection);
     }
 
