@@ -9,9 +9,6 @@ import requests
 from websocket import create_connection
 from backend.utils import send_execute_request
 
-
-import onnxruntime
-import numpy as np
 from PIL import Image
 
 from io import BytesIO
