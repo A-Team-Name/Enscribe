@@ -154,9 +154,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
 @login_required
 def image_to_text(request):
-    print("RECEIVED REQUEST", flush=True)
     if request.method == "POST":
-        print("RECEIVED REQUEST")
         image = request.FILES["img"]
         
         img = Image.open(image).convert("L")
@@ -166,64 +164,10 @@ def image_to_text(request):
         img.save(temp_image, format="PNG")
         temp_image.seek(0)
         
-        print("SENDING REQUEST", flush=True)
-        
         # Initialise CodeBlockPrediction Object
         code_block = CodeBlockPrediction()
         code_block.save()
 
-        # # Load the ONNX model
-        # session = onnxruntime.InferenceSession("models/allcnn2d_untrained.onnx")
-
-        # # Prepare input data
-        # img_array = np.asarray(img_file)
-        # input_image = img_array.astype(np.float32)
-
-        # # Example image
-        # input_image = np.random.random(
-        #     (
-        #         1,  # batch: stack as many images as you like here
-        #         1,  # channels: needs to be 1 (grayscale), pixels are 1.0 or 0.0
-        #         64,  # height: fixed to 64 pixels for now
-        #         64,  # width: fixed to 64 pixels for now
-        #     )
-        # ).astype(np.float32)
-
-        # # Run inference
-        # inputs: list[onnxruntime.NodeArg] = session.get_inputs()
-        # outputs: list[onnxruntime.NodeArg] = session.get_outputs()
-
-        # input_name: list[str] = inputs[0].name
-        # output_names: list[str] = [out.name for out in outputs]
-
-        # softmax: np.ndarray
-        # softmax_ordered: np.ndarray
-        # logits: np.ndarray
-
-        # logits, softmax, softmax_ordered = session.run(
-        #     output_names, {input_name: input_image}
-        # )
-
-        # # logits.shape is shape (batch, character) for all character labels
-        # # softmax.shape is shape (batch, character) for all character labels
-        # # softmax_ordered is shape (batch, character, [label index, label prob, unicode character value])
-
-        # # character dim is 44 (there are 44 character labels)
-        # # label index is from 0 to 44 (corresponding to each ordered label index)
-        # # label prob is a softmaxed probability for this label prediction
-        # # unicode character value is the unicode character for this prediction
-
-        # # 2D Array of top predicted characters for each position
-        # top_characters: list[list[str]] = [
-        #     [
-        #         chr(int(softmax_ordered[batch_i, i, 2]))
-        #         for i in range(softmax_ordered.shape[1])
-        #     ]
-        #     for batch_i in range(softmax_ordered.shape[0])
-        # ]
-
-        # # 2D array of corresponding probabilities
-        # top_character_probs: list[list[float]] = softmax_ordered[:, :, 1].tolist()
         
         request_url = f"http://{settings.HANDWRITING_URL}:{settings.HANDWRITING_PORT}/translate"
         
