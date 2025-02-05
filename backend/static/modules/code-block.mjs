@@ -10,8 +10,8 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable">print('hello world')\nx=1+2\nprint(x)</textarea>
-  <textarea id="output" class="ui-window clickable">Output</textarea>
+  <textarea id="text" class="ui-window clickable"></textarea>
+  <textarea id="output" class="ui-window clickable"></textarea>
 </div>
 `;
 

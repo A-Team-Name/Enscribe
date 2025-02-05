@@ -15,7 +15,6 @@ websocket-client = "^1.8.0"
 pillow = "^11.0.0"
 django = "4.1.13"
 mysqlclient = "^2.2.7"
-onnxruntime = "^1.20.1"
 
 
 [tool.poetry.group.dev.dependencies]
