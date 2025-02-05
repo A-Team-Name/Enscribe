@@ -24,7 +24,7 @@ services:
       - kernel_bridge
     ports:
       - "8888:8888"
-    command: "start-notebook.sh --NotebookApp.token="
+    command: "start-notebook.sh --NotebookApp.token= --ServerApp.disable_check_xsrf=True"
 
 networks:
   kernel_bridge:
