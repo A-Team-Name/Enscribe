@@ -396,7 +396,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.width = 0;
         this.#last_selection.dataset.height = 0;
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
-
+        this.#last_selection.whiteboard = this;
         this.#ui.appendChild(this.#last_selection);
     }
 
@@ -522,6 +522,19 @@ class Whiteboard extends HTMLElement {
         clip.bottom = clip.top + this.#drawing.canvas.height;
         clip.right = clip.left + this.#drawing.canvas.width;
         return clip;
+    }
+
+    /**
+     * Generate an image containing the whiteboard/page contents within clip
+     * @param {DOMRect} clip
+     */
+    async extractCode(clip) {
+        const codeCanvas = new OffscreenCanvas(clip.width, clip.height);
+        let ctx = codeCanvas.getContext('2d');
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        this.layers[0].draw(ctx, clip);
+        return codeCanvas.convertToBlob();
     }
 
     /// Re-draw the entire whiteboard contents (minimise calls to this)

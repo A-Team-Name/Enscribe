@@ -17,10 +17,12 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable">Program text</textarea>
-  <textarea id="output" class="ui-window clickable">Output</textarea>
+  <textarea id="text" class="ui-window clickable"></textarea>
+  <textarea id="output" class="ui-window clickable"></textarea>
 </div>
 `;
+
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 class CodeBlock extends HTMLElement {
     static languages = {
@@ -54,6 +56,10 @@ class CodeBlock extends HTMLElement {
     #anchor_x;
     /** Y coordinate where selection started. */
     #anchor_y;
+    /** Predicted text representation of code. */
+    #text;
+    /* Code evaluation result from server. */
+    #output;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -66,6 +72,8 @@ class CodeBlock extends HTMLElement {
         shadowRoot.innerHTML = code_block_template;
 
         this.#selection = shadowRoot.getElementById("selection");
+        this.#text = shadowRoot.getElementById("text");
+        this.#output = shadowRoot.getElementById("output");
 
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
@@ -104,10 +112,14 @@ class CodeBlock extends HTMLElement {
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
-        // On run, we perform text recognition, so the block is no longer stale.
+        // Post screen capture image to '/image_to_text' when run button is clicked
         shadowRoot.getElementById("run")
             .addEventListener("click", async () => {
+                // On run, we perform text recognition, so the block is no longer stale.
                 this.setAttribute("state", "executed");
+                await this.transcribeCodeBlockImage();
+                this.executeTranscribedCode();
+
             });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
@@ -117,11 +129,67 @@ class CodeBlock extends HTMLElement {
             (event) => event.stopPropagation());
 
         this.#anchor_x = this.#anchor_y = 0;
+        /// A reference to the whiteboard this selection is on, used for image extraction.
+        this.whiteboard = null;
+    }
+
+    async transcribeCodeBlockImage() {
+        let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
+
+        // Put the screen capture image into FormData object
+        const imageFormData = new FormData();
+        imageFormData.append("img", selectionContents); // Add the image file to the form data
+        imageFormData.append("name", "image_unique_id");
+
+        return fetch("/image_to_text/", {
+            method: "POST",
+            body: imageFormData,
+            headers: {
+                "X-CSRFTOKEN" : csrftoken
+            }
+        })
+            .then((rsp) => rsp.json())
+            .then((json) => {
+                this.#text.value = json.predicted_text;
+            })
+            .catch((error) => console.error("Error:", error));
+    }
+
+    executeTranscribedCode() {
+        // Put the execution language and code to be executed into FormData object
+        const executeFormData = new FormData();
+        executeFormData.append("language", this.getAttribute("language"));
+        executeFormData.append("code", this.#text.value);
+
+        fetch("/execute/", {
+            method: "POST",
+            body: executeFormData,
+            credentials: 'include',
+            headers: {
+                "X-CSRFTOKEN" : csrftoken
+            }
+        })
+            .then((rsp) => rsp.json())
+            .then((json) => {
+                var output = "";
+                // Loop through each line of output from /execute response
+                for (const line of json.output_stream) {
+                    // success = line.success
+                    // content_type = line.type
+                    output += line.content
+                }
+                this.#output.value = output;
+            })
+            .catch((error) => console.error("Error:", error));
     }
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
         this.setAttribute("state", "resizing");
+        if (!this.hasAttribute("language")) {
+            // TODO: Implement a better language selection policy.
+            this.setAttribute("language", "python3");
+        }
         this.#anchor_x = this.dataset.x;
         this.#anchor_y = this.dataset.y;
     }
