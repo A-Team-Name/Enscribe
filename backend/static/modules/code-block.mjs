@@ -30,7 +30,7 @@ class CodeBlock extends HTMLElement {
             "logo": "/static/logos/python.svg",
             "name": "Python 3",
         },
-        "apl": {
+        "dyalog_apl": {
             "logo": "/static/logos/apl.svg",
             "name": "APL",
         },
