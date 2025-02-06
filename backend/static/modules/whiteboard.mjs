@@ -1,4 +1,5 @@
 import { CodeBlock } from '/static/modules/code-block.mjs';
+import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
 
 const whiteboard_template = `
 <style>
@@ -55,45 +56,6 @@ const whiteboard_template = `
   </div>
 </div>
 `;
-
-function rectanglesOverlapping(a, b) {
-    return !(
-        a.right < b.left
-            || a.left > b.right
-            || a.bottom < b.top
-            || a.top > b.bottom
-    );
-}
-
-/// Computes whether point is in rect
-function pointInRect(point, rect) {
-    return !(
-        rect.right < point.x
-            || rect.left > point.x
-            || rect.bottom < point.y
-            || rect.top > point.y
-    );
-}
-
-/// Computes a rectangle that perfectly fits a and b
-function rectangleUnion(a, b) {
-    return {
-        right: Math.max(a.right, b.right),
-        left: Math.min(a.left, b.left),
-        top: Math.min(a.top, b.top),
-        bottom: Math.max(a.bottom, b.bottom),
-    };
-}
-
-/// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
-function circleBoundingRect(point, radius) {
-    return {
-        right: point.x + radius,
-        left: point.x - radius,
-        top: point.y - radius,
-        bottom: point.y + radius,
-    };
-}
 
 function fillCircle(ctx, x, y, radius) {
     const circle = new Path2D();
@@ -188,26 +150,34 @@ class Layer {
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
-    /// Mark the last line as complete
+    /// Mark the last line as complete and return a reference to it.
     completeLine() {
         this.lines[this.lines.length -1].recomputeBoundingRect();
+        return this.lines[this.lines.length -1];
     }
 
-    /// Erase lines with vertices intersecting circle centre (x, y), of given radius
+    /**
+     * Erase lines with vertices intersecting circle centre (x, y), of given radius.
+     * @returns Array<Line> - the lines that were erased
+     */
     erase(x, y, radius) {
-        let radius2 = radius ** 2;
-        let eraserBoundingRect = circleBoundingRect({y, x}, radius);
+        let erased = [];
+        let eraserPoint = new DOMPoint(x, y);
+        let eraserBoundingRect = circleBoundingRect(eraserPoint, radius);
         for (const i in this.lines) {
+            // Do bounding box tests as a first pass for efficiency.
             if (rectanglesOverlapping(eraserBoundingRect, this.lines[i].boundingRect)) {
-                let intersectionThreshold = radius2 + ((this.lines[i].lineWidth / 2) ** 2);
+                let linePointRadius = (this.lines[i].lineWidth / 2);
                 for (const point of this.lines[i].points) {
-                    if ((point.x - x) ** 2 + (point.y - y) ** 2 <= intersectionThreshold) {
+                    if (circlesOverlapping(eraserPoint, radius, point, linePointRadius)) {
+                        erased.push(this.lines[i]);
                         delete this.lines[i];
                         break;
                     }
                 }
             }
         }
+        return erased;
     }
 }
 
@@ -220,6 +190,7 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
+        "data-default-language"
     ];
 
     // DOM elements
@@ -247,6 +218,8 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+        // Default default language (used on hard reload)
+        this.dataset.defaultLanguage = "python3";
 
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
@@ -422,6 +395,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.y = y;
         this.#last_selection.dataset.width = 0;
         this.#last_selection.dataset.height = 0;
+        this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
         this.#ui.appendChild(this.#last_selection);
     }
@@ -455,14 +429,28 @@ class Whiteboard extends HTMLElement {
 
     #penUp() {
         if (this.#writing) {
-            this.active_layer.completeLine();
+            let line = this.active_layer.completeLine();
+
+            // Update any blocks the line intersected.
+            for (const block of this.#ui.querySelectorAll("code-block")) {
+                block.notifyUpdate(line.boundingRect);
+            }
             this.#enableAllBlocks();
         }
     }
 
     #erase(x, y) {
         console.log("erasing")
-        this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+        let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+
+        // Update any blocks that contained erased lines.
+        if (this.active_layer.is_code) {
+            for (const line of erased) {
+                for (const block of this.#ui.querySelectorAll("code-block")) {
+                    block.notifyUpdate(line.boundingRect);
+                }
+            }
+        }
     }
 
     #enableAllBlocks() {

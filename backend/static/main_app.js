@@ -1,5 +1,6 @@
 import { Whiteboard } from '/static/modules/whiteboard.mjs';
 import { onEvent, setAttribute } from '/static/modules/reactivity.mjs';
+import { CodeBlock } from '/static/modules/code-block.mjs';
 
 const settingsDialog = document.getElementById("settings-dialog");
 const whiteboard = document.getElementById("whiteboard");
@@ -17,3 +18,10 @@ onEvent("change", "input[name='layer']",
             document.getElementById("pen-width").value = whiteboard.active_layer.lineWidth;
         });
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
+onEvent("change", "select[name='default-language']",
+        (input) => {
+            let language = CodeBlock.languages[input.value];
+            document.getElementById("language-logo").src = language.logo;
+            document.getElementById("language-logo").alt = language.name;
+            whiteboard.dataset.defaultLanguage = input.value;
+        });

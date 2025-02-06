@@ -1,12 +1,19 @@
+import { onEvent } from '/static/modules/reactivity.mjs';
+import { rectanglesOverlapping } from '/static/modules/shapeUtils.mjs';
+
 const code_block_template = `
 <link rel="stylesheet" href="/static/code_block.css">
 <div style="display: flex; flex-direction: column; align-items: right; width: max-content">
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
-  <label class="material-symbols-outlined"><input name="show-output" type="checkbox" checked/>output</label>
-  <label class="material-symbols-outlined"><input name="show-text" type="checkbox"/>text_fields</label>
+  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
+  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
+  <button id="language-switch">
+    <img height="24" src="/static/logos/apl.svg" alt="APL"/>
+  </button>
   <button id="close" class="material-symbols-outlined">close</button>
+  <dialog id="select-language" class="clickable"></dialog>
 </div>
 </div>
 <div id="output-column">
@@ -18,13 +25,28 @@ const code_block_template = `
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 class CodeBlock extends HTMLElement {
+    static languages = {
+        "python3": {
+            "logo": "/static/logos/python.svg",
+            "name": "Python 3",
+        },
+        "apl": {
+            "logo": "/static/logos/apl.svg",
+            "name": "APL",
+        },
+        "lambda-calculus": {
+            "logo": "/static/logos/lambda.svg",
+            "name": "λ Calculus",
+        }
+    };
+
     static observedAttributes = [
         "data-x",
         "data-y",
         "data-width",
         "data-height",
         "disabled",
-        "resizing",
+        "state",
         "language",
     ];
 
@@ -38,6 +60,12 @@ class CodeBlock extends HTMLElement {
     #text;
     /* Code evaluation result from server. */
     #output;
+    /** The run button. */
+    #run;
+
+    /** Icon showing the logo for this block's language. */
+    #language_logo;
+    #language_button;
 
     constructor() {
         super();
@@ -49,18 +77,56 @@ class CodeBlock extends HTMLElement {
         this.#text = shadowRoot.getElementById("text");
         this.#output = shadowRoot.getElementById("output");
 
+        // Set up text and output display toggle checkboxes.
+        let programText = shadowRoot.getElementById("text");
+        onEvent("change", shadowRoot.getElementById("show-text"),
+            (show) => programText.style["display"] = show.checked ? "block" : "none");
+
+        let programOutput = shadowRoot.getElementById("output");
+        onEvent("change", shadowRoot.getElementById("show-output"),
+            (show) => programOutput.style["display"] = show.checked ? "block" : "none");
+
+        // Set up language switching UI.
+        this.#language_logo = shadowRoot.querySelector("#language-switch > img");
+
+        let select_language = shadowRoot.getElementById("select-language");
+        this.#language_button = shadowRoot.querySelector("#language-switch");
+        this.#language_button.addEventListener("click",
+            () => select_language.show());
+        // Generate buttons for each language.
+        for (const language in CodeBlock.languages) {
+            let lang_props = CodeBlock.languages[language];
+            let language_label = document.createElement('button');
+            language_label.title = lang_props.name;
+            language_label.popoverTargetAction = "hide";
+            language_label.popoverTargetElement = select_language;
+            language_label.innerHTML = `
+            <img height="24" src="${lang_props.logo}" alt="${lang_props.name}"/>`;
+            select_language.appendChild(language_label);
+            language_label.addEventListener("click",
+                () => {
+                    this.setAttribute("language", language);
+                    select_language.close();
+                });
+        }
+
+        // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
+        this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
-        shadowRoot.getElementById("run")
-            .addEventListener("click", async () => {
+        this.#run.addEventListener("click", async () => {
+            // Disable the run button until we finish executing to prevent double-clicks.
+            this.#run.disabled = true;
+            await this.transcribeCodeBlockImage();
+            // On run, we perform text recognition, so the block is no longer stale.
+            this.setAttribute("state", "executed");
+            this.executeTranscribedCode();
 
-                await this.transcribeCodeBlockImage();
-                this.executeTranscribedCode();
-
-            });
-
+            // Re-enable the run button now code has executed.
+            this.#run.disabled = false;
+        });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
@@ -125,7 +191,7 @@ class CodeBlock extends HTMLElement {
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("resizing", "");
+        this.setAttribute("state", "resizing");
         if (!this.hasAttribute("language")) {
             // TODO: Implement a better language selection policy.
             this.setAttribute("language", "python3");
@@ -138,7 +204,9 @@ class CodeBlock extends HTMLElement {
      * Resize the block in response to a pointer movement event
      */
     resize(event) {
-        this.setAttribute("resizing", "");
+        // Move back into resizing state if it wasn't there already.
+        this.setAttribute("state", "resizing");
+        console.log(this.getAttribute("state"));
         this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
         this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
         this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
@@ -146,13 +214,39 @@ class CodeBlock extends HTMLElement {
     }
 
     /**
+     * Get the bounding client rect of the selection (viewport coordinates).
+     * This includes the border of the selection.
+     * @returns DOMRect - viewport bounds of selection
+     */
+    getBoundingSelectionRect() {
+        return this.#selection.getBoundingClientRect();
+    }
+
+    /**
      * Lock in the current size of the selection and make interactible.
      */
     confirm() {
-        this.removeAttribute("resizing");
+        // We haven't run text recognition yet: stale.
+        this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
             this.#close();
+        }
+    }
+
+    /**
+     * Notify the code block of an update in the given rectangular region of the whiteboard/page.
+     * @param {DOMRect} region - The updated region in whiteboard space
+     */
+    notifyUpdate(region) {
+        // Make the block stale if the update intersects it.
+        let my_region = {
+            left: parseInt(this.dataset.x), top: parseInt(this.dataset.y),
+            right: parseInt(this.dataset.x) + parseInt(this.dataset.width),
+            bottom: parseInt(this.dataset.y) + parseInt(this.dataset.height)
+        };
+        if (rectanglesOverlapping(region, my_region)) {
+            this.setAttribute("state", "stale");
         }
     }
 
@@ -174,6 +268,11 @@ class CodeBlock extends HTMLElement {
         case "data-height":
             this.#selection.style["height"] = newValue + "px";
             break;
+        case "language":
+            // Display language in controls box.
+            let newLanguage = CodeBlock.languages[newValue];
+            this.#language_logo.src = newLanguage.logo;
+            this.#language_logo.alt = newLanguage.name;
         }
     }
 }
