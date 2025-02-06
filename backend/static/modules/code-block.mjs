@@ -60,6 +60,8 @@ class CodeBlock extends HTMLElement {
     #text;
     /* Code evaluation result from server. */
     #output;
+    /** The run button. */
+    #run;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -112,15 +114,19 @@ class CodeBlock extends HTMLElement {
         shadowRoot.getElementById("close")
             .addEventListener("click", () => this.#close());
 
+        this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
-        shadowRoot.getElementById("run")
-            .addEventListener("click", async () => {
-                // On run, we perform text recognition, so the block is no longer stale.
-                this.setAttribute("state", "executed");
-                await this.transcribeCodeBlockImage();
-                this.executeTranscribedCode();
+        this.#run.addEventListener("click", async () => {
+            // Disable the run button until we finish executing to prevent double-clicks.
+            this.#run.disabled = true;
+            await this.transcribeCodeBlockImage();
+            // On run, we perform text recognition, so the block is no longer stale.
+            this.setAttribute("state", "executed");
+            this.executeTranscribedCode();
 
-            });
+            // Re-enable the run button now code has executed.
+            this.#run.disabled = false;
+        });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
