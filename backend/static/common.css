@@ -57,7 +57,7 @@ button, select {
     border: 0.1rem solid var(--ui-border-color);
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
-    &:hover {
+    &:not([disabled]):hover {
         background-color: var(--ui-focus-color);
     }
     &.material-symbols-outlined {
