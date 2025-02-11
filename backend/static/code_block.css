@@ -31,21 +31,3 @@
 .clickable {
     pointer-events: auto;
 }
-
-/* :host([disabled]) {
-    opacity: 50%;
-    .clickable {
-        pointer-events: none;
-    }
-}
-
-:host([state="resizing"]) {
-    :not(#selection) {
-        display: none;
-    }
-}
-:host([state="stale"]) {
-    .selection {
-        border-style: dashed;
-    }
-} */
