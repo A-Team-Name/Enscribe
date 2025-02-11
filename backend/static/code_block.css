@@ -32,7 +32,7 @@
     pointer-events: auto;
 }
 
-:host([disabled]) {
+/* :host([disabled]) {
     opacity: 50%;
     .clickable {
         pointer-events: none;
@@ -48,4 +48,4 @@
     .selection {
         border-style: dashed;
     }
-}
+} */
