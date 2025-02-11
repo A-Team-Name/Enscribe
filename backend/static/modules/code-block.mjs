@@ -46,7 +46,8 @@ class CodeBlock extends HTMLElement {
         "data-width",
         "data-height",
         "disabled",
-        "state",
+        "stale",
+        "resizing",
         "language",
     ];
 
@@ -121,7 +122,7 @@ class CodeBlock extends HTMLElement {
             this.#run.disabled = true;
             await this.transcribeCodeBlockImage();
             // On run, we perform text recognition, so the block is no longer stale.
-            this.setAttribute("state", "executed");
+            this.removeAttribute("stale");
             this.executeTranscribedCode();
 
             // Re-enable the run button now code has executed.
@@ -191,7 +192,7 @@ class CodeBlock extends HTMLElement {
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("state", "resizing");
+        this.setAttribute("resizing", "");
         if (!this.hasAttribute("language")) {
             // TODO: Implement a better language selection policy.
             this.setAttribute("language", "python3");
@@ -205,8 +206,7 @@ class CodeBlock extends HTMLElement {
      */
     resize(event) {
         // Move back into resizing state if it wasn't there already.
-        this.setAttribute("state", "resizing");
-        console.log(this.getAttribute("state"));
+        this.setAttribute("resizing", "");
         this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
         this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
         this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
@@ -227,7 +227,8 @@ class CodeBlock extends HTMLElement {
      */
     confirm() {
         // We haven't run text recognition yet: stale.
-        this.setAttribute("state", "stale");
+        this.setAttribute("stale", "");
+        this.removeAttribute("resizing");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
             this.#close();
@@ -246,7 +247,7 @@ class CodeBlock extends HTMLElement {
             bottom: parseInt(this.dataset.y) + parseInt(this.dataset.height)
         };
         if (rectanglesOverlapping(region, my_region)) {
-            this.setAttribute("state", "stale");
+            this.setAttribute("stale", "");
         }
     }
 

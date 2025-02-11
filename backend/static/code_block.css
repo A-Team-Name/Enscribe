@@ -39,12 +39,12 @@
     }
 }
 
-:host([state="resizing"]) {
+:host([resizing]) {
     :not(#selection) {
         display: none;
     }
 }
-:host([state="stale"]) {
+:host([stale]) {
     .selection {
         border-style: dashed;
     }
