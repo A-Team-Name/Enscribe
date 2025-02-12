@@ -157,8 +157,14 @@ class Layer {
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
-    /// Mark the last line as complete and return a reference to it.
+    /**
+     * Mark the last line as complete and return a reference to it.
+     * @returns Line? - The line that was completed, if any
+     */
     completeLine() {
+        if (this.lines.length === 0) {
+            return null;
+        }
         this.lines[this.lines.length -1].recomputeBoundingRect();
         return this.lines[this.lines.length -1];
     }
@@ -441,11 +447,15 @@ class Whiteboard extends HTMLElement {
         if (this.#writing) {
             let line = this.active_layer.completeLine();
 
-            // Update any blocks the line intersected.
-            for (const block of this.#ui.querySelectorAll("code-block")) {
-                block.notifyUpdate(line.boundingRect);
+            if (line !== null) {
+                // Update any blocks the line intersected.
+                for (const block of this.#ui.querySelectorAll("code-block")) {
+                    block.notifyUpdate(line.boundingRect);
+                }
             }
+
             this.#enableAllBlocks();
+            this.#writing = false;
         }
     }
 
