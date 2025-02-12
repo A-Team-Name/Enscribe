@@ -127,8 +127,6 @@ class Layer {
         this.lines = [];
         /// Color for new lines
         this.color = color;
-        /// Thickness for new lines
-        this.lineWidth = 3;
         this.is_code = is_code;
     }
 
@@ -140,9 +138,18 @@ class Layer {
         }
     }
 
-    /// Add a new line starting at point start
-    newLine(start) {
-        this.lines.push(new Line(this.color, this.lineWidth, start));
+    /**
+     * Add a new line
+     *
+     * @param {DOMPoint} start - Starting point of the the line.
+     * @param {number} lineWidth - Width of the line.
+     *
+     * @returns {Line} A reference to the new line that was created.
+     */
+    newLine(start, lineWidth) {
+        let line = new Line(this.color, lineWidth, start);
+        this.lines.push(line);
+        return line;
     }
 
     /// Extend the last line on the Layer to point
@@ -218,6 +225,7 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+
         // Default default language (used on hard reload)
         this.dataset.defaultLanguage = "python3";
 
@@ -229,6 +237,8 @@ class Whiteboard extends HTMLElement {
             new Layer("annotations", "blue", false)
         ];
         this.active_layer = this.layers[0];
+        /** Thickness for new lines */
+        this.lineWidth = 3;
 
         this.#start_x = 0;
         this.#start_y = 0;
@@ -326,7 +336,7 @@ class Whiteboard extends HTMLElement {
             case "write":
                 this.#drawing.fillStyle = interpretColor(this.active_layer.color);
                 fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
-                    this.active_layer.lineWidth/2);
+                    this.lineWidth/2);
                 break;
             case "erase":
                 this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
@@ -423,7 +433,7 @@ class Whiteboard extends HTMLElement {
      */
     #penDown(x, y) {
         this.#disableAllBlocks();
-        this.active_layer.newLine({y: y, x: x});
+        this.active_layer.newLine({y: y, x: x}, this.lineWidth);
         this.render();
     }
 
