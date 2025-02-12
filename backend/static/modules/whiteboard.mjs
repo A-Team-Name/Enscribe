@@ -491,9 +491,11 @@ class Whiteboard extends HTMLElement {
 
     /// Handle a change in the size of the visible region of the whiteboard.
     #resizeCanvas() {
-        let container_bounds = this.getBoundingClientRect();
-        this.#drawing.canvas.width = container_bounds.width;
-        this.#drawing.canvas.height = container_bounds.height;
+        // Match the size of the window to prevent situations where the canvas is too small after
+        // some other element resized. This will usually not be much bigger than it would have to be
+        // anyway, so we don't need to worry about the performance implications too much.
+        this.#drawing.canvas.width = window.innerWidth;
+        this.#drawing.canvas.height = window.innerHeight;
         this.render();
     }
 
