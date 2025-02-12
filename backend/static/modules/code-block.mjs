@@ -266,15 +266,15 @@ class CodeBlock extends HTMLElement {
             this.#selection.classList.remove("tentative");
             break;
         case "stale":
-            this.#controls.style["display"] = "flex";
+            this.#controls.style["display"] = "block";
             this.#selection.classList.add("tentative");
             break;
         case "running":
-            this.#controls.style["display"] = "flex";
+            this.#controls.style["display"] = "block";
             this.#selection.classList.remove("tentative");
             break;
         case "executed":
-            this.#controls.style["display"] = "flex";
+            this.#controls.style["display"] = "block";
             this.#selection.classList.remove("tentative");
             break;
         }
