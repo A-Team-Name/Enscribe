@@ -208,7 +208,6 @@ class CodeBlock extends HTMLElement {
     resize(event) {
         // Move back into resizing state if it wasn't there already.
         this.setAttribute("state", "resizing");
-        console.log(this.getAttribute("state"));
         this.dataset.x = Math.min(event.offsetX, this.#anchor_x);
         this.dataset.y = Math.min(event.offsetY, this.#anchor_y);
         this.dataset.width = Math.abs(event.offsetX - this.#anchor_x);
@@ -258,7 +257,6 @@ class CodeBlock extends HTMLElement {
 
 
     setStyle() {
-        console.log("resizing");
         switch (this.getAttribute("state")) {
         case "resizing":
             // loop through all the children of the shadow root
@@ -281,7 +279,6 @@ class CodeBlock extends HTMLElement {
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        console.log(`Attribute changed: ${name} ${oldValue} -> ${newValue}`);
         switch (name) {
         case "data-x":
             this.style["left"] = newValue + "px";
