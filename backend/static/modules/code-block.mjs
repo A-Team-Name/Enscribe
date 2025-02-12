@@ -45,7 +45,6 @@ class CodeBlock extends HTMLElement {
         "data-y",
         "data-width",
         "data-height",
-        "disabled",
         "state",
         "language",
     ];

@@ -397,7 +397,6 @@ class Whiteboard extends HTMLElement {
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
                 this.#last_selection = null;
-                this.#enableAllBlocks();
             }
             break;
         }
@@ -405,7 +404,6 @@ class Whiteboard extends HTMLElement {
     }
 
     #createSelection(x, y) {
-        this.#disableAllBlocks();
         this.#last_selection = document.createElement("code-block");
         this.#last_selection.dataset.x = x;
         this.#last_selection.dataset.y = y;
@@ -438,7 +436,6 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(x, y) {
-        this.#disableAllBlocks();
         this.active_layer.newLine({y: y, x: x}, this.lineWidth);
         this.render();
     }
@@ -454,7 +451,6 @@ class Whiteboard extends HTMLElement {
                 }
             }
 
-            this.#enableAllBlocks();
             this.#writing = false;
         }
     }
@@ -470,18 +466,6 @@ class Whiteboard extends HTMLElement {
                     block.notifyUpdate(line.boundingRect);
                 }
             }
-        }
-    }
-
-    #enableAllBlocks() {
-        for (const block of this.#ui.querySelectorAll("code-block")) {
-            block.removeAttribute("disabled");
-        }
-    }
-
-    #disableAllBlocks() {
-        for (const block of this.#ui.querySelectorAll("code-block")) {
-            block.setAttribute("disabled", "");
         }
     }
 
