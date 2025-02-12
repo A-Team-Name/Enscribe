@@ -159,10 +159,11 @@ class Layer {
 
     /**
      * Mark the last line as complete and return a reference to it.
-     * @returns Line? - The line that was completed, if any
+     * @returns Line? - The line that was completed, if any.
      */
     completeLine() {
-        if (this.lines.length === 0) {
+        // Last line could be undefined if it was erased
+        if (this.lines.length === 0 || this.lines[this.lines.length - 1] === undefined) {
             return null;
         }
         this.lines[this.lines.length -1].recomputeBoundingRect();
