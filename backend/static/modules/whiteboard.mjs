@@ -71,7 +71,7 @@ function strokeCircle(ctx, x, y, radius) {
 
 function interpretColor(color) {
     if (color === "auto") {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "white" : "black";
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "#ffffff" : "#000000";
     } else {
         return color;
     }
@@ -242,7 +242,7 @@ class Whiteboard extends HTMLElement {
 
         this.layers = [
             new Layer("code", "auto", true),
-            new Layer("annotations", "blue", false)
+            new Layer("annotations", "#0000ff", false)
         ];
         this.active_layer = this.layers[0];
         /** Thickness for new lines */
@@ -284,6 +284,21 @@ class Whiteboard extends HTMLElement {
         this.#resizeCanvas();
         window.addEventListener("resize",
             () => this.#resizeCanvas());
+    }
+
+    // This get/set API exposes hex color values even if active_layer.color is auto.
+    // The color input type requires hex colors, hence this song and dance
+    set lineColor(color) {
+        // Enable auto colour if switching to what it would currently render as.
+        if (color === interpretColor("auto")) {
+            this.active_layer.color = "auto";
+        } else {
+            this.active_layer.color = color;
+        }
+    }
+
+    get lineColor() {
+        return interpretColor(this.active_layer.color);
     }
 
     /**
