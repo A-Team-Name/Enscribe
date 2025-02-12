@@ -197,6 +197,7 @@ class Layer {
 
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
+        "data-touch-action",
         "data-eraser-width",
         "data-layer",
         "data-tool",
@@ -294,8 +295,11 @@ class Whiteboard extends HTMLElement {
             return "none";
         switch (event.pointerType) {
         case "touch":
-            // We no longer attempt to handle touch events ourselves, at all
-            return "none";
+            // Use native touch for scrolling
+            if (this.dataset.touchAction === "pan" || this.dataset.tool === "pan")
+                return "none";
+            else
+                return this.dataset.tool;
         case "mouse":
             if (event.buttons & 4)
                 // Middle-click to scroll
@@ -314,9 +318,8 @@ class Whiteboard extends HTMLElement {
         event.preventDefault();
         if (event.isPrimary)
             event.target.setPointerCapture(event.pointerId);
-        if (event.pointerType !== "touch")
-            this.#writing = true;
-        switch (this.#eventAction(event)) {
+        let action = this.#eventAction(event);
+        switch (action) {
         case "erase":
             this.#erase(event.offsetX, event.offsetY);
             this.render();
@@ -332,7 +335,10 @@ class Whiteboard extends HTMLElement {
             this.#start_y = event.offsetY;
             break;
         }
-        this.#drawCursor(event);
+        if (action !== "none") {
+            this.#writing = true;
+            this.#drawCursor(event);
+        }
     }
 
     #drawCursor(event) {

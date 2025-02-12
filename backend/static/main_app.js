@@ -14,6 +14,7 @@ onEvent("change", "#eraser-width", setAttribute(whiteboard, "data-eraser-width")
 onEvent("change", "#show-annotations", setAttribute(whiteboard, "data-show-annotations"));
 onEvent("change", "input[name='layer']", setAttribute(whiteboard, "data-layer"));
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
+onEvent("change", "input[name='touch-action']", setAttribute(whiteboard, "data-touch-action"));
 onEvent("change", "select[name='default-language']",
         (input) => {
             let language = CodeBlock.languages[input.value];
