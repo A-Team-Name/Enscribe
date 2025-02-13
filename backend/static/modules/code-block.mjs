@@ -64,6 +64,8 @@ class CodeBlock extends HTMLElement {
     #output;
     /** The run button. */
     #run;
+    /** The controls block. */
+    #controls;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -78,6 +80,7 @@ class CodeBlock extends HTMLElement {
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
         this.#output = shadowRoot.getElementById("output");
+        this.#controls = shadowRoot.getElementById("controls");
 
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
@@ -292,7 +295,32 @@ class CodeBlock extends HTMLElement {
         this.remove();
     }
 
+
+    setStyle() {
+        console.log("resizing");
+        switch (this.getAttribute("state")) {
+        case "resizing":
+            // loop through all the children of the shadow root
+            this.#controls.style["display"] = "none";
+            this.#selection.classList.remove("tentative");
+            break;
+        case "stale":
+            this.#controls.style["display"] = "flex";
+            this.#selection.classList.add("tentative");
+            break;
+        case "running":
+            this.#controls.style["display"] = "flex";
+            this.#selection.classList.remove("tentative");
+            break;
+        case "executed":
+            this.#controls.style["display"] = "flex";
+            this.#selection.classList.remove("tentative");
+            break;
+        }
+    }
+
     attributeChangedCallback(name, oldValue, newValue) {
+        console.log(`Attribute changed: ${name} ${oldValue} -> ${newValue}`);
         switch (name) {
         case "data-x":
             this.style["left"] = newValue + "px";
@@ -311,6 +339,10 @@ class CodeBlock extends HTMLElement {
             let newLanguage = CodeBlock.languages[newValue];
             this.#language_logo.src = newLanguage.logo;
             this.#language_logo.alt = newLanguage.name;
+            break;
+        case "state":
+            this.setStyle();
+            break;
         }
     }
 }
