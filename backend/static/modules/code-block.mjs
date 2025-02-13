@@ -196,7 +196,7 @@ class CodeBlock extends HTMLElement {
             .then((rsp) => rsp.json())
             .then((json) => {
                 this.setAttribute("predicted_text", json.predicted_text);
-                this.setAttribute("predictions", json.predictions);
+                this.setAttribute("predictions", JSON.stringify(json.predictions));
                 this.#text.value = json.predicted_text;
             })
             .catch((error) => console.error("Error:", error));
