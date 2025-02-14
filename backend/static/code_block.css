@@ -31,3 +31,32 @@
 .clickable {
     pointer-events: auto;
 }
+
+.resizeable {
+    resize: both;
+    overflow: auto;
+}
+
+.character-button {
+    float: left;
+    padding-left: 5px;
+}
+
+#predictions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    width: 200px;
+    height: 100px;
+    display: none;
+}
+
+#text {
+    width: 200px;
+    height: 40px;
+}
+
+.predicted-text-span:hover{
+    cursor: default;
+}

@@ -17,7 +17,8 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <textarea id="text" class="ui-window clickable"></textarea>
+  <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
+  <div contenteditable="true" id="predictions" class="ui-window clickable "></div>
   <textarea id="output" class="ui-window clickable"></textarea>
 </div>
 `;
@@ -60,6 +61,10 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
+    /* Character predictions from server. */
+    #buttons_container;
+    /* Div for buttons for each character */
+    #predictions;
     /* Code evaluation result from server. */
     #output;
     /** The run button. */
@@ -79,9 +84,9 @@ class CodeBlock extends HTMLElement {
 
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
+        this.#predictions = shadowRoot.getElementById("predictions");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
-
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
         onEvent("change", shadowRoot.getElementById("show-text"),
@@ -197,9 +202,67 @@ class CodeBlock extends HTMLElement {
             .then((json) => {
                 this.setAttribute("predicted_text", json.predicted_text);
                 this.setAttribute("predictions", JSON.stringify(json.predictions));
-                this.#text.value = json.predicted_text;
+                this.#text.textContent = json.predicted_text;
+                this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
+                this.predictions_dict = json.predictions["predictions"]
+                this.refreshClickableCharacters();
             })
             .catch((error) => console.error("Error:", error));
+    }
+
+    /**
+     * Update the event listeners for each character in the predicted text
+     */
+    refreshClickableCharacters (){
+
+        var text = this.#text.textContent;
+
+        // Clear previous buttons
+        this.#text.innerHTML = ""; 
+
+        // Loop through each character in predicted text field
+        text.split("").forEach((char, index) => {
+            // Create a span element and insert the character
+            const span = document.createElement("span");
+            span.textContent = char || " ";
+            span.className = "char predicted-text-span";
+
+            // Add event listener to display the top 3 predictions for that character's position
+            span.onclick = (e) =>{
+                e.stopPropagation();
+                // Unhide the predictions box
+                this.#predictions.style["display"] = "flex"
+                // Get the predictions for this position in the predicted text
+                var character_predictions = this.predictions_dict[index];
+
+                // Clear predictions field
+                this.#predictions.innerHTML = "";
+
+                // Loop through each prediction 
+                for (const character_prediction of character_predictions){
+                    // Create a button
+                    const character_button = document.createElement("button");
+
+                    character_button.className = "char-button character-button";
+
+                    // Set text content to predicted character and its probability 
+                    character_button.textContent = character_prediction["character"] + "        -       " + character_prediction["probability"];
+
+                    // Add event listener to replace selected character with the new chosen character
+                    character_button.onclick = (e) => {
+                        e.stopPropagation();
+                        var new_text = text.substring(0, index) + character_prediction["character"] + text.substring(index + 1);
+                        this.#text.textContent = new_text
+                        this.predicted_text = new_text
+
+                        this.refreshClickableCharacters();
+                    }
+
+                    this.#predictions.appendChild(character_button);
+                }
+            } 
+            this.#text.appendChild(span);
+        });
     }
 
     executeTranscribedCode() {

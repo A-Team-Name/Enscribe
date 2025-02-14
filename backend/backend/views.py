@@ -159,20 +159,20 @@ def image_to_text(request):
         img.save(temp_image, format="PNG")
         temp_image.seek(0)
 
-        request_url = (
-            f"http://{settings.HANDWRITING_URL}:{settings.HANDWRITING_PORT}/translate"
-        )
+        # request_url = (
+        #     f"http://{settings.HANDWRITING_URL}:{settings.HANDWRITING_PORT}/translate"
+        # )
 
-        files = {"image": temp_image}
+        # files = {"image": temp_image}
 
-        response = requests.post(request_url, files=files)
+        # response = requests.post(request_url, files=files)
 
-        json_response = response.json()
+        # json_response = response.json()
 
-        # json_response = {
-        #     "top_preds": [["a", "b", "c"], ["b", "c", "d"]],
-        #     "top_probs": [[0.5, 0.2, 0.2], [0.8, 0.1, 0.1]],
-        # }
+        json_response = {
+            "top_preds": [["a", "b", "c"], ["b", "c", "d"]],
+            "top_probs": [[0.5, 0.2, 0.2], [0.8, 0.1, 0.1]],
+        }
 
         top_characters = json_response["top_preds"]
         top_character_probs = json_response["top_probs"]
