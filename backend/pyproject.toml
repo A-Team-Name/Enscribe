@@ -13,7 +13,7 @@ python-dotenv = "^1.0.1"
 whitenoise = "^6.8.2"
 websocket-client = "^1.8.0"
 pillow = "^11.0.0"
-django = "4.1.13"
+django = "4.2.18"
 mysqlclient = "^2.2.7"
 numpy = "^2.2.3"
 
