@@ -49,7 +49,7 @@ class CodeBlock extends HTMLElement {
         "disabled",
         "state",
         "language",
-        "predicted_text",
+        "predicted-text",
         "predictions"
     ];
 
@@ -137,39 +137,8 @@ class CodeBlock extends HTMLElement {
             // Re-enable the run button now code has executed.
             this.#run.disabled = false;
 
-            var code_block_list = localStorage.getItem("code_block_list")
-            // Convert HTML elements attributes to dict
-            var attrbutes_dict = Array.from(this.attributes).reduce((acc, attr) => {
-                acc[attr.name] = attr.value;
-                return acc;
-            }, {});
-            // If no existing code blocks then create list in local storage
-            if (code_block_list == null){
-                localStorage.setItem("code_block_list", JSON.stringify([attrbutes_dict]))
-            }
-            else{
-                code_block_list = JSON.parse(code_block_list)
-                var existing = false;
-                // Loop through each code block in local storage 
-                for (const code_block of code_block_list){
-                    // If code block is already in list
-                    if ((code_block["data-x"] == attrbutes_dict["data-x"]) && (code_block["data-y"] == attrbutes_dict["data-y"])){
-                        // Update with new attributes
-                        var removed_code_block_list = code_block_list.filter(item => item !== code_block);
-                        var updated_code_block_list = code_block_list.concat(removed_code_block_list)
-                        localStorage.setItem("code_block_list", JSON.stringify(updated_code_block_list))
-                        existing = true;
-                        break;
-
-                    }
-                }
-                // If code block is not in list then add to list in local storage
-                if (!existing){
-                    var new_code_block_list = code_block_list.concat(attrbutes_dict)
-                    localStorage.setItem("code_block_list", JSON.stringify(new_code_block_list))
-                }
-                
-            }
+            // Update list of code blocks in local storage
+            this.updateLocalStorage();
         });
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
@@ -200,7 +169,7 @@ class CodeBlock extends HTMLElement {
         })
             .then((rsp) => rsp.json())
             .then((json) => {
-                this.setAttribute("predicted_text", json.predicted_text);
+                this.setAttribute("predicted-text", json.predicted_text);
                 this.setAttribute("predictions", JSON.stringify(json.predictions));
                 this.#text.textContent = json.predicted_text;
                 this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
@@ -263,6 +232,46 @@ class CodeBlock extends HTMLElement {
             } 
             this.#text.appendChild(span);
         });
+
+    }
+
+    updateLocalStorage () {
+        var code_block_list = localStorage.getItem("code_block_list");
+
+        // Convert HTML elements attributes to dict
+        var attributes_dict = Array.from(this.attributes).reduce((acc, attr) => {
+            acc[attr.name] = attr.value;
+            return acc;
+        }, {});
+        
+        // If no existing code blocks then create list in local storage
+        if (code_block_list == null){
+            localStorage.setItem("code_block_list", JSON.stringify([attributes_dict]))
+        }
+        else{
+            code_block_list = JSON.parse(code_block_list)
+            var existing = false;
+            // Loop through each code block in local storage 
+            for (const code_block of code_block_list){
+                // If code block is already in list
+                if ((code_block["data-x"] == attributes_dict["data-x"]) && (code_block["data-y"] == attributes_dict["data-y"])){
+                    // Update with new attributes
+                    var removed_code_block_list = code_block_list.filter(item => item !== code_block);
+                    var updated_code_block_list = code_block_list.concat(removed_code_block_list)
+                    localStorage.setItem("code_block_list", JSON.stringify(updated_code_block_list))
+                    existing = true;
+                    break;
+
+                }
+            }
+            // If code block is not in list then add to list in local storage
+            if (!existing){
+                var new_code_block_list = code_block_list.concat(attributes_dict)
+                localStorage.setItem("code_block_list", JSON.stringify(new_code_block_list))
+            }
+            
+        }
+
     }
 
     executeTranscribedCode() {
