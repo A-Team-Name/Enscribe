@@ -6,6 +6,7 @@ from django.conf import settings
 
 import json
 import requests
+import numpy as np
 from websocket import create_connection
 from backend.utils import send_execute_request
 
@@ -152,7 +153,10 @@ def image_to_text(request):
     if request.method == "POST":
         image = request.FILES["img"]
 
-        img = Image.open(image).convert("L")
+        # load image and convert to grayscale based on alpha channel
+        img = Image.open(image)
+        img = np.array(img)
+        img = Image.fromarray(255 - img[:, :, 3]).convert("L")
 
         # Save the uploaded image to a temporary file
         temp_image = BytesIO()
