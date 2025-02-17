@@ -158,7 +158,7 @@ def image_to_text(request):
         # load image and convert to grayscale based on alpha channel
         img = Image.open(image)
         img = np.array(img)
-        img = Image.fromarray(255 - img[:, :, 3]).convert("L").save("test2.png")
+        img = Image.fromarray(255 - img[:, :, 3]).convert("L")
         
         # Save the uploaded image to a temporary file
         temp_image = BytesIO()
