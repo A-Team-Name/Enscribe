@@ -1,14 +1,6 @@
 @import './common.css';
 
 /* || UI Elements */
-header {
-    padding: 0.5em;
-    background: var(--ui-background-color);
-    border-color: var(--ui-border-color);
-    border-width: 1px;
-    border-bottom-style: solid;
-}
-
 fieldset {
     border: var(--thin-border) solid var(--ui-border-color);
     /* border-radius: var(--thin-border); */
