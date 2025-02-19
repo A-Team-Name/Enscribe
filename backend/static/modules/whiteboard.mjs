@@ -34,6 +34,10 @@ const whiteboard_template = `
     }
 }
 
+#tab-bar {
+    cursor: auto;
+}
+
 /* Cursors */
 :host([data-tool="select"]) {
     cursor: crosshair;
@@ -49,6 +53,10 @@ const whiteboard_template = `
 
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
+<div id="tab-bar" class="spaced-bar tool-bar">
+<button class="" >Tab 1</button>
+<button class="material-symbols-outlined" id="new-tab">add</button>
+</div>
 <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
@@ -208,6 +216,10 @@ class Whiteboard extends HTMLElement {
     #last_selection;
     #writing;
 
+    // Tab Bar elements
+    #tab_bar;
+    #new_tab;
+
     constructor() {
         super();
         const shadowRoot = this.attachShadow({mode: 'closed'});
@@ -215,6 +227,8 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#ui = shadowRoot.getElementById("ui");
+        this.#tab_bar = shadowRoot.getElementById("tab-bar");
+        this.#new_tab = shadowRoot.getElementById("new-tab");
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
