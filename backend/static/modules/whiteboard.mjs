@@ -43,7 +43,14 @@ const whiteboard_template = `
 }
 
 #tab-bar {
-    cursor: auto;
+/* TODO: Do firefox-style overflow: scroll tabs, and keep new tab button visible */
+/* Put tab bar above canvases etc */
+z-index: 1;
+cursor: auto;
+display: flex;
+flex-wrap: nowrap;
+width: 100%;
+gap: 0.5rem;
 }
 
 /* Cursors */
@@ -61,9 +68,14 @@ const whiteboard_template = `
 
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
-<div id="tab-bar" class="spaced-bar tool-bar">
-<button class="" >Tab 1</button>
-<button class="material-symbols-outlined" id="new-tab">add</button>
+<div id="tab-bar" class="tool-bar">
+  <button>Tab 0</button>
+  <button>Tab 95</button>
+  <button>Tab 96</button>
+  <button>Tab 97</button>
+  <button>Tab 98</button>
+  <button>Tab 99</button>
+  <button class="material-symbols-outlined" id="new-tab">add</button>
 </div>
 <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
