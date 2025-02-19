@@ -4,10 +4,18 @@ import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverl
 const whiteboard_template = `
 <style>
 @import '/static/common.css';
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: clip;
+}
+
 #container {
     overflow: scroll;
     width: 100%;
-    height: 100%;
+/* Fill remaining vertical space of whiteboard element */
+    flex-grow: 1;
 }
 #drawing {
     position: absolute;
