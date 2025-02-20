@@ -210,12 +210,12 @@ class Layer {
  * whereas the Page is our abstract representation of drawn lines.
  */
 class Page {
-    constructor() {
+    constructor(id) {
         this.layers = [
             new Layer("code", "auto", true),
             new Layer("annotations", "blue", false),
         ];
-        this.active_layer = 0;
+        this.id = id;
     }
 }
 
@@ -371,7 +371,7 @@ class Whiteboard extends HTMLElement {
         // Add the new tab at the end of the list, before the new tab button.
         this.#tab_bar.insertBefore(tab, this.#new_tab);
 
-        this.#pages.set(id, new Page());
+        this.#pages.set(id, new Page(id));
         this.#switchToPage(id);
 
         return id;
@@ -381,8 +381,9 @@ class Whiteboard extends HTMLElement {
      * Switch to the page with the given id, and hide code blocks that aren't on that page.
      */
     #switchToPage(id) {
+        id = parseInt(id);
         // Remove the border of the deselected tab, if it exists
-        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page}']`);
+        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page?.id??-1}']`);
         if (active_tab !== null) {
             active_tab.style["border-color"] = "#00000000";
         }
@@ -390,12 +391,17 @@ class Whiteboard extends HTMLElement {
         // Enable the border on the selected tab
         this.#tab_bar.querySelector(`button[data-id='${id}']`).style.removeProperty("border");
 
-        this.#active_page = id;
+        this.#active_page = this.#pages.get(id);
 
         // Show only code blocks on the current page
         for (const block of this.#ui.querySelectorAll("code-block")) {
             block.style["visibility"] = block.dataset.page == id ? "visible" : "hidden";
         }
+
+        // Switch to the same layer on the new page
+        this.#switchToLayer(this.active_layer?.name ?? "code");
+
+        this.render();
     }
 
     /**
@@ -411,7 +417,7 @@ class Whiteboard extends HTMLElement {
         let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
 
         // Switch to a different page if the active one was closed
-        if (id == this.#active_page) {
+        if (id == this.#active_page.id) {
             let last_tab =
                 Array.from(this.#tab_bar.querySelectorAll(`button[data-id]`)).reverse()[0];
             // Switch to tab after the current one, or the one before it if this is the last.
@@ -424,6 +430,11 @@ class Whiteboard extends HTMLElement {
         // Delete the page and its associated tab
         this.#pages.delete(id);
         page_tab.remove();
+
+        // Delete associated code blocks
+        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${this.#active_page.id}]`)) {
+            block.remove();
+        }
     }
 
     /**
@@ -555,7 +566,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.height = 0;
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
-        this.#last_selection.dataset.page = this.#active_page;
+        this.#last_selection.dataset.page = this.#active_page.id;
         this.#ui.appendChild(this.#last_selection);
     }
 
@@ -657,16 +668,23 @@ class Whiteboard extends HTMLElement {
             // TODO: Draw a background pattern
             break;
         case "data-layer":
-            for (var i = 0; i < this.layers.length; i += 1) {
-                if (newValue === this.layers[i].name) {
-                    this.active_layer = this.layers[i];
-                    break;
-                }
-            }
+            this.#switchToLayer(newValue);
             break;
         case "data-show-annotations":
             this.render();
             break;
+        }
+    }
+
+    /**
+     * Switch to the layer with the given name on the current page.
+     */
+    #switchToLayer(name) {
+        for (var i = 0; i < this.#active_page.layers.length; i += 1) {
+            if (name === this.#active_page.layers[i].name) {
+                this.active_layer = this.#active_page.layers[i];
+                break;
+            }
         }
     }
 
@@ -692,7 +710,7 @@ class Whiteboard extends HTMLElement {
         let ctx = codeCanvas.getContext('2d');
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        this.layers[0].draw(ctx, clip);
+        this.#active_page.layers[0].draw(ctx, clip);
         return codeCanvas.convertToBlob();
     }
 
@@ -703,7 +721,7 @@ class Whiteboard extends HTMLElement {
         this.#drawing.lineJoin = "round";
         let clip = this.#clipRegion();
 
-        for (const layer of this.layers) {
+        for (const layer of this.#active_page.layers) {
             if (layer.is_code || this.dataset.showAnnotations === "on")
                 layer.draw(this.#drawing, clip);
         }
