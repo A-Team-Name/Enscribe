@@ -135,3 +135,9 @@ dialog {
         grid-area: 1 / 2 / 2 / 3;
     }
 }
+
+/* Dumb hacks */
+/* mix-blend-mode: difference makes lambda show up against background */
+img[src$="lambda.svg"] {
+    mix-blend-mode: difference;
+}

@@ -29,6 +29,7 @@ body {
 html, body {
     /* exactly fill viewport so we can only scroll the whiteboard area */
     height: 100%;
+    overflow: hidden;
 }
 main {
     /* let the whiteboard scroll */
