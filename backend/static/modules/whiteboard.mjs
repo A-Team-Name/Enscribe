@@ -365,9 +365,10 @@ class Whiteboard extends HTMLElement {
 
         let tab = document.createElement("button");
         tab.dataset.id = id;
-        tab.classList.add("ui-group");
         tab.classList.add("spaced-bar");
+        // Hide the border on inactive tabs by default
         tab.style["border"] = "none";
+        // Large space between label and close button
         tab.style["column-gap"] = "1rem";
 
         tab.addEventListener(
@@ -386,6 +387,7 @@ class Whiteboard extends HTMLElement {
                 label_element.focus();
             });
 
+        // Disable contenteditable when the label loses focus.
         label_element.addEventListener(
             "focusout",
             () => label_element.removeAttribute("contenteditable"));
