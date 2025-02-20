@@ -329,7 +329,7 @@ class Whiteboard extends HTMLElement {
         this.#pages_created_count += 1;
         let id = this.#pages_created_count;
 
-        let tab = document.createElement("div");
+        let tab = document.createElement("button");
         tab.dataset.id = id;
         tab.classList.add("ui-group");
         tab.classList.add("spaced-bar");
@@ -382,13 +382,13 @@ class Whiteboard extends HTMLElement {
      */
     #switchToPage(id) {
         // Remove the border of the deselected tab, if it exists
-        let active_tab = this.#tab_bar.querySelector(`div[data-id='${this.#active_page}']`);
+        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page}']`);
         if (active_tab !== null) {
             active_tab.style["border-color"] = "#00000000";
         }
 
         // Enable the border on the selected tab
-        this.#tab_bar.querySelector(`div[data-id='${id}']`).style.removeProperty("border");
+        this.#tab_bar.querySelector(`button[data-id='${id}']`).style.removeProperty("border");
 
         this.#active_page = id;
 
@@ -408,11 +408,12 @@ class Whiteboard extends HTMLElement {
             return;
         }
 
-        let page_tab = this.#tab_bar.querySelector(`div[data-id='${id}']`);
+        let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
 
         // Switch to a different page if the active one was closed
         if (id == this.#active_page) {
-            let last_tab = this.#tab_bar.querySelector(`div[data-id]:last-of-type`);
+            let last_tab =
+                Array.from(this.#tab_bar.querySelectorAll(`button[data-id]`)).reverse()[0];
             // Switch to tab after the current one, or the one before it if this is the last.
             let target_tab =
                 page_tab == last_tab ? last_tab.previousSibling : page_tab.nextSibling;
