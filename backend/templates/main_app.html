@@ -41,18 +41,14 @@
 
       <label>
         Pen Width
-        <input id="pen-width" type="number"
-               value="3" min="1" max="30"
-               style="width: 2.5em"/>
-        (px)
+        <input id="pen-width" type="range" value="3" min="1" max="30"/>
       </label>
       <label>
         Eraser Width
-        <input id="eraser-width" type="number"
-               value="20" min="5" max="30"
-               style="width: 2.5em"/>
-        (px)
+        <input id="eraser-width" type="range" value="20" min="5" max="30"/>
       </label>
+
+      <input id="line-color" type="color" value="#ffffff"/>
 
       <div class="spaced-bar">
         <button id="undo" title="Undo" class="material-symbols-outlined">undo</button>
@@ -91,6 +87,17 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
+      <fieldset>
+        <legend>Touch Behaviour</legend>
+        <label>
+          <input type="radio" name="touch-action" value="pan" checked/>
+          Pan
+        </label>
+        <label>
+          <input type="radio" name="touch-action" value="auto"/>
+          Auto (match pen and mouse)
+        </label>
+      </fieldset>
       <div>
         <label>Default Language</label>
         <select id="default-language" name="default-language">

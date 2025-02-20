@@ -93,7 +93,7 @@ function strokeCircle(ctx, x, y, radius) {
 
 function interpretColor(color) {
     if (color === "auto") {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "white" : "black";
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? "#ffffff" : "#000000";
     } else {
         return color;
     }
@@ -149,8 +149,6 @@ class Layer {
         this.lines = [];
         /// Color for new lines
         this.color = color;
-        /// Thickness for new lines
-        this.lineWidth = 3;
         this.is_code = is_code;
     }
 
@@ -162,9 +160,18 @@ class Layer {
         }
     }
 
-    /// Add a new line starting at point start
-    newLine(start) {
-        this.lines.push(new Line(this.color, this.lineWidth, start));
+    /**
+     * Add a new line
+     *
+     * @param {DOMPoint} start - Starting point of the the line.
+     * @param {number} lineWidth - Width of the line.
+     *
+     * @returns {Line} A reference to the new line that was created.
+     */
+    newLine(start, lineWidth) {
+        let line = new Line(this.color, lineWidth, start);
+        this.lines.push(line);
+        return line;
     }
 
     /// Extend the last line on the Layer to point
@@ -172,8 +179,15 @@ class Layer {
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
-    /// Mark the last line as complete and return a reference to it.
+    /**
+     * Mark the last line as complete and return a reference to it.
+     * @returns Line? - The line that was completed, if any.
+     */
     completeLine() {
+        // Last line could be undefined if it was erased
+        if (this.lines.length === 0 || this.lines[this.lines.length - 1] === undefined) {
+            return null;
+        }
         this.lines[this.lines.length -1].recomputeBoundingRect();
         return this.lines[this.lines.length -1];
     }
@@ -213,7 +227,7 @@ class Page {
     constructor(id) {
         this.layers = [
             new Layer("code", "auto", true),
-            new Layer("annotations", "blue", false),
+            new Layer("annotations", "#0000ff", false),
         ];
         this.id = id;
     }
@@ -221,6 +235,7 @@ class Page {
 
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
+        "data-touch-action",
         "data-eraser-width",
         "data-layer",
         "data-tool",
@@ -263,11 +278,15 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+
         // Default default language (used on hard reload)
         this.dataset.defaultLanguage = "python3";
 
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
+
+        /** Thickness for new lines */
+        this.lineWidth = 3;
 
         this.#start_x = 0;
         this.#start_y = 0;
@@ -318,6 +337,21 @@ class Whiteboard extends HTMLElement {
         this.#resizeCanvas();
         window.addEventListener("resize",
             () => this.#resizeCanvas());
+    }
+
+    // This get/set API exposes hex color values even if active_layer.color is auto.
+    // The color input type requires hex colors, hence this song and dance
+    set lineColor(color) {
+        // Enable auto colour if switching to what it would currently render as.
+        if (color === interpretColor("auto")) {
+            this.active_layer.color = "auto";
+        } else {
+            this.active_layer.color = color;
+        }
+    }
+
+    get lineColor() {
+        return interpretColor(this.active_layer.color);
     }
 
     /**
@@ -446,8 +480,11 @@ class Whiteboard extends HTMLElement {
             return "none";
         switch (event.pointerType) {
         case "touch":
-            // We no longer attempt to handle touch events ourselves, at all
-            return "none";
+            // Use native touch for scrolling
+            if (this.dataset.touchAction === "pan" || this.dataset.tool === "pan")
+                return "none";
+            else
+                return this.dataset.tool;
         case "mouse":
             if (event.buttons & 4)
                 // Middle-click to scroll
@@ -466,9 +503,8 @@ class Whiteboard extends HTMLElement {
         event.preventDefault();
         if (event.isPrimary)
             event.target.setPointerCapture(event.pointerId);
-        if (event.pointerType !== "touch")
-            this.#writing = true;
-        switch (this.#eventAction(event)) {
+        let action = this.#eventAction(event);
+        switch (action) {
         case "erase":
             this.#erase(event.offsetX, event.offsetY);
             this.render();
@@ -484,7 +520,10 @@ class Whiteboard extends HTMLElement {
             this.#start_y = event.offsetY;
             break;
         }
-        this.#drawCursor(event);
+        if (action !== "none") {
+            this.#writing = true;
+            this.#drawCursor(event);
+        }
     }
 
     #drawCursor(event) {
@@ -495,7 +534,7 @@ class Whiteboard extends HTMLElement {
             case "write":
                 this.#drawing.fillStyle = interpretColor(this.active_layer.color);
                 fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
-                    this.active_layer.lineWidth/2);
+                    this.lineWidth/2);
                 break;
             case "erase":
                 this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
@@ -550,7 +589,6 @@ class Whiteboard extends HTMLElement {
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
                 this.#last_selection = null;
-                this.#enableAllBlocks();
             }
             break;
         }
@@ -558,7 +596,6 @@ class Whiteboard extends HTMLElement {
     }
 
     #createSelection(x, y) {
-        this.#disableAllBlocks();
         this.#last_selection = document.createElement("code-block");
         this.#last_selection.dataset.x = x;
         this.#last_selection.dataset.y = y;
@@ -592,8 +629,7 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(x, y) {
-        this.#disableAllBlocks();
-        this.active_layer.newLine({y: y, x: x});
+        this.active_layer.newLine({y: y, x: x}, this.lineWidth);
         this.render();
     }
 
@@ -601,11 +637,14 @@ class Whiteboard extends HTMLElement {
         if (this.#writing) {
             let line = this.active_layer.completeLine();
 
-            // Update any blocks the line intersected.
-            for (const block of this.#ui.querySelectorAll("code-block")) {
-                block.notifyUpdate(line.boundingRect);
+            if (line !== null && this.active_layer.is_code) {
+                // Update any blocks the line intersected.
+                for (const block of this.#ui.querySelectorAll("code-block")) {
+                    block.notifyUpdate(line.boundingRect);
+                }
             }
-            this.#enableAllBlocks();
+
+            this.#writing = false;
         }
     }
 
@@ -620,18 +659,6 @@ class Whiteboard extends HTMLElement {
                     block.notifyUpdate(line.boundingRect);
                 }
             }
-        }
-    }
-
-    #enableAllBlocks() {
-        for (const block of this.#ui.querySelectorAll("code-block")) {
-            block.removeAttribute("disabled");
-        }
-    }
-
-    #disableAllBlocks() {
-        for (const block of this.#ui.querySelectorAll("code-block")) {
-            block.setAttribute("disabled", "");
         }
     }
 
@@ -650,9 +677,11 @@ class Whiteboard extends HTMLElement {
 
     /// Handle a change in the size of the visible region of the whiteboard.
     #resizeCanvas() {
-        let container_bounds = this.getBoundingClientRect();
-        this.#drawing.canvas.width = container_bounds.width;
-        this.#drawing.canvas.height = container_bounds.height;
+        // Match the size of the window to prevent situations where the canvas is too small after
+        // some other element resized. This will usually not be much bigger than it would have to be
+        // anyway, so we don't need to worry about the performance implications too much.
+        this.#drawing.canvas.width = window.innerWidth;
+        this.#drawing.canvas.height = window.innerHeight;
         this.render();
     }
 
