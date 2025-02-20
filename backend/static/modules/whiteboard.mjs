@@ -450,6 +450,7 @@ class Whiteboard extends HTMLElement {
      * Do nothing if this is the only page.
      */
     #closePage(id) {
+        id = parseInt(id);
         if (this.#pages.size <= 1) {
             return;
         }
