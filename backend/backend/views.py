@@ -6,8 +6,9 @@ from django.conf import settings
 
 import json
 import requests
+import numpy as np
 from websocket import create_connection
-from backend.utils import send_execute_request
+from backend.utils import send_execute_request, generate
 
 from PIL import Image
 
@@ -152,7 +153,10 @@ def image_to_text(request):
     if request.method == "POST":
         image = request.FILES["img"]
 
-        img = Image.open(image).convert("L")
+        # load image and convert to grayscale based on alpha channel
+        img = Image.open(image)
+        img = np.array(img)
+        img = Image.fromarray(255 - img[:, :, 3]).convert("L")
 
         # Save the uploaded image to a temporary file
         temp_image = BytesIO()
@@ -219,3 +223,9 @@ def create_predicted_code_block(code_block_prediction_dict):
     predicted_string = "".join(predicted_characters_list)
 
     return predicted_string
+
+
+def get_random_lambda_line(request: WSGIRequest) -> HttpResponse:
+    new_lambda_line = generate()
+    
+    return JsonResponse({"lambda_line": new_lambda_line})

@@ -38,15 +38,20 @@ const setupCanvasDrawing = (canvas, controls) => {
     let ctx = canvas.getContext("2d");
     let drawing_index = getRandomInt(0, controls.symbolSet.value.length);
 
+    console.log("Drawing index:", drawing_index);
+
     /** Select the nth next symbol in controls.symbolSet, wrapping if necessary. */
-    const selectSymbol = (n) => {
-        let symbols = controls.symbolSet.value;
-        drawing_index = (drawing_index + n) % symbols.length;
-        let chosen_symbol = symbols.substring(drawing_index, drawing_index + 1);
-        controls.writtenSymbol.value = chosen_symbol;
+    const getNewLine = () => {
+        fetch('/lambda_calculus/')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                controls.symbolSet.value = data.lambda_line;
+            })
+            .catch(error => console.error('Error fetching new symbol:', error));
     }
 
-    selectSymbol(0);
+    getNewLine();
 
     ctx.lineWidth = controls.lineWidth.value || 3;
     controls.lineWidth.labels[0].innerHTML = ctx.lineWidth + "px";
@@ -84,7 +89,7 @@ const setupCanvasDrawing = (canvas, controls) => {
             if (controls.save.innerHTML != "") {
                 controls.save.click();
                 clearCanvas();
-                selectSymbol(1);
+                getNewLine();
             } else {
                 alert("You haven't drawn anything for the current symbol.");
             }
@@ -95,7 +100,7 @@ const setupCanvasDrawing = (canvas, controls) => {
         "click",
         (event) => {
             clearCanvas();
-            selectSymbol(-1);
+            getNewLine();
         }
     )
 
@@ -104,8 +109,7 @@ const setupCanvasDrawing = (canvas, controls) => {
         // Set up the save link so clicking it downloads the currently drawn character.
         controls.save.href = canvas.toDataURL();
         controls.save.download =
-            "u"
-            + controls.writtenSymbol.value.codePointAt(0).toString(16)
+            controls.symbolSet.value.toString()
             + "-" + Date.now() + ".png";
         controls.save.innerHTML = "Save: " + controls.save.download;
     }
