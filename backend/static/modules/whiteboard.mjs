@@ -14,7 +14,7 @@ const whiteboard_template = `
 #container {
     overflow: scroll;
     width: 100%;
-/* Fill remaining vertical space of whiteboard element */
+    /* Fill remaining vertical space of whiteboard element */
     flex-grow: 1;
 }
 #drawing {
@@ -43,14 +43,14 @@ const whiteboard_template = `
 }
 
 #tab-bar {
-/* TODO: Do firefox-style overflow: scroll tabs, and keep new tab button visible */
-/* Put tab bar above canvases etc */
-z-index: 1;
-cursor: auto;
-display: flex;
-flex-wrap: nowrap;
-width: 100%;
-gap: 0.5rem;
+    /* TODO: Do firefox-style overflow: scroll tabs, and keep new tab button visible */
+    /* Put tab bar above canvases etc */
+    z-index: 1;
+    cursor: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 0.5rem;
 }
 
 /* Cursors */
