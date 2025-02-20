@@ -230,6 +230,9 @@ class Page {
             new Layer("annotations", "#0000ff", false),
         ];
         this.id = id;
+        // Scroll position of page, updated when switching away from a given page.
+        this.scrollLeft = 0;
+        this.scrollTop = 0;
     }
 }
 
@@ -426,6 +429,9 @@ class Whiteboard extends HTMLElement {
         let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page?.id??-1}']`);
         if (active_tab !== null) {
             active_tab.style["border-color"] = "#00000000";
+            // Store the scroll position of the page so we can have each scrolled a different amount
+            this.#active_page.scrollLeft = this.#container.scrollLeft;
+            this.#active_page.scrollTop = this.#container.scrollTop;
         }
 
         // Enable the border on the selected tab
@@ -440,6 +446,9 @@ class Whiteboard extends HTMLElement {
 
         // Switch to the same layer on the new page
         this.#switchToLayer(this.active_layer?.name ?? "code");
+
+        // Apply the stored scroll position of the selected tab.
+        this.#container.scrollTo(this.#active_page.scrollLeft, this.#active_page.scrollTop);
 
         this.render();
     }
