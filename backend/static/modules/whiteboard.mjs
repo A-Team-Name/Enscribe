@@ -69,12 +69,6 @@ gap: 0.5rem;
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
 <div id="tab-bar" class="tool-bar">
-  <button>Tab 0</button>
-  <button>Tab 95</button>
-  <button>Tab 96</button>
-  <button>Tab 97</button>
-  <button>Tab 98</button>
-  <button>Tab 99</button>
   <button class="material-symbols-outlined" id="new-tab">add</button>
 </div>
 <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
@@ -253,7 +247,8 @@ class Whiteboard extends HTMLElement {
     #writing;
 
     // Tabs/Pages
-    #current_tab;
+    #pages_created_count;
+    #active_page;
     #tab_bar;
     #new_tab;
     #pages;
@@ -265,8 +260,6 @@ class Whiteboard extends HTMLElement {
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
         this.#ui = shadowRoot.getElementById("ui");
-        this.#tab_bar = shadowRoot.getElementById("tab-bar");
-        this.#new_tab = shadowRoot.getElementById("new-tab");
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
@@ -306,6 +299,19 @@ class Whiteboard extends HTMLElement {
             () => this.render());
 
         this.#container.addEventListener("scroll", () => this.render());
+
+        // Pages State
+        this.#tab_bar = shadowRoot.getElementById("tab-bar");
+        this.#new_tab = shadowRoot.getElementById("new-tab");
+
+        this.#new_tab.addEventListener(
+            "click",
+            () => this.#newPage());
+
+        this.#pages_created_count = 0;
+        this.#pages = new Map();
+        // TODO: Add code to load page state from local storage here
+        this.#newPage();
     }
 
     connectedCallback() {
@@ -314,12 +320,109 @@ class Whiteboard extends HTMLElement {
             () => this.#resizeCanvas());
     }
 
-    /*
-     * Create a new page.
-     * @returns {number} The index of the new page
+    /**
+     * Create a new page, and add a tab for it.
+     * Make it the active page.
+     * @returns {string} The id of the new page
      */
-    newPage() {
+    #newPage() {
+        this.#pages_created_count += 1;
+        let id = this.#pages_created_count;
 
+        let tab = document.createElement("div");
+        tab.dataset.id = id;
+        tab.classList.add("ui-group");
+        tab.classList.add("spaced-bar");
+        tab.style["border"] = "none";
+        // tab.style["align-items"] = "center";
+
+        tab.addEventListener(
+            "click",
+            () => this.#switchToPage(tab.dataset.id));
+
+        let label = "Tab " + id;
+        let label_element = document.createElement("span");
+        label_element.innerHTML = label;
+        label_element.setAttribute("inputmode", "")
+
+        label_element.addEventListener(
+            "dblclick",
+            () => label_element.setAttribute("contenteditable", "true"));
+
+        label_element.addEventListener(
+            "focusout",
+            () => label_element.removeAttribute("contenteditable"));
+
+        tab.appendChild(label_element);
+
+        let close_button = document.createElement("button");
+        close_button.classList.add("material-symbols-outlined");
+        close_button.innerHTML = "close";
+        close_button.addEventListener(
+            "click",
+            (event) => {
+                // Don't count this as a click on the tab, which would switch to it.
+                event.stopPropagation();
+                this.#closePage(id);
+            });
+
+        tab.appendChild(close_button);
+
+        // Add the new tab at the end of the list, before the new tab button.
+        this.#tab_bar.insertBefore(tab, this.#new_tab);
+
+        this.#pages.set(id, new Page());
+        this.#switchToPage(id);
+
+        return id;
+    }
+
+    /**
+     * Switch to the page with the given id, and hide code blocks that aren't on that page.
+     */
+    #switchToPage(id) {
+        // Remove the border of the deselected tab, if it exists
+        let active_tab = this.#tab_bar.querySelector(`div[data-id='${this.#active_page}']`);
+        if (active_tab !== null) {
+            active_tab.style["border-color"] = "#00000000";
+        }
+
+        // Enable the border on the selected tab
+        this.#tab_bar.querySelector(`div[data-id='${id}']`).style.removeProperty("border");
+
+        this.#active_page = id;
+
+        // Show only code blocks on the current page
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            block.style["visibility"] = block.dataset.page == id ? "visible" : "hidden";
+        }
+    }
+
+    /**
+     * Remove the page with the given id, and switch to the next tab if there is one, or the last
+     * tab otherwise.
+     * Do nothing if this is the only page.
+     */
+    #closePage(id) {
+        if (this.#pages.size <= 1) {
+            return;
+        }
+
+        let page_tab = this.#tab_bar.querySelector(`div[data-id='${id}']`);
+
+        // Switch to a different page if the active one was closed
+        if (id == this.#active_page) {
+            let last_tab = this.#tab_bar.querySelector(`div[data-id]:last-of-type`);
+            // Switch to tab after the current one, or the one before it if this is the last.
+            let target_tab =
+                page_tab == last_tab ? last_tab.previousSibling : page_tab.nextSibling;
+
+            this.#switchToPage(target_tab.dataset.id);
+        }
+
+        // Delete the page and its associated tab
+        this.#pages.delete(id);
+        page_tab.remove();
     }
 
     /**
@@ -451,6 +554,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.height = 0;
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
+        this.#last_selection.dataset.page = this.#active_page;
         this.#ui.appendChild(this.#last_selection);
     }
 
