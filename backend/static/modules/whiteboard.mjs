@@ -368,7 +368,7 @@ class Whiteboard extends HTMLElement {
         tab.classList.add("ui-group");
         tab.classList.add("spaced-bar");
         tab.style["border"] = "none";
-        // tab.style["align-items"] = "center";
+        tab.style["column-gap"] = "1rem";
 
         tab.addEventListener(
             "click",
