@@ -466,7 +466,7 @@ class Whiteboard extends HTMLElement {
         if (this.#writing) {
             let line = this.active_layer.completeLine();
 
-            if (line !== null) {
+            if (line !== null && this.active_layer.is_code) {
                 // Update any blocks the line intersected.
                 for (const block of this.#ui.querySelectorAll("code-block")) {
                     block.notifyUpdate(line.boundingRect);
