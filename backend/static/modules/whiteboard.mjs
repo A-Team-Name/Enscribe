@@ -209,6 +209,12 @@ class Layer {
     }
 }
 
+/**
+ * A collection of layers, each containing lines.
+ *
+ * Code blocks are not stored with their associated Page object because they are part of the DOM,
+ * whereas the Page is our abstract representation of drawn lines.
+ */
 class Page {
     constructor() {
         this.layers = [
