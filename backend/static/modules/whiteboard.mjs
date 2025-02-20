@@ -209,6 +209,16 @@ class Layer {
     }
 }
 
+class Page {
+    constructor() {
+        this.layers = [
+            new Layer("code", "auto", true),
+            new Layer("annotations", "blue", false),
+        ];
+        this.active_layer = 0;
+    }
+}
+
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-eraser-width",
@@ -236,9 +246,11 @@ class Whiteboard extends HTMLElement {
     #last_selection;
     #writing;
 
-    // Tab Bar elements
+    // Tabs/Pages
+    #current_tab;
     #tab_bar;
     #new_tab;
+    #pages;
 
     constructor() {
         super();
@@ -257,12 +269,6 @@ class Whiteboard extends HTMLElement {
 
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
-
-        this.layers = [
-            new Layer("code", "auto", true),
-            new Layer("annotations", "blue", false)
-        ];
-        this.active_layer = this.layers[0];
 
         this.#start_x = 0;
         this.#start_y = 0;
@@ -300,6 +306,14 @@ class Whiteboard extends HTMLElement {
         this.#resizeCanvas();
         window.addEventListener("resize",
             () => this.#resizeCanvas());
+    }
+
+    /*
+     * Create a new page.
+     * @returns {number} The index of the new page
+     */
+    newPage() {
+
     }
 
     /**
