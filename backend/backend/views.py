@@ -8,7 +8,7 @@ import json
 import requests
 import numpy as np
 from websocket import create_connection
-from backend.utils import send_execute_request
+from backend.utils import send_execute_request, generate
 
 from PIL import Image
 
@@ -223,3 +223,9 @@ def create_predicted_code_block(code_block_prediction_dict):
     predicted_string = "".join(predicted_characters_list)
 
     return predicted_string
+
+
+def get_random_lambda_line(request: WSGIRequest) -> HttpResponse:
+    new_lambda_line = generate()
+    
+    return JsonResponse({"lambda_line": new_lambda_line})
