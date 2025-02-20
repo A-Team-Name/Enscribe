@@ -173,11 +173,6 @@ def image_to_text(request):
 
         json_response = response.json()
 
-        # json_response = {
-        #     "top_preds": [["a", "b", "c"], ["b", "c", "d"]],
-        #     "top_probs": [[0.5, 0.2, 0.2], [0.8, 0.1, 0.1]],
-        # }
-
         top_characters = json_response["top_preds"]
         top_character_probs = json_response["top_probs"]
 
@@ -227,5 +222,5 @@ def create_predicted_code_block(code_block_prediction_dict):
 
 def get_random_lambda_line(request: WSGIRequest) -> HttpResponse:
     new_lambda_line = generate()
-    
+
     return JsonResponse({"lambda_line": new_lambda_line})
