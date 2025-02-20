@@ -377,11 +377,14 @@ class Whiteboard extends HTMLElement {
         let label = "Tab " + id;
         let label_element = document.createElement("span");
         label_element.innerHTML = label;
-        label_element.setAttribute("inputmode", "")
 
-        label_element.addEventListener(
+        // Enable label editing on double-click.
+        tab.addEventListener(
             "dblclick",
-            () => label_element.setAttribute("contenteditable", "true"));
+            () => {
+                label_element.setAttribute("contenteditable", "true");
+                label_element.focus();
+            });
 
         label_element.addEventListener(
             "focusout",
