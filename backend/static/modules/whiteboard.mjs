@@ -262,7 +262,6 @@ class Whiteboard extends HTMLElement {
     #writing;
 
     // Tabs/Pages
-    #pages_created_count;
     #active_page;
     #tab_bar;
     #new_tab;
@@ -327,7 +326,6 @@ class Whiteboard extends HTMLElement {
             "click",
             () => this.#newPage());
 
-        this.#pages_created_count = 0;
         this.#pages = new Map();
         // TODO: Add code to load page state from local storage here
         this.#newPage();
@@ -360,8 +358,11 @@ class Whiteboard extends HTMLElement {
      * @returns {string} The id of the new page
      */
     #newPage() {
-        this.#pages_created_count += 1;
-        let id = this.#pages_created_count;
+        // Get an unused ID for the tab
+        let id = 1;
+        while (this.#pages.has(id)) {
+            id += 1;
+        }
 
         let tab = document.createElement("button");
         tab.dataset.id = id;
