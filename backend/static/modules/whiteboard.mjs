@@ -4,10 +4,18 @@ import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverl
 const whiteboard_template = `
 <style>
 @import '/static/common.css';
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: clip;
+}
+
 #container {
     overflow: scroll;
     width: 100%;
-    height: 100%;
+    /* Fill remaining vertical space of whiteboard element */
+    flex-grow: 1;
 }
 #drawing {
     position: absolute;
@@ -34,6 +42,17 @@ const whiteboard_template = `
     }
 }
 
+#tab-bar {
+    /* TODO: Do firefox-style overflow: scroll tabs, and keep new tab button visible */
+    /* Put tab bar above canvases etc */
+    z-index: 1;
+    cursor: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 0.5rem;
+}
+
 /* Cursors */
 :host([data-tool="select"]) {
     cursor: crosshair;
@@ -49,6 +68,9 @@ const whiteboard_template = `
 
 /* TODO: Hide cursor when we add pen and eraser previews */
 </style>
+<div id="tab-bar" class="tool-bar">
+  <button class="material-symbols-outlined" id="new-tab">add</button>
+</div>
 <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
@@ -195,6 +217,25 @@ class Layer {
     }
 }
 
+/**
+ * A collection of layers, each containing lines.
+ *
+ * Code blocks are not stored with their associated Page object because they are part of the DOM,
+ * whereas the Page is our abstract representation of drawn lines.
+ */
+class Page {
+    constructor(id) {
+        this.layers = [
+            new Layer("code", "auto", true),
+            new Layer("annotations", "#0000ff", false),
+        ];
+        this.id = id;
+        // Scroll position of page, updated when switching away from a given page.
+        this.scrollLeft = 0;
+        this.scrollTop = 0;
+    }
+}
+
 class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-touch-action",
@@ -223,6 +264,12 @@ class Whiteboard extends HTMLElement {
     #last_selection;
     #writing;
 
+    // Tabs/Pages
+    #active_page;
+    #tab_bar;
+    #new_tab;
+    #pages;
+
     constructor() {
         super();
         const shadowRoot = this.attachShadow({mode: 'closed'});
@@ -240,11 +287,6 @@ class Whiteboard extends HTMLElement {
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
 
-        this.layers = [
-            new Layer("code", "auto", true),
-            new Layer("annotations", "#0000ff", false)
-        ];
-        this.active_layer = this.layers[0];
         /** Thickness for new lines */
         this.lineWidth = 3;
 
@@ -278,6 +320,18 @@ class Whiteboard extends HTMLElement {
             () => this.render());
 
         this.#container.addEventListener("scroll", () => this.render());
+
+        // Pages State
+        this.#tab_bar = shadowRoot.getElementById("tab-bar");
+        this.#new_tab = shadowRoot.getElementById("new-tab");
+
+        this.#new_tab.addEventListener(
+            "click",
+            () => this.#newPage());
+
+        this.#pages = new Map();
+        // TODO: Add code to load page state from local storage here
+        this.#newPage();
     }
 
     connectedCallback() {
@@ -299,6 +353,138 @@ class Whiteboard extends HTMLElement {
 
     get lineColor() {
         return interpretColor(this.active_layer.color);
+    }
+
+    /**
+     * Create a new page, and add a tab for it.
+     * Make it the active page.
+     * @returns {string} The id of the new page
+     */
+    #newPage() {
+        // Get an unused ID for the tab
+        let id = 1;
+        while (this.#pages.has(id)) {
+            id += 1;
+        }
+
+        let tab = document.createElement("button");
+        tab.dataset.id = id;
+        tab.classList.add("spaced-bar");
+        // Hide the border on inactive tabs by default
+        tab.style["border"] = "none";
+        // Large space between label and close button
+        tab.style["column-gap"] = "1rem";
+
+        tab.addEventListener(
+            "click",
+            () => this.#switchToPage(tab.dataset.id));
+
+        let label = "Tab " + id;
+        let label_element = document.createElement("span");
+        label_element.innerHTML = label;
+
+        // Enable label editing on double-click.
+        tab.addEventListener(
+            "dblclick",
+            () => {
+                label_element.setAttribute("contenteditable", "true");
+                label_element.focus();
+            });
+
+        // Disable contenteditable when the label loses focus.
+        label_element.addEventListener(
+            "focusout",
+            () => label_element.removeAttribute("contenteditable"));
+
+        tab.appendChild(label_element);
+
+        let close_button = document.createElement("button");
+        close_button.classList.add("material-symbols-outlined");
+        close_button.innerHTML = "close";
+        close_button.addEventListener(
+            "click",
+            (event) => {
+                // Don't count this as a click on the tab, which would switch to it.
+                event.stopPropagation();
+                this.#closePage(id);
+            });
+
+        tab.appendChild(close_button);
+
+        // Add the new tab at the end of the list, before the new tab button.
+        this.#tab_bar.insertBefore(tab, this.#new_tab);
+
+        this.#pages.set(id, new Page(id));
+        this.#switchToPage(id);
+
+        return id;
+    }
+
+    /**
+     * Switch to the page with the given id, and hide code blocks that aren't on that page.
+     */
+    #switchToPage(id) {
+        id = parseInt(id);
+        // Remove the border of the deselected tab, if it exists
+        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page?.id??-1}']`);
+        if (active_tab !== null) {
+            active_tab.style["border-color"] = "#00000000";
+            // Store the scroll position of the page so we can have each scrolled a different amount
+            this.#active_page.scrollLeft = this.#container.scrollLeft;
+            this.#active_page.scrollTop = this.#container.scrollTop;
+        }
+
+        // Enable the border on the selected tab
+        this.#tab_bar.querySelector(`button[data-id='${id}']`).style.removeProperty("border");
+
+        this.#active_page = this.#pages.get(id);
+
+        // Show only code blocks on the current page
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            block.style["visibility"] = block.dataset.page == id ? "visible" : "hidden";
+        }
+
+        // Switch to the same layer on the new page
+        this.#switchToLayer(this.active_layer?.name ?? "code");
+
+        // Apply the stored scroll position of the selected tab.
+        this.#container.scrollTo(this.#active_page.scrollLeft, this.#active_page.scrollTop);
+
+        this.render();
+    }
+
+    /**
+     * Remove the page with the given id, and switch to the next tab if there is one, or the last
+     * tab otherwise.
+     * Do nothing if this is the only page.
+     */
+    #closePage(id) {
+        id = parseInt(id);
+        if (this.#pages.size <= 1) {
+            return;
+        }
+
+        let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
+
+        // Switch to a different page if the active one was closed
+        if (id == this.#active_page.id) {
+            let last_tab =
+                Array.from(this.#tab_bar.querySelectorAll(`button[data-id]`)).reverse()[0];
+            // Switch to tab after the current one, or the one before it if this is the last.
+            let target_tab =
+                page_tab == last_tab ? last_tab.previousSibling : page_tab.nextSibling;
+
+            this.#switchToPage(target_tab.dataset.id);
+        }
+
+        // Delete the page and its associated tab
+        this.#pages.delete(id);
+        page_tab.remove();
+
+        // Delete associated code blocks
+        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${this.#active_page.id}]`)) {
+            block.remove();
+        }
     }
 
     /**
@@ -433,6 +619,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.dataset.height = 0;
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
+        this.#last_selection.dataset.page = this.#active_page.id;
         this.#ui.appendChild(this.#last_selection);
     }
 
@@ -526,16 +713,23 @@ class Whiteboard extends HTMLElement {
             // TODO: Draw a background pattern
             break;
         case "data-layer":
-            for (var i = 0; i < this.layers.length; i += 1) {
-                if (newValue === this.layers[i].name) {
-                    this.active_layer = this.layers[i];
-                    break;
-                }
-            }
+            this.#switchToLayer(newValue);
             break;
         case "data-show-annotations":
             this.render();
             break;
+        }
+    }
+
+    /**
+     * Switch to the layer with the given name on the current page.
+     */
+    #switchToLayer(name) {
+        for (var i = 0; i < this.#active_page.layers.length; i += 1) {
+            if (name === this.#active_page.layers[i].name) {
+                this.active_layer = this.#active_page.layers[i];
+                break;
+            }
         }
     }
 
@@ -561,7 +755,7 @@ class Whiteboard extends HTMLElement {
         let ctx = codeCanvas.getContext('2d');
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        this.layers[0].draw(ctx, clip);
+        this.#active_page.layers[0].draw(ctx, clip);
         return codeCanvas.convertToBlob();
     }
 
@@ -572,7 +766,7 @@ class Whiteboard extends HTMLElement {
         this.#drawing.lineJoin = "round";
         let clip = this.#clipRegion();
 
-        for (const layer of this.layers) {
+        for (const layer of this.#active_page.layers) {
             if (layer.is_code || this.dataset.showAnnotations === "on")
                 layer.draw(this.#drawing, clip);
         }
