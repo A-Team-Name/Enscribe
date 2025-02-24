@@ -1,0 +1,78 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Canvas Drawing Prototype</title>
+    <style>
+      .ltr-layout {
+          display: flex;
+
+          * {
+              margin: 0.2em;
+          }
+      }
+
+      @font-face {
+          font-family: bqn386;
+          src: url("{% static 'BQN386.ttf' %}");
+      }
+
+      #written-symbol, #symbol-set {
+          font-family: bqn386;
+          font-size: 200%;
+      }
+
+      button {
+          font-size: 200%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1></h1>
+    <div class="ltr-layout">
+      <div>
+        <div>
+          <button id="clear-canvas">Clear</button>
+          <input id="line-width" type="range" value="20" min="3" max="30"/>
+          <label for="line-width"></label>
+        </div>
+        <canvas id="demo-canvas" height="500" width="4000" style="border: solid"></canvas>
+        <div>
+          <br/>
+          <label for="symbol-set">Line:</label>
+          <br/>
+          <textarea id="symbol-set" rows="10" cols="50" readonly></textarea>
+          <div>
+            <button id="next-symbol">Next Symbol</button>
+            <button id="previous-symbol">Previous Symbol</button>
+          </div>
+          <div>
+            <a id="save-image" download></a>
+          </div>
+          <h2>Usage</h2>
+          <ol style="max-width: 100%">
+            <li>Draw the displayed symbol on the canvas to the left.</li>
+            <li>
+              Either click the "Next Symbol" button to save and go to the next symbol, or click the save link to just save the current drawing.
+            </li>
+            <li>Use the controls above the canvas to adjust the line thickness, and to clear it if you make a mistake.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <script src="{% static 'canvas_drawing.js' %}" charset="utf-8"></script>
+    <script>
+      setupCanvasDrawing(
+          document.getElementById("demo-canvas"),
+          {
+              "lineWidth": document.getElementById("line-width"),
+              "save": document.getElementById("save-image"),
+              "nextSymbol": document.getElementById("next-symbol"),
+              "previousSymbol": document.getElementById("previous-symbol"),
+              "symbolSet": document.getElementById("symbol-set"),
+              "clear": document.getElementById("clear-canvas")
+          });
+    </script>
+  </body>
+</html>

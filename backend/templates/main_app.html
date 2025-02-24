@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Enscribe</title>
+    <link href="/static/main_app.css" rel="stylesheet"/>
+  </head>
+  <body>
+    <header class="spaced-bar">
+      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+      <div class="spaced-bar">
+        <button class="material-symbols-outlined" title="Save Notebook" id="save">
+          save
+        </button>
+        <button class="material-symbols-outlined" title="New Notebook" id="new">
+          note_add
+        </button>
+        <button class="material-symbols-outlined" title="Open Notebook" id="open">
+          folder_open
+        </button>
+      </div>
+
+      <fieldset class="spaced-bar">
+        <input id="tool-pan" type="radio" name="tool" value="pan">
+        <label title="Pan" for="tool-pan" class="material-symbols-outlined">
+          drag_pan
+        </label>
+        <input id="tool-select" type="radio" name="tool" value="select" />
+        <label for="tool-select" class="material-symbols-outlined">
+          select
+        </label>
+        <input id="tool-write" type="radio" name="tool" value="write" checked/>
+        <label for="tool-write" class="material-symbols-outlined">
+          edit
+        </label>
+        <input id="tool-erase" type="radio" name="tool" value="erase">
+        <label for="tool-erase" class="material-symbols-outlined">
+          ink_eraser
+        </label>
+      </fieldset>
+
+      <label>
+        Pen Width
+        <input id="pen-width" type="range" value="3" min="1" max="30"/>
+      </label>
+      <label>
+        Eraser Width
+        <input id="eraser-width" type="range" value="20" min="5" max="30"/>
+      </label>
+
+      <input id="line-color" type="color" value="#ffffff"/>
+
+      <div class="spaced-bar">
+        <button id="undo" title="Undo" class="material-symbols-outlined">undo</button>
+        <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
+      </div>
+
+      <label>
+        <input id="show-annotations" type="checkbox" checked/>
+        Show Annotations
+      </label>
+      <fieldset class="spaced-bar">
+        <label>
+          <input id="layer-code" type="radio" name="layer" value="code" checked/>
+          Code
+        </label>
+        <label>
+          <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
+          Annotation
+        </label>
+      </fieldset>
+      <div>
+        <button id="open-settings">
+          Settings
+        </button>
+      </div>
+    </header>
+    <main>
+      <white-board id="whiteboard"
+                   data-width="10000"
+                   data-height="10000"
+                   data-background="squares">
+      </white-board>
+    </main>
+    <dialog id="settings-dialog">
+      <h1>Settings</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <fieldset>
+        <legend>Touch Behaviour</legend>
+        <label>
+          <input type="radio" name="touch-action" value="pan" checked/>
+          Pan
+        </label>
+        <label>
+          <input type="radio" name="touch-action" value="auto"/>
+          Auto (match pen and mouse)
+        </label>
+      </fieldset>
+      <div>
+        <label>Default Language</label>
+        <select id="default-language" name="default-language">
+          <option value="python3">Python</option>
+          <option value="dyalog_apl">APL</option>
+          <option value="lambda-calculus">λ Calculus</option>
+        </select>
+      </div>
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+      </form>
+    </dialog>
+    <script src="/static/main_app.js" type="module" charset="utf-8"></script>
+  </body>
+</html>

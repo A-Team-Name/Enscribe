@@ -1,0 +1,37 @@
+@import './common.css';
+
+/* || UI Elements */
+header {
+    padding: 0.5em;
+    background: var(--ui-background-color);
+    border-color: var(--ui-border-color);
+    border-width: 1px;
+    border-bottom-style: solid;
+}
+
+fieldset {
+    border: var(--thin-border) solid var(--ui-border-color);
+    /* border-radius: var(--thin-border); */
+    /* Small padding so most of internal area is in children. */
+    padding: 0 0.2rem;
+    /* Add large padding to child elements to make them easier to hit. */
+    > *:not(legend) {
+        padding: 0.5rem;
+    }
+}
+
+/* || Whiteboard interaction */
+body {
+    /* display: flex forces main to not overflow from body */
+    display: flex;
+    flex-direction: column;
+}
+html, body {
+    /* exactly fill viewport so we can only scroll the whiteboard area */
+    height: 100%;
+    overflow: hidden;
+}
+main {
+    /* let the whiteboard scroll */
+    overflow: hidden;
+}

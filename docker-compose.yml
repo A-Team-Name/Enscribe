@@ -1,13 +1,31 @@
 services:
   api:
+    container_name: api
     build:
       context: ./backend
       dockerfile: dockerfile
     ports:
       - "5000:5000"
-  # client:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: dockerfile
-  #   ports:
-  #     "3000:3000"
+    volumes:
+      - ./backend/:/backend/
+    networks:
+      - kernel_bridge
+    env_file:
+      - .env
+
+  kernel:
+    # TO WORK: The JUPYTER_URL in .env must be set to the container_name
+    container_name: kernel
+    platform: ${KERNEL_PLATFORM}
+    image: ghcr.io/a-team-name/lambda-kernculus:latest
+    volumes:
+      - ./work:/home/jovyan/work
+    networks:
+      - kernel_bridge
+    ports:
+      - "8888:8888"
+    command: "start-notebook.sh --NotebookApp.token= --ServerApp.disable_check_xsrf=True"
+
+networks:
+  kernel_bridge:
+    external: true

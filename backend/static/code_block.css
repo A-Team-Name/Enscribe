@@ -1,0 +1,62 @@
+@import '/static/common.css';
+:host {
+    /* Allow pointer events to pass through unless explicitly enabled */
+    pointer-events: none;
+    display: flex;
+    flex-direction: row;
+}
+#selection {
+    /* Include border in the dimensions/area of the selection. */
+    box-sizing: border-box;
+    resize:both;
+}
+#controls {
+    width: max-content;
+}
+
+#select-language {
+    position: relative;
+    width: max-content;
+    &[open] {
+        display: flex;
+    }
+}
+
+#output-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.clickable {
+    pointer-events: auto;
+}
+
+.resizeable {
+    resize: both;
+    overflow: auto;
+}
+
+.character-button {
+    float: left;
+    padding-left: 5px;
+}
+
+#predictions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    width: 200px;
+    height: 100px;
+    display: none;
+}
+
+#text {
+    width: 200px;
+    height: 40px;
+}
+
+.predicted-text-span:hover{
+    cursor: default;
+}
