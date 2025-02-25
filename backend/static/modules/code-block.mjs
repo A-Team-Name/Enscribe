@@ -277,7 +277,7 @@ class CodeBlock extends HTMLElement {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
         executeFormData.append("language", this.getAttribute("language"));
-        executeFormData.append("code", this.#text.value);
+        executeFormData.append("code", this.#text.textContent);
 
         fetch("/execute/", {
             method: "POST",
