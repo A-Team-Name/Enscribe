@@ -60,8 +60,8 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
-    /* Character predictions from server. */
-    #buttons_container;
+    // /* Character predictions from server. */
+    // #buttons_container;
     /* Div for buttons for each character */
     #predictions;
     /* Code evaluation result from server. */
@@ -75,6 +75,8 @@ class CodeBlock extends HTMLElement {
     #language_logo;
     #language_button;
 
+    
+
     constructor() {
         super();
 
@@ -83,7 +85,6 @@ class CodeBlock extends HTMLElement {
 
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
-        this.#predictions = shadowRoot.getElementById("predictions");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
         // Set up text and output display toggle checkboxes.
@@ -149,6 +150,22 @@ class CodeBlock extends HTMLElement {
         this.#anchor_x = this.#anchor_y = 0;
         /// A reference to the whiteboard this selection is on, used for image extraction.
         this.whiteboard = null;
+
+        this.#predictions = shadowRoot.getElementById("predictions");
+
+
+        // Close predictions menu on click anywhere outside the div
+        this.#predictions.addEventListener("click",function(e){
+                this.style["display"] = "flex";
+                e.stopPropagation()
+        } );
+
+        document.addEventListener("click",function(e){
+            let predictions_block = shadowRoot.getElementById("predictions");
+            predictions_block.style["display"] = "none";
+          });
+
+
     }
 
     async transcribeCodeBlockImage() {
@@ -222,6 +239,9 @@ class CodeBlock extends HTMLElement {
                         var new_text = text.substring(0, index) + character_prediction["character"] + text.substring(index + 1);
                         this.#text.textContent = new_text
                         this.predicted_text = new_text
+
+                        // Close predictions menu when user has clicked on a character
+                        this.#predictions.style["display"] = "none"
 
                         this.refreshClickableCharacters();
                     }
