@@ -60,8 +60,6 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
-    // /* Character predictions from server. */
-    // #buttons_container;
     /* Div for buttons for each character */
     #predictions;
     /* Code evaluation result from server. */
@@ -74,8 +72,6 @@ class CodeBlock extends HTMLElement {
     /** Icon showing the logo for this block's language. */
     #language_logo;
     #language_button;
-
-    
 
     constructor() {
         super();
@@ -153,19 +149,16 @@ class CodeBlock extends HTMLElement {
 
         this.#predictions = shadowRoot.getElementById("predictions");
 
-
         // Close predictions menu on click anywhere outside the div
         this.#predictions.addEventListener("click",function(e){
                 this.style["display"] = "flex";
                 e.stopPropagation()
-        } );
+        });
 
         document.addEventListener("click",function(e){
             let predictions_block = shadowRoot.getElementById("predictions");
             predictions_block.style["display"] = "none";
-          });
-
-
+        });
     }
 
     async transcribeCodeBlockImage() {
