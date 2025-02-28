@@ -186,7 +186,7 @@ class CodeBlock extends HTMLElement {
         var text = this.#text.textContent;
 
         // Clear previous buttons
-        this.#text.innerHTML = ""; 
+        this.#text.innerHTML = "";
 
         // Loop through each character in predicted text field
         text.split("").forEach((char, index) => {
@@ -206,14 +206,14 @@ class CodeBlock extends HTMLElement {
                 // Clear predictions field
                 this.#predictions.innerHTML = "";
 
-                // Loop through each prediction 
+                // Loop through each prediction
                 for (const character_prediction of character_predictions){
                     // Create a button
                     const character_button = document.createElement("button");
 
                     character_button.className = "char-button character-button";
 
-                    // Set text content to predicted character and its probability 
+                    // Set text content to predicted character and its probability
                     character_button.textContent = character_prediction["character"] + "        -       " + character_prediction["probability"];
 
                     // Add event listener to replace selected character with the new chosen character
@@ -228,7 +228,7 @@ class CodeBlock extends HTMLElement {
 
                     this.#predictions.appendChild(character_button);
                 }
-            } 
+            }
             this.#text.appendChild(span);
         });
 
@@ -242,7 +242,7 @@ class CodeBlock extends HTMLElement {
             acc[attr.name] = attr.value;
             return acc;
         }, {});
-        
+
         // If no existing code blocks then create list in local storage
         if (code_block_list == null){
             localStorage.setItem("code_block_list", JSON.stringify([attributes_dict]))
@@ -250,7 +250,7 @@ class CodeBlock extends HTMLElement {
         else{
             code_block_list = JSON.parse(code_block_list)
             var existing = false;
-            // Loop through each code block in local storage 
+            // Loop through each code block in local storage
             for (const code_block of code_block_list){
                 // If code block is already in list
                 if ((code_block["data-x"] == attributes_dict["data-x"]) && (code_block["data-y"] == attributes_dict["data-y"])){
@@ -268,7 +268,7 @@ class CodeBlock extends HTMLElement {
                 var new_code_block_list = code_block_list.concat(attributes_dict)
                 localStorage.setItem("code_block_list", JSON.stringify(new_code_block_list))
             }
-            
+
         }
 
     }
