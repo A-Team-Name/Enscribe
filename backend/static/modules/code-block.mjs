@@ -7,8 +7,6 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
-  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
-  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
     <img height="24" src="/static/logos/apl.svg" alt="APL"/>
   </button>
@@ -88,12 +86,8 @@ class CodeBlock extends HTMLElement {
         this.#controls = shadowRoot.getElementById("controls");
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
-        onEvent("change", shadowRoot.getElementById("show-text"),
-            (show) => programText.style["display"] = show.checked ? "block" : "none");
 
         let programOutput = shadowRoot.getElementById("output");
-        onEvent("change", shadowRoot.getElementById("show-output"),
-            (show) => programOutput.style["display"] = show.checked ? "block" : "none");
 
         // Set up language switching UI.
         this.#language_logo = shadowRoot.querySelector("#language-switch > img");
@@ -365,25 +359,50 @@ class CodeBlock extends HTMLElement {
         this.remove();
     }
 
+    #showControls() {
+        // We shouldn't use display="none" to hide stuff where feasible because it means we don't
+        // have to remember what to set it back to when we display the element. We can't just set
+        // visibility to "visible" because this would override hiding inactive tabs/pages, which
+        // also relies on visibility. TODO: Avoid this potential interaction entirely.
+        this.#controls.style.removeProperty("visibility");
+    }
 
-    setStyle() {
-        switch (this.getAttribute("state")) {
+    #hideControls() {
+        this.#controls.style.visibility = "hidden";
+    }
+
+    #showOutputs() {
+        this.#text.style.removeProperty("visibility");
+        this.#output.style.removeProperty("visibility");
+    }
+
+    #hideOutputs() {
+        this.#text.style.visibility = "hidden";
+        this.#output.style.visibility = "hidden";
+    }
+
+    updateState(oldState, newState) {
+        // By separating logic for leaving and entering states, the intention of the code is
+        // clearer, and it's less repetitive.
+        switch (oldState) {
         case "resizing":
-            // loop through all the children of the shadow root
-            this.#controls.style["display"] = "none";
-            this.#selection.classList.remove("tentative");
+            this.#showControls();
             break;
         case "stale":
-            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            break;
+        }
+
+        switch (newState) {
+        case "resizing":
+            this.#hideControls();
+            this.#hideOutputs();
+            break;
+        case "stale":
             this.#selection.classList.add("tentative");
             break;
-        case "running":
-            this.#controls.style["display"] = "block";
-            this.#selection.classList.remove("tentative");
-            break;
         case "executed":
-            this.#controls.style["display"] = "block";
-            this.#selection.classList.remove("tentative");
+            this.#showOutputs();
             break;
         }
     }
@@ -411,7 +430,7 @@ class CodeBlock extends HTMLElement {
             window.postMessage({"setting": "defaultLanguage", "value": newValue});
             break;
         case "state":
-            this.setStyle();
+            this.updateState(oldValue, newValue);
             break;
         }
     }
