@@ -41,10 +41,23 @@ onEvent("change", "#line-color",
         })
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
 onEvent("change", "input[name='touch-action']", setAttribute(whiteboard, "data-touch-action"));
+const selectLanguage = (languageName) => {
+    let language = CodeBlock.languages[languageName];
+    document.getElementById("default-language").value = languageName;
+    document.getElementById("language-logo").src = language.logo;
+    document.getElementById("language-logo").alt = language.name;
+    whiteboard.dataset.defaultLanguage = languageName;
+}
 onEvent("change", "select[name='default-language']",
-        (input) => {
-            let language = CodeBlock.languages[input.value];
-            document.getElementById("language-logo").src = language.logo;
-            document.getElementById("language-logo").alt = language.name;
-            whiteboard.dataset.defaultLanguage = input.value;
-        });
+        (input) => selectLanguage(input.value));
+window.addEventListener(
+    "message",
+    (event) => {
+        if ("setting" in event.data) {
+            switch (event.data.setting) {
+            case "defaultLanguage":
+                selectLanguage(event.data.value);
+            }
+        }
+    }
+)

@@ -407,6 +407,8 @@ class CodeBlock extends HTMLElement {
             let newLanguage = CodeBlock.languages[newValue];
             this.#language_logo.src = newLanguage.logo;
             this.#language_logo.alt = newLanguage.name;
+            // Update the application-level default language to match what we set here.
+            window.postMessage({"setting": "defaultLanguage", "value": newValue});
             break;
         case "state":
             this.setStyle();
