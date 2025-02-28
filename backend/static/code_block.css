@@ -43,13 +43,18 @@
 }
 
 #predictions {
-    display: flex;
     flex-direction: column;
     gap: 0.25rem;
 
-    width: 200px;
-    height: 100px;
-    display: none;
+    position: relative;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+
+    min-height: 100px;
+    &[open] {
+        display: flex;
+    }
 }
 
 #text {
