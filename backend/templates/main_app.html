@@ -22,21 +22,21 @@
 
       <fieldset class="spaced-bar">
         <input id="tool-pan" type="radio" name="tool" value="pan">
-        <label title="Pan" for="tool-pan" class="material-symbols-outlined">
+        <button for="tool-pan" title="Pan" class="material-symbols-outlined">
           drag_pan
-        </label>
+        </button>
         <input id="tool-select" type="radio" name="tool" value="select" />
-        <label for="tool-select" class="material-symbols-outlined">
+        <button for="tool-select" class="material-symbols-outlined">
           select
-        </label>
+        </button>
         <input id="tool-write" type="radio" name="tool" value="write" checked/>
-        <label for="tool-write" class="material-symbols-outlined">
+        <button for="tool-write" class="material-symbols-outlined">
           edit
-        </label>
+        </button>
         <input id="tool-erase" type="radio" name="tool" value="erase">
-        <label for="tool-erase" class="material-symbols-outlined">
+        <button for="tool-erase" class="material-symbols-outlined">
           ink_eraser
-        </label>
+        </button>
       </fieldset>
 
       <label>
@@ -55,19 +55,19 @@
         <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
       </div>
 
-      <label>
-        <input id="show-annotations" type="checkbox" checked/>
+      <input id="show-annotations" type="checkbox" checked/>
+      <button for="show-annotations">
         Show Annotations
-      </label>
+      </button>
       <fieldset class="spaced-bar">
-        <label>
-          <input id="layer-code" type="radio" name="layer" value="code" checked/>
+        <input id="layer-code" type="radio" name="layer" value="code" checked/>
+        <button for="layer-code">
           Code
-        </label>
-        <label>
-          <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
+        </button>
+        <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
+        <button for="layer-annotations">
           Annotation
-        </label>
+        </button>
       </fieldset>
       <div>
         <button id="open-settings">
@@ -89,14 +89,14 @@
       </form>
       <fieldset>
         <legend>Touch Behaviour</legend>
-        <label>
-          <input type="radio" name="touch-action" value="pan" checked/>
+        <input type="radio" id="touch-action-pan" name="touch-action" value="pan" checked/>
+        <button for="touch-action-pan">
           Pan
-        </label>
-        <label>
-          <input type="radio" name="touch-action" value="auto"/>
+        </button>
+        <input type="radio" id="touch-action-auto" name="touch-action" value="auto"/>
+        <button for="touch-action-auto">
           Auto (match pen and mouse)
-        </label>
+        </button>
       </fieldset>
       <div>
         <label>Default Language</label>

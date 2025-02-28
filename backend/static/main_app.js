@@ -61,3 +61,10 @@ window.addEventListener(
         }
     }
 )
+
+// Use buttons with the for attribute to click the corresponding radio. Buttons are easier to click
+// than labels because the pointer can move before lifting, and a click event will still fire.
+onEvent("click", "button[for]",
+        (button) => document.getElementById(button.getAttribute("for")).click(),
+        // Disable default "immediate application" behaviour of onEvent: wait for real clicks.
+        false);
