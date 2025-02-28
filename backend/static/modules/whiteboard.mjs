@@ -246,7 +246,8 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
-        "data-default-language"
+        "data-default-language",
+        "data-auto-execute",
     ];
 
     // DOM elements
@@ -604,6 +605,10 @@ class Whiteboard extends HTMLElement {
         case "select":
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
+                if (this.dataset.autoExecute === "on") {
+                    // Immediately execute a code block if auto-execution is enabled.
+                    this.#last_selection.execute();
+                }
                 this.#last_selection = null;
             }
             break;

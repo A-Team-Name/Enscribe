@@ -119,20 +119,7 @@ class CodeBlock extends HTMLElement {
 
         this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
-        this.#run.addEventListener("click", async () => {
-            // Disable the run button until we finish executing to prevent double-clicks.
-            this.#run.disabled = true;
-            await this.transcribeCodeBlockImage();
-            // On run, we perform text recognition, so the block is no longer stale.
-            this.setAttribute("state", "executed");
-            this.executeTranscribedCode();
-
-            // Re-enable the run button now code has executed.
-            this.#run.disabled = false;
-
-            // Update list of code blocks in local storage
-            this.updateLocalStorage();
-        });
+        this.#run.addEventListener("click", () => this.execute());
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
@@ -145,6 +132,20 @@ class CodeBlock extends HTMLElement {
         this.whiteboard = null;
     }
 
+    async execute() {
+            // Disable the run button until we finish executing to prevent double-clicks.
+            this.#run.disabled = true;
+            await this.transcribeCodeBlockImage();
+            // On run, we perform text recognition, so the block is no longer stale.
+            this.setAttribute("state", "executed");
+            this.executeTranscribedCode();
+
+            // Re-enable the run button now code has executed.
+            this.#run.disabled = false;
+
+            // Update list of code blocks in local storage
+            this.updateLocalStorage();
+    }
     async transcribeCodeBlockImage() {
         let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
 

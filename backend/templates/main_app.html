@@ -106,6 +106,9 @@
           <option value="lambda-calculus">λ Calculus</option>
         </select>
       </div>
+      <div>
+        <label><input name="auto-execute" type="checkbox" value="on" checked/> Automatically execute new selections.</label>
+      </div>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>
