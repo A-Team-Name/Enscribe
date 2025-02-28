@@ -7,6 +7,8 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
+  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
+  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
     <img height="24" src="/static/logos/apl.svg" alt="APL"/>
   </button>
@@ -58,12 +60,14 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
+    #text_toggle;
     /* Character predictions from server. */
     #buttons_container;
     /* Div for buttons for each character */
     #predictions;
     /* Code evaluation result from server. */
     #output;
+    #output_toggle;
     /** The run button. */
     #run;
     /** The controls block. */
@@ -86,8 +90,28 @@ class CodeBlock extends HTMLElement {
         this.#controls = shadowRoot.getElementById("controls");
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
+        this.#text_toggle = shadowRoot.getElementById("show-text")
+        onEvent("change", this.#text_toggle,
+            (toggle) => {
+                if (toggle.checked)
+                    this.#showText();
+                else
+                    this.#hideText();
+            },
+            false
+        );
 
         let programOutput = shadowRoot.getElementById("output");
+        this.#output_toggle = shadowRoot.getElementById("show-output");
+        onEvent("change", this.#output_toggle,
+            (toggle) => {
+                if (toggle.checked)
+                    this.#showOutput();
+                else
+                    this.#hideOutput();
+            },
+            false
+        );
 
         // Set up language switching UI.
         this.#language_logo = shadowRoot.querySelector("#language-switch > img");
@@ -361,10 +385,12 @@ class CodeBlock extends HTMLElement {
     }
 
     #showControls() {
-        // We shouldn't use display="none" to hide stuff where feasible because it means we don't
-        // have to remember what to set it back to when we display the element. We can't just set
-        // visibility to "visible" because this would override hiding inactive tabs/pages, which
-        // also relies on visibility. TODO: Avoid this potential interaction entirely.
+        // We may prefer to not use display="none" to hide stuff where feasible because it means we
+        // don't have to remember what to set it back to when we display the element.
+        //
+        // We can't just set visibility to "visible" here because this would override hiding
+        // inactive tabs/pages, which also relies on visibility. TODO: Avoid this potential
+        // interaction entirely.
         this.#controls.style.removeProperty("visibility");
     }
 
@@ -372,14 +398,28 @@ class CodeBlock extends HTMLElement {
         this.#controls.style.visibility = "hidden";
     }
 
-    #showOutputs() {
-        this.#text.style.removeProperty("visibility");
-        this.#output.style.removeProperty("visibility");
+    #showOutput() {
+        // We have to use display rather than visibility for text and output because Safari doesn't
+        // handle visibility="collapse" properly. We would have to use visibility="hidden", which
+        // would leave the output floating part-way down the selection height if it was the only one
+        // visible.
+        this.#output.style.removeProperty("display");
+        this.#output_toggle.checked = true;
     }
 
-    #hideOutputs() {
-        this.#text.style.visibility = "hidden";
-        this.#output.style.visibility = "hidden";
+    #hideOutput() {
+        this.#output.style.display = "none";
+        this.#output_toggle.checked = false;
+    }
+
+    #showText() {
+        this.#text.style.removeProperty("display");
+        this.#text_toggle.checked = true;
+    }
+
+    #hideText() {
+        this.#text.style.display = "none";
+        this.#text_toggle.checked = false;
     }
 
     updateState(oldState, newState) {
@@ -397,13 +437,20 @@ class CodeBlock extends HTMLElement {
         switch (newState) {
         case "resizing":
             this.#hideControls();
-            this.#hideOutputs();
+            this.#hideOutput();
+            this.#hideText();
             break;
         case "stale":
             this.#selection.classList.add("tentative");
+            // The text representation is no longer valid, so hide it, and don't let user show it.
+            // They might still want to see the output, so don't mess with that.
+            this.#hideText();
+            this.#text_toggle.disabled = true;
             break;
         case "executed":
-            this.#showOutputs();
+            // enable displaying text representation
+            this.#text_toggle.disabled = false;
+            this.#showOutput();
             break;
         }
     }
@@ -427,6 +474,10 @@ class CodeBlock extends HTMLElement {
             let newLanguage = CodeBlock.languages[newValue];
             this.#language_logo.src = newLanguage.logo;
             this.#language_logo.alt = newLanguage.name;
+            if (oldValue !== newValue) {
+                // The current text representation is no longer valid, so the block becomes stale.
+                this.setAttribute("state", "stale");
+            }
             // Update the application-level default language to match what we set here.
             window.postMessage({"setting": "defaultLanguage", "value": newValue});
             break;
