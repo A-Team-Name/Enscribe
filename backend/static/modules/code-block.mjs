@@ -97,8 +97,17 @@ class CodeBlock extends HTMLElement {
 
         let select_language = shadowRoot.getElementById("select-language");
         this.#language_button = shadowRoot.querySelector("#language-switch");
+
+        // Open language selection menu if closed, close menu if already open
         this.#language_button.addEventListener("click",(e) => {
-                select_language.show();
+                if (select_language.open) {
+                    alert("closing")
+                    select_language.close();
+                }
+                else{
+                    alert("opening")
+                    select_language.show();
+                }
                 e.stopPropagation();
             });
 
@@ -221,10 +230,8 @@ class CodeBlock extends HTMLElement {
             span.onclick = (e) =>{
                 e.stopPropagation();
                 // Unhide the predictions box
-                // this.#predictions.style["display"] = "flex"
                 this.#predictions.show()
                 this.#predictions.focus()
-                // this.#predictions.focus();
 
                 // Get the predictions for this position in the predicted text
                 var character_predictions = this.predictions_dict[index];
@@ -250,7 +257,6 @@ class CodeBlock extends HTMLElement {
                         this.predicted_text = new_text
 
                         // Close predictions menu when user has clicked on a character
-                        // this.#predictions.style["display"] = "none"
                         this.#predictions.close()
                         e.stopPropagation();
 
