@@ -18,7 +18,7 @@ const code_block_template = `
 </div>
 <div id="output-column">
   <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
-  <div contenteditable="true" id="predictions" class="ui-window clickable "></div>
+  <dialog id="predictions" class="ui-window clickable"></dialog>
   <textarea id="output" class="ui-window clickable"></textarea>
 </div>
 `;
@@ -60,8 +60,6 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
-    /* Character predictions from server. */
-    #buttons_container;
     /* Div for buttons for each character */
     #predictions;
     /* Code evaluation result from server. */
@@ -83,7 +81,6 @@ class CodeBlock extends HTMLElement {
 
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
-        this.#predictions = shadowRoot.getElementById("predictions");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
         // Set up text and output display toggle checkboxes.
@@ -100,8 +97,25 @@ class CodeBlock extends HTMLElement {
 
         let select_language = shadowRoot.getElementById("select-language");
         this.#language_button = shadowRoot.querySelector("#language-switch");
-        this.#language_button.addEventListener("click",
-            () => select_language.show());
+
+        // Open language selection menu if closed, close menu if already open
+        this.#language_button.addEventListener("click",(e) => {
+                if (select_language.open) {
+                    alert("closing")
+                    select_language.close();
+                }
+                else{
+                    alert("opening")
+                    select_language.show();
+                }
+                e.stopPropagation();
+            });
+
+        select_language.addEventListener("click", (e) => {
+                select_language.show();
+                e.stopPropagation();
+            });
+
         // Generate buttons for each language.
         for (const language in CodeBlock.languages) {
             let lang_props = CodeBlock.languages[language];
@@ -113,9 +127,10 @@ class CodeBlock extends HTMLElement {
             <img height="24" src="${lang_props.logo}" alt="${lang_props.name}"/>`;
             select_language.appendChild(language_label);
             language_label.addEventListener("click",
-                () => {
+                (e) => {
                     this.setAttribute("language", language);
                     select_language.close();
+                    e.stopPropagation()
                 });
         }
 
@@ -149,6 +164,22 @@ class CodeBlock extends HTMLElement {
         this.#anchor_x = this.#anchor_y = 0;
         /// A reference to the whiteboard this selection is on, used for image extraction.
         this.whiteboard = null;
+
+        this.#predictions = shadowRoot.getElementById("predictions");
+        this.#predictions.close();
+
+        // Close menus on click anywhere outside the element
+        document.addEventListener("click",(e) => {
+            this.#predictions.close()
+            select_language.close()
+        });
+
+        // Ensure menus are not closed when their element is clicked on 
+        this.#predictions.addEventListener("click",(e) => {
+            this.#predictions.show()
+            e.stopPropagation()
+        });
+
     }
 
     async transcribeCodeBlockImage() {
@@ -199,7 +230,9 @@ class CodeBlock extends HTMLElement {
             span.onclick = (e) =>{
                 e.stopPropagation();
                 // Unhide the predictions box
-                this.#predictions.style["display"] = "flex"
+                this.#predictions.show()
+                this.#predictions.focus()
+
                 // Get the predictions for this position in the predicted text
                 var character_predictions = this.predictions_dict[index];
 
@@ -222,6 +255,10 @@ class CodeBlock extends HTMLElement {
                         var new_text = text.substring(0, index) + character_prediction["character"] + text.substring(index + 1);
                         this.#text.textContent = new_text
                         this.predicted_text = new_text
+
+                        // Close predictions menu when user has clicked on a character
+                        this.#predictions.close()
+                        e.stopPropagation();
 
                         this.refreshClickableCharacters();
                     }
