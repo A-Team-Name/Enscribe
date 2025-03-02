@@ -42,6 +42,7 @@ onEvent("change", "#line-color",
 onEvent("change", "input[name='tool']", setAttribute(whiteboard, "data-tool"));
 onEvent("change", "input[name='touch-action']", setAttribute(whiteboard, "data-touch-action"));
 onEvent("change", "input[name='auto-execute']", setAttribute(whiteboard, "data-auto-execute"));
+onEvent("change", "select[name='background-selection']", setAttribute(whiteboard, "data-background"));
 const selectLanguage = (languageName) => {
     let language = CodeBlock.languages[languageName];
     document.getElementById("default-language").value = languageName;

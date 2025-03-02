@@ -109,6 +109,15 @@
       <div>
         <label><input name="auto-execute" type="checkbox" value="on" checked/> Automatically execute new selections.</label>
       </div>
+      <div>
+        <label for="background-selection">Background</label>
+        <select id="background-selection" name="background-selection">
+          <option value="none">None</option>
+          <option value="squares">Squares</option>
+          <option value="lines">Lines</option>
+          <option value="dots">Dots</option>
+        </select>
+      </div>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>
