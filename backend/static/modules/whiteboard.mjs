@@ -481,7 +481,7 @@ class Whiteboard extends HTMLElement {
         page_tab.remove();
 
         // Delete associated code blocks
-        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${this.#active_page.id}]`)) {
+        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
             block.remove();
         }
     }
