@@ -65,8 +65,6 @@ const whiteboard_template = `
 :host([data-tool="write"]), :host([data-tool="erase"]) {
     cursor: none;
 }
-
-/* TODO: Hide cursor when we add pen and eraser previews */
 </style>
 <div id="tab-bar" class="tool-bar">
   <button class="material-symbols-outlined" id="new-tab">add</button>
