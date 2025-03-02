@@ -12,6 +12,7 @@ const whiteboard_template = `
 }
 
 #container {
+    overscroll-behavior: none;
     overflow: scroll;
     width: 100%;
     /* Fill remaining vertical space of whiteboard element */
