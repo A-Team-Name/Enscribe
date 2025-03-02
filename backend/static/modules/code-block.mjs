@@ -119,11 +119,8 @@ class CodeBlock extends HTMLElement {
         // Open language selection menu if closed, close menu if already open
         this.#language_button.addEventListener("click",(e) => {
                 if (select_language.open) {
-                    alert("closing")
                     select_language.close();
-                }
-                else{
-                    alert("opening")
+                } else {
                     select_language.show();
                 }
                 e.stopPropagation();
