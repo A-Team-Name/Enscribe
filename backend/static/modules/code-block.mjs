@@ -143,10 +143,16 @@ class CodeBlock extends HTMLElement {
         this.#run.addEventListener("click", async () => {
             // Disable the run button until we finish executing to prevent double-clicks.
             this.#run.disabled = true;
-            await this.transcribeCodeBlockImage();
+
+            // Only transcribe when user has made changes to code block
+            if (this.getAttribute("state") == "stale"){
+                await this.transcribeCodeBlockImage();
+            }
+                
             // On run, we perform text recognition, so the block is no longer stale.
             this.setAttribute("state", "executed");
-            this.executeTranscribedCode();
+
+            await this.executeTranscribedCode();
 
             // Re-enable the run button now code has executed.
             this.#run.disabled = false;
@@ -310,13 +316,13 @@ class CodeBlock extends HTMLElement {
 
     }
 
-    executeTranscribedCode() {
+    async executeTranscribedCode() {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
         executeFormData.append("language", this.getAttribute("language"));
         executeFormData.append("code", this.#text.textContent);
 
-        fetch("/execute/", {
+        return fetch("/execute/", {
             method: "POST",
             body: executeFormData,
             credentials: 'include',
