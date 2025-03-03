@@ -326,13 +326,13 @@ class CodeBlock extends HTMLElement {
 
     }
 
-    executeTranscribedCode() {
+    async executeTranscribedCode() {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
         executeFormData.append("language", this.getAttribute("language"));
         executeFormData.append("code", this.#text.textContent);
 
-        fetch("/execute/", {
+        return fetch("/execute/", {
             method: "POST",
             body: executeFormData,
             credentials: 'include',
