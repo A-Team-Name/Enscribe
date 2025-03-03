@@ -7,6 +7,7 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
+  <span id="loader"></span>
   <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
   <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
