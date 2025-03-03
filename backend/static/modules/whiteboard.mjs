@@ -153,12 +153,10 @@ class Line {
 }
 
 class Layer {
-    constructor(name, color, is_code) {
+    constructor(name, is_code) {
         this.name = name;
         /// Contents of the layer
         this.lines = [];
-        /// Color for new lines
-        this.color = color;
         this.is_code = is_code;
     }
 
@@ -175,11 +173,12 @@ class Layer {
      *
      * @param {DOMPoint} start - Starting point of the the line.
      * @param {number} lineWidth - Width of the line.
+     * @param color - A color hex code, or the string "auto".
      *
      * @returns {Line} A reference to the new line that was created.
      */
-    newLine(start, lineWidth) {
-        let line = new Line(this.color, lineWidth, start);
+    newLine(start, lineWidth, color) {
+        let line = new Line(color, lineWidth, start);
         this.lines.push(line);
         return line;
     }
@@ -236,8 +235,8 @@ class Layer {
 class Page {
     constructor(id) {
         this.layers = [
-            new Layer("code", "auto", true),
-            new Layer("annotations", "#0000ff", false),
+            new Layer("code", true),
+            new Layer("annotations", false),
         ];
         this.id = id;
         // Scroll position of page, updated when switching away from a given page.
@@ -280,6 +279,7 @@ class Whiteboard extends HTMLElement {
     #tab_bar;
     #new_tab;
     #pages;
+    #line_colors;
 
     constructor() {
         super();
@@ -341,6 +341,7 @@ class Whiteboard extends HTMLElement {
             () => this.#newPage());
 
         this.#pages = new Map();
+        this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
         // TODO: Add code to load page state from local storage here
         this.#newPage();
     }
@@ -351,19 +352,19 @@ class Whiteboard extends HTMLElement {
             () => this.#resizeCanvas());
     }
 
-    // This get/set API exposes hex color values even if active_layer.color is auto.
+    // This get/set API exposes hex color values even if the line color is auto.
     // The color input type requires hex colors, hence this song and dance
     set lineColor(color) {
         // Enable auto colour if switching to what it would currently render as.
         if (color === interpretColor("auto")) {
-            this.active_layer.color = "auto";
+            this.#line_colors[this.active_layer.name] = "auto";
         } else {
-            this.active_layer.color = color;
+            this.#line_colors[this.active_layer.name] = color;
         }
     }
 
     get lineColor() {
-        return interpretColor(this.active_layer.color);
+        return interpretColor(this.#line_colors[this.active_layer.name]);
     }
 
     /**
@@ -559,12 +560,12 @@ class Whiteboard extends HTMLElement {
             let clip = this.#clipRegion();
             switch (this.dataset.tool) {
             case "write":
-                this.#drawing.fillStyle = interpretColor(this.active_layer.color);
+                this.#drawing.fillStyle = this.lineColor;
                 fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.lineWidth/2);
                 break;
             case "erase":
-                this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
+                this.#drawing.strokeStyle = this.lineColor;
                 this.#drawing.lineWidth = 1;
                 strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.dataset.eraserWidth/2);
@@ -660,7 +661,8 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(x, y) {
-        this.active_layer.newLine({y: y, x: x}, this.lineWidth);
+        this.active_layer.newLine({y: y, x: x}, this.lineWidth,
+            this.#line_colors[this.active_layer.name]);
         this.render();
     }
 
