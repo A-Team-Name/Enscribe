@@ -12,6 +12,7 @@ const whiteboard_template = `
 }
 
 #container {
+    overscroll-behavior: none;
     overflow: scroll;
     width: 100%;
     /* Fill remaining vertical space of whiteboard element */
@@ -22,18 +23,13 @@ const whiteboard_template = `
 }
 #surface {
     display: block;
-    position: relative;
-    border: var(--thick-border) dashed var(--ui-border-color);
-
     > :not(canvas) {
         width: 100%;
         height: 100%;
     }
-    > * {
-        position: absolute;
-    }
 }
 #ui {
+    position: relative;
     /* Immediate children of #ui are "floating" UI elements */
     > * {
         /* Enable manual positioning with top and left CSS properties. */
@@ -65,15 +61,29 @@ const whiteboard_template = `
 :host([data-tool="write"]), :host([data-tool="erase"]) {
     cursor: none;
 }
-
-/* TODO: Hide cursor when we add pen and eraser previews */
+/* Background patterns based on: https://phuoc.ng/collection/css-layout/grid-lines-background/ */
+#surface {
+    background-size: 3rem 3rem;
+    background-position: left left;
+}
+#surface[data-background=squares] {
+    background-image: linear-gradient(to right, var(--ui-border-color) 1px, transparent 1px),
+                      linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+}
+#surface[data-background=lines] {
+    background-image: linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+}
+#surface[data-background=dots] {
+    background-image: radial-gradient(circle, var(--ui-border-color) 2px, transparent 2px);
+    background-position: center center;
+}
 </style>
 <div id="tab-bar" class="tool-bar">
   <button class="material-symbols-outlined" id="new-tab">add</button>
 </div>
-<canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
+    <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
     <div id="ui"></div>
   </div>
 </div>
@@ -246,7 +256,8 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
-        "data-default-language"
+        "data-default-language",
+        "data-auto-execute",
     ];
 
     // DOM elements
@@ -482,7 +493,7 @@ class Whiteboard extends HTMLElement {
         page_tab.remove();
 
         // Delete associated code blocks
-        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${this.#active_page.id}]`)) {
+        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
             block.remove();
         }
     }
@@ -604,6 +615,10 @@ class Whiteboard extends HTMLElement {
         case "select":
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
+                if (this.dataset.autoExecute === "on") {
+                    // Immediately execute a code block if auto-execution is enabled.
+                    this.#last_selection.execute();
+                }
                 this.#last_selection = null;
             }
             break;
@@ -710,7 +725,7 @@ class Whiteboard extends HTMLElement {
             this.#resizeSurface();
             break;
         case "data-background":
-            // TODO: Draw a background pattern
+            this.#surface.dataset.background = newValue;
             break;
         case "data-layer":
             this.#switchToLayer(newValue);
