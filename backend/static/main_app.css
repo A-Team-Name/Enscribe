@@ -27,3 +27,24 @@ main {
     /* let the whiteboard scroll */
     overflow: hidden;
 }
+
+#help-dialog {
+    width: 75%;
+}
+
+#help-dialog div{
+    margin-bottom: 30px;
+}
+
+#help-dialog h1{
+    font-size: 150%;
+}
+
+#help-dialog h2{
+    font-size: 140%;
+}
+
+#help-dialog h3{
+    font-size: 100%;
+}
+

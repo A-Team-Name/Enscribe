@@ -3,10 +3,14 @@ import { onEvent, setAttribute } from '/static/modules/reactivity.mjs';
 import { CodeBlock } from '/static/modules/code-block.mjs';
 
 const settingsDialog = document.getElementById("settings-dialog");
+const helpDialog = document.getElementById("help-dialog");
 const whiteboard = document.getElementById("whiteboard");
 
 document.getElementById("open-settings")
     .addEventListener("click", () => settingsDialog.showModal());
+
+document.getElementById("open-help")
+    .addEventListener("click", () => helpDialog.showModal());
 
 onEvent("change", "#pen-width",
         (input) => { whiteboard.lineWidth = input.value; });

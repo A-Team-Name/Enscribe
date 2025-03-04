@@ -70,6 +70,9 @@
         </button>
       </fieldset>
       <div>
+        <button id="open-help">
+          Help
+        </button>
         <button id="open-settings">
           Settings
         </button>
@@ -122,6 +125,35 @@
         {% csrf_token %}
         <button type="submit">Log Out</button>
       </form>
+    </dialog>
+    <dialog id="help-dialog">
+      <h1>Help</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <div>
+        <h2>Opening a new tab</h2>
+        <p>If you need a new blank whiteboard without losing your previous work then you can open a new tab using the "+" icon next to your existing tabs </p>
+      </div>
+      <div>
+        <h2>Settings Menu</h2>
+        <p>The settings menu allows you to configure the application to your needs with a selection of options</p><br>
+
+        <h4>Touch Behaviour</h4>
+        <p>When using a pen device, choose between using the pen to draw and touch to pan or touch and pen have the same behaviour</p><br>
+
+        <h4>Default Language</h4>
+        <p>Choose the language that is selected by default when selecting a block of code. </p><br>
+
+        <h4>Automatically execute new selections</h4>
+        <p>Run a block of code as soon as it is selected. (Enabled by default)</p><br>
+
+        <h4>Background</h4>
+        <p>Choose from squares, lines or dots as the background of the whiteboard.</p><br>
+      </div>
+      
+
+
     </dialog>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>
