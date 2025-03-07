@@ -30,6 +30,11 @@ main {
 
 #help-dialog {
     width: 75%;
+    
+}
+
+#help-dialog ul{
+    padding:revert;
 }
 
 #help-dialog div{
