@@ -33,6 +33,12 @@ main {
     
 }
 
+
+/* Help Menu */
+#help-dialog img{
+    margin: 10px
+}
+
 #help-dialog ul{
     padding:revert;
 }
