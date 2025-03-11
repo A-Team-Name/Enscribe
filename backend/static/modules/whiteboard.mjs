@@ -67,14 +67,14 @@ const whiteboard_template = `
     background-position: left left;
 }
 #surface[data-background=squares] {
-    background-image: linear-gradient(to right, var(--ui-border-color) 1px, transparent 1px),
-                      linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+    background-image: linear-gradient(to right, var(--ui-border-color) 0.1rem, transparent 0.1rem),
+                      linear-gradient(to bottom, var(--ui-border-color) 0.1rem, transparent 0.1rem);
 }
 #surface[data-background=lines] {
-    background-image: linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+    background-image: linear-gradient(to bottom, var(--ui-border-color) 0.1rem, transparent 0.1rem);
 }
 #surface[data-background=dots] {
-    background-image: radial-gradient(circle, var(--ui-border-color) 2px, transparent 2px);
+    background-image: radial-gradient(circle, var(--ui-border-color) 0.2rem, transparent 2px);
     background-position: center center;
 }
 </style>
