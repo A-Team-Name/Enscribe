@@ -110,11 +110,19 @@ function interpretColor(color) {
 }
 
 class Line {
-    constructor(color, lineWidth, start) {
+    constructor(color, lineWidth, start, points=[]) {
         this.color = color;
         this.lineWidth = lineWidth;
-        this.points = [start];
-        this.boundingRect = circleBoundingRect(start, lineWidth/2);
+        if (points.length == 0){
+            this.points = [start];
+            this.boundingRect = circleBoundingRect(start, lineWidth/2);
+        }
+        else{
+            this.points = points;
+            this.recomputeBoundingRect();
+        }
+            
+        
     }
 
     addPoint(point) {
@@ -124,9 +132,12 @@ class Line {
     recomputeBoundingRect() {
         let lineWidth2 = this.lineWidth/2;
         this.boundingRect = circleBoundingRect(this.points[0], lineWidth2);
+        console.log(this.boundingRect)
         for (var i = 1; i < this.points.length; i += 1) {
             this.boundingRect = rectangleUnion(this.boundingRect, circleBoundingRect(this.points[i], lineWidth2));
         }
+        console.log(this.boundingRect)
+        
     }
 
     /// Draw this line in the given context, mapped within the given clip rectangle
@@ -291,6 +302,92 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+
+        document.getElementById("save")
+            .addEventListener("click", () => {
+                // alert("saving");
+                // let canvas = shadowRoot.getElementById('drawing'); // Get the canvas element
+                // console.log(canvas)
+                // let dataURL = canvas.toDataURL("image/png"); // Convert canvas to PNG data URL
+                
+                // let a = document.createElement('a');
+                // a.href = dataURL;
+                // a.download = 'canvas-drawing.png'; // Set the file name
+                // document.body.appendChild(a);
+                // a.click()
+                // document.body.removeChild(a); // Clean up
+
+                console.log(this.#active_page.layers[0].lines) // code lines
+                const jsonString = JSON.stringify(this.#active_page.layers[0].lines, null, 2); // Convert array to JSON string (pretty formatted)
+                const blob = new Blob([jsonString], { type: "application/json" }); // Create a Blob
+                const link = document.createElement("a"); // Create a temporary link
+                link.href = URL.createObjectURL(blob); // Create a URL for the Blob
+                link.download = "code-lines.json"; // Set filename
+                document.body.appendChild(link);
+                link.click(); // Trigger download
+                document.body.removeChild(link); // Cleanup
+            
+            });
+
+        document.getElementById("open")
+            .addEventListener("click", () => {
+                document.getElementById('fileInput').click();
+            
+            });
+
+        
+        document.getElementById('fileInput').addEventListener('change', (event) =>  {
+            let file = event.target.files[0]; // Get the selected file
+            if (file) {
+                alert(`Selected file: ${file.name}`);
+                // You can process the file here (e.g., read it, upload it, etc.)
+                const reader = new FileReader();
+    
+                reader.onload = (event) => {
+                    try {
+                        
+                        const code_lines = JSON.parse(event.target.result); // Parse JSON string into an array
+                        console.log("Array of objects:", code_lines); // Log or process the array
+                        var line_objs = []
+                        console.log(code_lines)
+                        console.log(code_lines[0])
+                        for (var code_line of code_lines){
+                            console.log(code_line)
+                            console.log(code_line.color)
+                            console.log(code_line.lineWidth)
+                            console.log(code_line.points)
+                            console.log(code_line.points[0])
+                            let line = new Line(code_line.color, code_line.lineWidth, code_line.points[0], code_line.points);
+                            console.log(line)
+                            line_objs.push(line)
+                        }
+
+                    
+                        this.#active_page.layers[0].lines = line_objs
+                        
+                    } catch (error) {
+                        console.error("Invalid JSON file:", error);
+                    }
+                };
+
+                
+                reader.readAsText(file);
+
+                
+
+                // const img = new Image();
+                // img.src = URL.createObjectURL(file); // Convert file to URL
+
+                // img.onload = () => {
+                //     alert(img.src)
+                //     // this.#drawing.clearRect(0, 0, this.#drawing.canvas.width, this.#drawing.canvas.height);
+                //     let clip = this.#clipRegion();
+                //     // this.#drawing.canvas.drawImage(img, 0, 0, 0, 0); 
+                //     this.active_layer;
+                // };
+                        }
+        });
+
 
         // Default default language (used on hard reload)
         this.dataset.defaultLanguage = "python3";
