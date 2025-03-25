@@ -12,6 +12,7 @@ const whiteboard_template = `
 }
 
 #container {
+    overscroll-behavior: none;
     overflow: scroll;
     width: 100%;
     /* Fill remaining vertical space of whiteboard element */
@@ -22,18 +23,13 @@ const whiteboard_template = `
 }
 #surface {
     display: block;
-    position: relative;
-    border: var(--thick-border) dashed var(--ui-border-color);
-
     > :not(canvas) {
         width: 100%;
         height: 100%;
     }
-    > * {
-        position: absolute;
-    }
 }
 #ui {
+    position: relative;
     /* Immediate children of #ui are "floating" UI elements */
     > * {
         /* Enable manual positioning with top and left CSS properties. */
@@ -65,15 +61,29 @@ const whiteboard_template = `
 :host([data-tool="write"]), :host([data-tool="erase"]) {
     cursor: none;
 }
-
-/* TODO: Hide cursor when we add pen and eraser previews */
+/* Background patterns based on: https://phuoc.ng/collection/css-layout/grid-lines-background/ */
+#surface {
+    background-size: 3rem 3rem;
+    background-position: left left;
+}
+#surface[data-background=squares] {
+    background-image: linear-gradient(to right, var(--ui-border-color) 1px, transparent 1px),
+                      linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+}
+#surface[data-background=lines] {
+    background-image: linear-gradient(to bottom, var(--ui-border-color) 1px, transparent 1px);
+}
+#surface[data-background=dots] {
+    background-image: radial-gradient(circle, var(--ui-border-color) 2px, transparent 2px);
+    background-position: center center;
+}
 </style>
 <div id="tab-bar" class="tool-bar">
   <button class="material-symbols-outlined" id="new-tab">add</button>
 </div>
-<canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
 <div id="container">
   <div id="surface">
+    <canvas id="drawing">A canvas drawing context could not be created. This application requires canvas drawing to function.</canvas>
     <div id="ui"></div>
   </div>
 </div>
@@ -143,12 +153,10 @@ class Line {
 }
 
 class Layer {
-    constructor(name, color, is_code) {
+    constructor(name, is_code) {
         this.name = name;
         /// Contents of the layer
         this.lines = [];
-        /// Color for new lines
-        this.color = color;
         this.is_code = is_code;
     }
 
@@ -165,11 +173,12 @@ class Layer {
      *
      * @param {DOMPoint} start - Starting point of the the line.
      * @param {number} lineWidth - Width of the line.
+     * @param color - A color hex code, or the string "auto".
      *
      * @returns {Line} A reference to the new line that was created.
      */
-    newLine(start, lineWidth) {
-        let line = new Line(this.color, lineWidth, start);
+    newLine(start, lineWidth, color) {
+        let line = new Line(color, lineWidth, start);
         this.lines.push(line);
         return line;
     }
@@ -226,8 +235,8 @@ class Layer {
 class Page {
     constructor(id) {
         this.layers = [
-            new Layer("code", "auto", true),
-            new Layer("annotations", "#0000ff", false),
+            new Layer("code", true),
+            new Layer("annotations", false),
         ];
         this.id = id;
         // Scroll position of page, updated when switching away from a given page.
@@ -246,7 +255,8 @@ class Whiteboard extends HTMLElement {
         "data-height",
         "data-background",
         "data-show-annotations",
-        "data-default-language"
+        "data-default-language",
+        "data-auto-execute",
     ];
 
     // DOM elements
@@ -269,6 +279,7 @@ class Whiteboard extends HTMLElement {
     #tab_bar;
     #new_tab;
     #pages;
+    #line_colors;
 
     constructor() {
         super();
@@ -330,6 +341,7 @@ class Whiteboard extends HTMLElement {
             () => this.#newPage());
 
         this.#pages = new Map();
+        this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
         // TODO: Add code to load page state from local storage here
         this.#newPage();
     }
@@ -340,19 +352,19 @@ class Whiteboard extends HTMLElement {
             () => this.#resizeCanvas());
     }
 
-    // This get/set API exposes hex color values even if active_layer.color is auto.
+    // This get/set API exposes hex color values even if the line color is auto.
     // The color input type requires hex colors, hence this song and dance
     set lineColor(color) {
         // Enable auto colour if switching to what it would currently render as.
         if (color === interpretColor("auto")) {
-            this.active_layer.color = "auto";
+            this.#line_colors[this.active_layer.name] = "auto";
         } else {
-            this.active_layer.color = color;
+            this.#line_colors[this.active_layer.name] = color;
         }
     }
 
     get lineColor() {
-        return interpretColor(this.active_layer.color);
+        return interpretColor(this.#line_colors[this.active_layer.name]);
     }
 
     /**
@@ -482,7 +494,7 @@ class Whiteboard extends HTMLElement {
         page_tab.remove();
 
         // Delete associated code blocks
-        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${this.#active_page.id}]`)) {
+        for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
             block.remove();
         }
     }
@@ -548,12 +560,12 @@ class Whiteboard extends HTMLElement {
             let clip = this.#clipRegion();
             switch (this.dataset.tool) {
             case "write":
-                this.#drawing.fillStyle = interpretColor(this.active_layer.color);
+                this.#drawing.fillStyle = this.lineColor;
                 fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.lineWidth/2);
                 break;
             case "erase":
-                this.#drawing.strokeStyle = interpretColor(this.active_layer.color);
+                this.#drawing.strokeStyle = this.lineColor;
                 this.#drawing.lineWidth = 1;
                 strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
                     this.dataset.eraserWidth/2);
@@ -604,6 +616,10 @@ class Whiteboard extends HTMLElement {
         case "select":
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
+                if (this.dataset.autoExecute === "on") {
+                    // Immediately execute a code block if auto-execution is enabled.
+                    this.#last_selection.execute();
+                }
                 this.#last_selection = null;
             }
             break;
@@ -645,7 +661,8 @@ class Whiteboard extends HTMLElement {
      * Draw a dot at that point, which will appear even if the pointer doesn't move.
      */
     #penDown(x, y) {
-        this.active_layer.newLine({y: y, x: x}, this.lineWidth);
+        this.active_layer.newLine({y: y, x: x}, this.lineWidth,
+            this.#line_colors[this.active_layer.name]);
         this.render();
     }
 
@@ -710,7 +727,7 @@ class Whiteboard extends HTMLElement {
             this.#resizeSurface();
             break;
         case "data-background":
-            // TODO: Draw a background pattern
+            this.#surface.dataset.background = newValue;
             break;
         case "data-layer":
             this.#switchToLayer(newValue);
