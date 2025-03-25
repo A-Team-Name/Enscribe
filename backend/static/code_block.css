@@ -91,3 +91,12 @@
         transform: rotate(360deg);
     }
 }
+
+#tick {
+    height: 13px;
+    width: 5px;
+    border-bottom: 3px solid green;
+    border-right: 3px solid green;
+    transform: rotate(45deg);
+    margin: 5px;
+}
