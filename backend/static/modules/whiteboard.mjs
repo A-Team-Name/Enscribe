@@ -303,32 +303,21 @@ class Whiteboard extends HTMLElement {
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
 
+        // Save button - saves notebook in JSON format
         document.getElementById("save")
             .addEventListener("click", () => {
-                // alert("saving");
-                // let canvas = shadowRoot.getElementById('drawing'); // Get the canvas element
-                // console.log(canvas)
-                // let dataURL = canvas.toDataURL("image/png"); // Convert canvas to PNG data URL
-                
-                // let a = document.createElement('a');
-                // a.href = dataURL;
-                // a.download = 'canvas-drawing.png'; // Set the file name
-                // document.body.appendChild(a);
-                // a.click()
-                // document.body.removeChild(a); // Clean up
-
-                console.log(this.#active_page.layers[0].lines) // code lines
-                const jsonString = JSON.stringify(this.#active_page.layers[0].lines, null, 2); // Convert array to JSON string (pretty formatted)
+                const jsonString = JSON.stringify(Array.from(this.#pages.entries()), null, 2); // Convert array to JSON string 
                 const blob = new Blob([jsonString], { type: "application/json" }); // Create a Blob
                 const link = document.createElement("a"); // Create a temporary link
                 link.href = URL.createObjectURL(blob); // Create a URL for the Blob
-                link.download = "code-lines.json"; // Set filename
+                link.download = "my_notebook.json"; // Set filename
                 document.body.appendChild(link);
                 link.click(); // Trigger download
                 document.body.removeChild(link); // Cleanup
             
             });
 
+        // Open Button - opens hidden file input button
         document.getElementById("open")
             .addEventListener("click", () => {
                 document.getElementById('fileInput').click();
@@ -336,55 +325,56 @@ class Whiteboard extends HTMLElement {
             });
 
         
+        // Open file input selection
         document.getElementById('fileInput').addEventListener('change', (event) =>  {
             let file = event.target.files[0]; // Get the selected file
             if (file) {
-                alert(`Selected file: ${file.name}`);
-                // You can process the file here (e.g., read it, upload it, etc.)
                 const reader = new FileReader();
     
                 reader.onload = (event) => {
                     try {
                         
-                        const code_lines = JSON.parse(event.target.result); // Parse JSON string into an array
-                        console.log("Array of objects:", code_lines); // Log or process the array
-                        var line_objs = []
-                        console.log(code_lines)
-                        console.log(code_lines[0])
-                        for (var code_line of code_lines){
-                            console.log(code_line)
-                            console.log(code_line.color)
-                            console.log(code_line.lineWidth)
-                            console.log(code_line.points)
-                            console.log(code_line.points[0])
-                            let line = new Line(code_line.color, code_line.lineWidth, code_line.points[0], code_line.points);
-                            console.log(line)
-                            line_objs.push(line)
-                        }
+                        // Open JSON file
+                        const pages = JSON.parse(event.target.result); 
 
-                    
-                        this.#active_page.layers[0].lines = line_objs
-                        
+                        // Close all existing tabs
+                        this.#closeAllPages();
+
+                        // Create a new pages map
+                        this.#pages = new Map();
+
+                        var first = true;
+
+                        // For each page in saved notebook
+                        for (const [key, page] of pages) {
+                            // Create a new page
+                            var page_id = this.#newPage();
+
+                            // Store the ID of the first page id
+                            if (first) {
+                                var first_page_id = page_id;
+                                first = false;
+                            }
+
+                            // Reconstruct each line
+                            var line_objs = [];
+                            for (var code_line of page.layers[0].lines){
+                                let line = new Line(code_line.color, code_line.lineWidth, code_line.points[0], code_line.points);
+                                line_objs.push(line)
+                            }
+
+                            this.#pages.get(page_id).layers[0].lines = line_objs
+                          }
+
+                        // Switch to the first page
+                        this.#switchToPage(first_page_id);
                     } catch (error) {
                         console.error("Invalid JSON file:", error);
                     }
                 };
 
-                
                 reader.readAsText(file);
 
-                
-
-                // const img = new Image();
-                // img.src = URL.createObjectURL(file); // Convert file to URL
-
-                // img.onload = () => {
-                //     alert(img.src)
-                //     // this.#drawing.clearRect(0, 0, this.#drawing.canvas.width, this.#drawing.canvas.height);
-                //     let clip = this.#clipRegion();
-                //     // this.#drawing.canvas.drawImage(img, 0, 0, 0, 0); 
-                //     this.active_layer;
-                // };
                         }
         });
 
@@ -593,6 +583,25 @@ class Whiteboard extends HTMLElement {
         // Delete associated code blocks
         for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
             block.remove();
+        }
+    }
+
+    // Close all existing pages, including the last tab
+    #closeAllPages() {
+        for (var id of Array.from(this.#pages.keys())){
+            id = parseInt(id);
+
+            let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
+
+            // Delete the page and its associated tab
+            this.#pages.delete(id);
+            page_tab.remove();
+
+            // Delete associated code blocks
+            for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
+                block.remove();
+            }
+
         }
     }
 
