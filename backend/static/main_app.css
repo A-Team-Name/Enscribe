@@ -37,6 +37,7 @@ main {
 /* Help Menu */
 #help-dialog img{
     margin: 10px
+    max-width: 90%;
 }
 
 #help-dialog ul{
