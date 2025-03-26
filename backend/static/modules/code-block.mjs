@@ -7,6 +7,8 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
+  <span id="loader"></span>
+  <span id="tick"></span>
   <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
   <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
@@ -70,6 +72,8 @@ class CodeBlock extends HTMLElement {
     #run;
     /** The controls block. */
     #controls;
+    /** The tick icon */
+    #tick;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -85,6 +89,8 @@ class CodeBlock extends HTMLElement {
         this.#text = shadowRoot.getElementById("text");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
+        this.#tick = shadowRoot.getElementById("tick");
+        this.#tick.style["display"] = "none";
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
         this.#text_toggle = shadowRoot.getElementById("show-text")
@@ -120,7 +126,8 @@ class CodeBlock extends HTMLElement {
         this.#language_button.addEventListener("click",(e) => {
                 if (select_language.open) {
                     select_language.close();
-                } else {
+                }
+                else{
                     select_language.show();
                 }
                 e.stopPropagation();
@@ -486,11 +493,22 @@ class CodeBlock extends HTMLElement {
             // They might still want to see the output, so don't mess with that.
             this.#hideText();
             this.#text_toggle.disabled = true;
+            this.#tick.style["display"] = "none";
+            break;
+        case "running":
+            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "none";
             break;
         case "executed":
+            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "inline-block";
+            
             // enable displaying text representation
             this.#text_toggle.disabled = false;
             this.#showOutput();
+
             break;
         }
     }
