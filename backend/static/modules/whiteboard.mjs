@@ -110,19 +110,19 @@ function interpretColor(color) {
 }
 
 class Line {
-    constructor(color, lineWidth, start, points=[]) {
+    constructor(color, lineWidth, points) {
+        console.log(points)
+        console.log(Array.isArray(points))
         this.color = color;
         this.lineWidth = lineWidth;
-        if (points.length == 0){
-            this.points = [start];
-            this.boundingRect = circleBoundingRect(start, lineWidth/2);
-        }
-        else{
+        if (Array.isArray(points)){
             this.points = points;
             this.recomputeBoundingRect();
-        }
             
-        
+        } else {
+            this.points = [points];
+            this.boundingRect = circleBoundingRect(points, lineWidth/2);
+        }
     }
 
     addPoint(point) {
@@ -132,12 +132,9 @@ class Line {
     recomputeBoundingRect() {
         let lineWidth2 = this.lineWidth/2;
         this.boundingRect = circleBoundingRect(this.points[0], lineWidth2);
-        console.log(this.boundingRect)
         for (var i = 1; i < this.points.length; i += 1) {
             this.boundingRect = rectangleUnion(this.boundingRect, circleBoundingRect(this.points[i], lineWidth2));
         }
-        console.log(this.boundingRect)
-        
     }
 
     /// Draw this line in the given context, mapped within the given clip rectangle
@@ -356,26 +353,34 @@ class Whiteboard extends HTMLElement {
                                 first = false;
                             }
 
-                            // Reconstruct each line
+                            // Reconstruct each line of code layer
                             var line_objs = [];
                             for (var code_line of page.layers[0].lines){
-                                let line = new Line(code_line.color, code_line.lineWidth, code_line.points[0], code_line.points);
+                                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
                                 line_objs.push(line)
                             }
 
                             this.#pages.get(page_id).layers[0].lines = line_objs
+
+                            // Reconstruct each line of annotations layer
+                            var line_objs = [];
+                            for (var code_line of page.layers[1].lines){
+                                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
+                                line_objs.push(line)
+                            }
+
+                            this.#pages.get(page_id).layers[1].lines = line_objs
                           }
 
                         // Switch to the first page
                         this.#switchToPage(first_page_id);
                     } catch (error) {
                         console.error("Invalid JSON file:", error);
+                        alert("Could not load Notebook: Invalid format.");
                     }
                 };
-
                 reader.readAsText(file);
-
-                        }
+            }
         });
 
 
@@ -601,7 +606,6 @@ class Whiteboard extends HTMLElement {
             for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
                 block.remove();
             }
-
         }
     }
 
