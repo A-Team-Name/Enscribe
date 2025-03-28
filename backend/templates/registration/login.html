@@ -24,6 +24,10 @@
         align-content: center;
     }
 
+    h2 {
+        font-size: 120%;
+    }
+
     form {
         display: flex;
         flex-direction: column;
@@ -43,6 +47,22 @@
       <form method="post">
         {% csrf_token %}
         {{ form }}
+                <label for="id_username">Username:</label>
+
+
+        <input type="text" name="username" autofocus="" autocapitalize="none" autocomplete="username" maxlength="150" required="" id="id_username">
+
+
+
+
+
+
+        <label for="id_password">Password:</label>
+
+
+        <input type="password" name="password" autocomplete="current-password" required="" id="id_password">
+
+
         <button type="submit">Log In</button>
       </form>
       <p id="password-reset"><a href="{% url 'password_reset' %}">Password Reset</a></p>
