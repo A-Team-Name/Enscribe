@@ -25,7 +25,7 @@
     :root {
         color-scheme: dark only;
         --default-background-color: black;
-        *:not(:disabled) {
+        *:not(:disabled):not(a) {
             color: white;
         }
     }
