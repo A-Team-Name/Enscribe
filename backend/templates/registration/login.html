@@ -5,39 +5,7 @@
 <head>
   <meta charset="utf-8">
   <title>Login</title>
-  <link href="/static/main_app.css" rel="stylesheet"/>
-  <style>
-    body {
-        background-color: var(--ui-background-color);
-    }
-    main {
-        max-width: 30em;
-        padding: 5em;
-        max-height: max-content;
-        margin: auto;
-    }
-
-    h1 {
-        font-size: 200%;
-        width: 100%;
-        text-align: center;
-        align-content: center;
-    }
-
-    h2 {
-        font-size: 120%;
-    }
-
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    #password-reset {
-        font-size: 80%;
-    }
-  </style>
+  <link href="/static/login_register.css" rel="stylesheet"/>
 </head>
 
 <body>
@@ -49,7 +17,7 @@
         {{ form }}
         <button type="submit">Log In</button>
       </form>
-      <p id="password-reset"><a href="{% url 'password_reset' %}">Password Reset</a></p>
+      <p class="password-reset"><a href="{% url 'password_reset' %}">Password Reset</a></p>
   </main>
 </body>
 
