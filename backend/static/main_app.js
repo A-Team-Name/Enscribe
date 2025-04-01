@@ -63,6 +63,12 @@ window.addEventListener(
             switch (event.data.setting) {
             case "defaultLanguage":
                 selectLanguage(event.data.value);
+                break;
+            case "undo":
+                // Disable the undo and redo buttons if we can't undo/redo on the current page.
+                document.getElementById("undo").disabled = !event.data.undo;
+                document.getElementById("redo").disabled = !event.data.redo;
+                break;
             }
         }
     }
@@ -74,3 +80,6 @@ onEvent("click", "button[for]",
         (button) => document.getElementById(button.getAttribute("for")).click(),
         // Disable default "immediate application" behaviour of onEvent: wait for real clicks.
         false);
+
+document.getElementById("undo").addEventListener("click", () => whiteboard.undo());
+document.getElementById("redo").addEventListener("click", () => whiteboard.redo());

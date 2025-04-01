@@ -1,3 +1,4 @@
+import { DrawAction } from './undo-redo.mjs';
 import { CodeBlock } from '/static/modules/code-block.mjs';
 import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
 
@@ -190,20 +191,20 @@ class Layer {
 
     /**
      * Mark the last line as complete and return a reference to it.
-     * @returns Line? - The line that was completed, if any.
+     * @returns number? - The index of the line that was completed, if any.
      */
     completeLine() {
         // Last line could be undefined if it was erased
         if (this.lines.length === 0 || this.lines[this.lines.length - 1] === undefined) {
             return null;
         }
-        this.lines[this.lines.length -1].recomputeBoundingRect();
-        return this.lines[this.lines.length -1];
+        this.lines[this.lines.length - 1].recomputeBoundingRect();
+        return this.lines.length - 1;
     }
 
     /**
      * Erase lines with vertices intersecting circle centre (x, y), of given radius.
-     * @returns Array<Line> - the lines that were erased
+     * @returns Array<Line> - a sparse array of the lines that were erased, at their respective indices.
      */
     erase(x, y, radius) {
         let erased = [];
@@ -215,7 +216,7 @@ class Layer {
                 let linePointRadius = (this.lines[i].lineWidth / 2);
                 for (const point of this.lines[i].points) {
                     if (circlesOverlapping(eraserPoint, radius, point, linePointRadius)) {
-                        erased.push(this.lines[i]);
+                        erased[i] = this.lines[i];
                         delete this.lines[i];
                         break;
                     }
@@ -233,6 +234,9 @@ class Layer {
  * whereas the Page is our abstract representation of drawn lines.
  */
 class Page {
+    #action_history;
+    #undo_head;
+
     constructor(id) {
         this.layers = [
             new Layer("code", true),
@@ -242,6 +246,63 @@ class Page {
         // Scroll position of page, updated when switching away from a given page.
         this.scrollLeft = 0;
         this.scrollTop = 0;
+        // History of actions on this page that can be undone
+        this.#action_history = [];
+        // Current position in this.actions (the undo/redo history of this page)
+        // Index *after* the last action that has been performed (and not undone)
+        this.#undo_head = 0;
+    }
+
+    canUndo() {
+        return this.#undo_head > 0;
+    }
+
+    canRedo() {
+        return this.#undo_head < this.#action_history.length;
+    }
+
+    // Notify the rest of the application of the undo/redo state of this page
+    postUndoState() {
+        window.postMessage({
+            "setting": "undo",
+            "undo": this.canUndo(),
+            "redo": this.canRedo(),
+        });
+    }
+
+    recordAction(action) {
+        // Drop the history after the current position
+        if (this.canRedo()) {
+            this.#action_history = this.#action_history.slice(0, this.#undo_head);
+        }
+
+        // TODO: Impose maximum history length if it consumes too much memory (unlikely).
+
+        this.#action_history.push(action);
+        this.#undo_head = this.#action_history.length;
+        this.postUndoState();
+    }
+
+    undo() {
+        if (!this.canUndo()) {
+            // There is no history to undo.
+            return;
+        }
+
+        this.#undo_head -= 1;
+        this.#action_history[this.#undo_head].undo();
+        this.postUndoState();
+    }
+
+    redo() {
+        if (!this.canRedo()) {
+            // There is no history to redo.
+            return;
+        }
+
+        this.#action_history[this.#undo_head].redo();
+        this.#undo_head += 1;
+        this.postUndoState();
     }
 }
 
@@ -273,6 +334,8 @@ class Whiteboard extends HTMLElement {
     #pointer_active;
     #last_selection;
     #writing;
+    /** Lines that have been erased in the current stroke of the eraser, if any */
+    #erased_lines;
 
     // Tabs/Pages
     #active_page;
@@ -305,6 +368,7 @@ class Whiteboard extends HTMLElement {
         this.#start_y = 0;
         this.#writing = false;
         this.#last_selection = null;
+        this.#erased_lines = [];
 
         this.#ui.addEventListener("pointerdown",
             (event) => this.#handlePointerDown(event));
@@ -461,6 +525,9 @@ class Whiteboard extends HTMLElement {
 
         // Apply the stored scroll position of the selected tab.
         this.#container.scrollTo(this.#active_page.scrollLeft, this.#active_page.scrollTop);
+
+        // Notify the UI of the selected page's undo/redo state
+        this.#active_page.postUndoState();
 
         this.render();
     }
@@ -670,17 +737,24 @@ class Whiteboard extends HTMLElement {
 
     #penUp() {
         if (this.#writing) {
-            let line = this.active_layer.completeLine();
+            let index = this.active_layer.completeLine();
 
-            if (line !== null && this.active_layer.is_code) {
-                // Update any blocks the line intersected.
-                for (const block of this.#ui.querySelectorAll("code-block")) {
-                    block.notifyUpdate(line.boundingRect);
+            // Record writing action
+            if (index !== null) {
+                let line = this.active_layer.lines[index];
+                this.#active_page.recordAction(new DrawAction(this.active_layer, index, line));
+
+                if (this.active_layer.is_code) {
+                    // Update any blocks the line intersected.
+                    for (const block of this.#ui.querySelectorAll("code-block")) {
+                        block.notifyUpdate(line.boundingRect);
+                    }
                 }
             }
 
             this.#writing = false;
         }
+        // TODO Record erase action
     }
 
     #erase(x, y) {
@@ -689,10 +763,15 @@ class Whiteboard extends HTMLElement {
 
         // Update any blocks that contained erased lines.
         if (this.active_layer.is_code) {
-            for (const line of erased) {
+            for (const line in erased) {
                 for (const block of this.#ui.querySelectorAll("code-block")) {
                     block.notifyUpdate(line.boundingRect);
                 }
+            }
+        }
+        for (let i = 0; i < erased.length; i += 1) {
+            if (erased.hasOwnProperty(i)) {
+                this.#erased_lines[i] = erased[i];
             }
         }
     }
@@ -789,6 +868,16 @@ class Whiteboard extends HTMLElement {
             if (layer.is_code || this.dataset.showAnnotations === "on")
                 layer.draw(this.#drawing, clip);
         }
+    }
+
+    undo() {
+        this.#active_page.undo();
+        this.render();
+    }
+
+    redo() {
+        this.#active_page.redo();
+        this.render();
     }
 }
 customElements.define("white-board", Whiteboard);
