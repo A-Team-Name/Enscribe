@@ -718,10 +718,9 @@ class Whiteboard extends HTMLElement {
                     }
 
                     this.#active_page.recordAction(new CreateSelectionAction(this, this.#last_selection));
-
                 }
-                this.#last_selection = null;
 
+                this.#last_selection = null;
             }
             break;
         }

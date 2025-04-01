@@ -160,7 +160,9 @@ class CodeBlock extends HTMLElement {
         shadowRoot.getElementById("close")
             .addEventListener("click", () => {
                 // Defer responsibility for deleting the block to the whiteboard,
-                // which can record an associated CloseSelectionAction
+                // which can record an associated CloseSelectionAction.
+                // The contents of a message must be pure JSON, so we can't simply pass
+                // a reference to the code block. The index is sufficiently unambiguous.
                 window.postMessage({
                     "deleteCodeBlock": Array.from(this.parentElement.childNodes).indexOf(this)
                 });
