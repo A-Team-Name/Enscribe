@@ -410,9 +410,13 @@ class Whiteboard extends HTMLElement {
         this.#newPage();
     }
 
+    /**
+     * Perform the necessary operations to handle a change in the given region of the current page.
+     */
     handleRegionUpdate(region) {
         for (const block of this.#ui.querySelectorAll("code-block")) {
-            block.notifyUpdate(region);
+            if (block.dataset.page == this.#active_page.id)
+                block.notifyUpdate(region);
         }
     }
 
