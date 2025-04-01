@@ -2,6 +2,11 @@
  * A single change to the state of the application, that can be undone or redone.
  */
 class Action {
+    // Post a message indicating that a region of the whiteboard has changed
+    postRegionUpdate(region) {
+        window.postMessage({"regionUpdate": region});
+    }
+
     undo() {}
     redo() {}
 }
@@ -24,10 +29,12 @@ class DrawAction extends Action {
 
     undo() {
         delete this.#layer.lines[this.#index];
+        this.postRegionUpdate(this.#line.boundingRect);
     }
 
     redo() {
         this.#layer.lines[this.#index] = this.#line;
+        this.postRegionUpdate(this.#line.boundingRect);
     }
 }
 
@@ -49,6 +56,7 @@ class EraseAction extends Action {
         for (let i = 0; i < this.#lines.length; i += 1) {
             if (this.#lines.hasOwnProperty(i)) {
                 this.#layer.lines[i] = this.#lines[i];
+                this.postRegionUpdate(this.#lines[i].boundingRect);
             }
         }
     }
@@ -57,6 +65,7 @@ class EraseAction extends Action {
         for (let i = 0; i < this.#lines.length; i += 1) {
             if (this.#lines[i] != undefined) {
                 delete this.#layer.lines[i];
+                this.postRegionUpdate(this.#lines[i].boundingRect);
             }
         }
     }

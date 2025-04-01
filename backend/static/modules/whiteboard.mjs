@@ -410,6 +410,12 @@ class Whiteboard extends HTMLElement {
         this.#newPage();
     }
 
+    handleRegionUpdate(region) {
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            block.notifyUpdate(region);
+        }
+    }
+
     connectedCallback() {
         this.#resizeCanvas();
         window.addEventListener("resize",
@@ -422,6 +428,11 @@ class Whiteboard extends HTMLElement {
                     let block = this.#ui.childNodes[event.data.deleteCodeBlock];
                     block.close();
                     this.#active_page.recordAction(new CloseSelectionAction(this, block));
+                }
+
+                // Handle region changes
+                if ("regionUpdate" in event.data) {
+                    this.handleRegionUpdate(event.data.regionUpdate);
                 }
             })
     }
@@ -769,9 +780,7 @@ class Whiteboard extends HTMLElement {
 
                 if (this.active_layer.is_code) {
                     // Update any blocks the line intersected.
-                    for (const block of this.#ui.querySelectorAll("code-block")) {
-                        block.notifyUpdate(line.boundingRect);
-                    }
+                    this.handleRegionUpdate(line.boundingRect);
                 }
             }
 
@@ -790,9 +799,7 @@ class Whiteboard extends HTMLElement {
         // Update any blocks that contained erased lines.
         if (this.active_layer.is_code) {
             for (const i in erased) {
-                for (const block of this.#ui.querySelectorAll("code-block")) {
-                    block.notifyUpdate(erased[i].boundingRect);
-                }
+                this.handleRegionUpdate(erased[i].boundingRect);
             }
         }
         for (let i = 0; i < erased.length; i += 1) {
