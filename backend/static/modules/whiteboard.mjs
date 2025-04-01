@@ -766,9 +766,9 @@ class Whiteboard extends HTMLElement {
 
         // Update any blocks that contained erased lines.
         if (this.active_layer.is_code) {
-            for (const line in erased) {
+            for (const i in erased) {
                 for (const block of this.#ui.querySelectorAll("code-block")) {
-                    block.notifyUpdate(line.boundingRect);
+                    block.notifyUpdate(erased[i].boundingRect);
                 }
             }
         }
