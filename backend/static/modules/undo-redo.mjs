@@ -62,4 +62,50 @@ class EraseAction extends Action {
     }
 }
 
-export { Action, DrawAction, EraseAction };
+/**
+ * The action of creating a code block/selection
+ */
+class CreateSelectionAction extends Action {
+    #whiteboard;
+    #block;
+
+    constructor(whiteboard, block) {
+        super();
+        this.#whiteboard = whiteboard;
+        this.#block = block;
+    }
+
+    undo() {
+        this.#block.close();
+    }
+
+    redo() {
+        this.#whiteboard.addSelection(this.#block);
+        this.#block.confirm();
+    }
+}
+
+/**
+ * The action of closing a code block/selection
+ */
+class CloseSelectionAction extends Action {
+    #whiteboard;
+    #block;
+
+    constructor(whiteboard, block) {
+        super();
+        this.#whiteboard = whiteboard;
+        this.#block = block;
+    }
+
+    undo() {
+        this.#whiteboard.addSelection(this.#block);
+        this.#block.confirm();
+    }
+
+    redo() {
+        this.#block.close();
+    }
+}
+
+export { Action, DrawAction, EraseAction, CreateSelectionAction, CloseSelectionAction };

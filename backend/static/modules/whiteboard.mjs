@@ -1,4 +1,4 @@
-import { DrawAction, EraseAction } from './undo-redo.mjs';
+import { DrawAction, EraseAction, CreateSelectionAction, CloseSelectionAction } from './undo-redo.mjs';
 import { CodeBlock } from '/static/modules/code-block.mjs';
 import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
 
@@ -414,6 +414,16 @@ class Whiteboard extends HTMLElement {
         this.#resizeCanvas();
         window.addEventListener("resize",
             () => this.#resizeCanvas());
+
+        window.addEventListener("message",
+            (event) => {
+                // Handle code block closing events
+                if ("deleteCodeBlock" in event.data) {
+                    let block = this.#ui.childNodes[event.data.deleteCodeBlock];
+                    block.close();
+                    this.#active_page.recordAction(new CloseSelectionAction(this, block));
+                }
+            })
     }
 
     // This get/set API exposes hex color values even if the line color is auto.
@@ -683,15 +693,28 @@ class Whiteboard extends HTMLElement {
         case "select":
             if (this.#last_selection !== null) {
                 this.#last_selection.confirm();
-                if (this.dataset.autoExecute === "on") {
-                    // Immediately execute a code block if auto-execution is enabled.
-                    this.#last_selection.execute();
+
+                // Only execute and/or record block creation if the block was resized,
+                // and so didn't immediately close itself.
+                if (this.#last_selection.parentElement !== null) {
+                    if (this.dataset.autoExecute === "on") {
+                        // Immediately execute a code block if auto-execution is enabled.
+                        this.#last_selection.execute();
+                    }
+
+                    this.#active_page.recordAction(new CreateSelectionAction(this, this.#last_selection));
+
                 }
                 this.#last_selection = null;
+
             }
             break;
         }
         this.#writing = false;
+    }
+
+    addSelection(block) {
+        this.#ui.appendChild(block);
     }
 
     #createSelection(x, y) {
@@ -703,7 +726,7 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = this.#active_page.id;
-        this.#ui.appendChild(this.#last_selection);
+        this.addSelection(this.#last_selection);
 
         return this.#last_selection;
     }

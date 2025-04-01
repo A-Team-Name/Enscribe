@@ -158,7 +158,13 @@ class CodeBlock extends HTMLElement {
 
         // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
-            .addEventListener("click", () => this.close());
+            .addEventListener("click", () => {
+                // Defer responsibility for deleting the block to the whiteboard,
+                // which can record an associated CloseSelectionAction
+                window.postMessage({
+                    "deleteCodeBlock": Array.from(this.parentElement.childNodes).indexOf(this)
+                });
+            });
 
         this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
