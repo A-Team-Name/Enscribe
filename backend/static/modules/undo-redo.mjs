@@ -29,12 +29,14 @@ class DrawAction extends Action {
 
     undo() {
         delete this.#layer.lines[this.#index];
-        this.postRegionUpdate(this.#line.boundingRect);
+        if (this.#layer.is_code)
+            this.postRegionUpdate(this.#line.boundingRect);
     }
 
     redo() {
         this.#layer.lines[this.#index] = this.#line;
-        this.postRegionUpdate(this.#line.boundingRect);
+        if (this.#layer.is_code)
+            this.postRegionUpdate(this.#line.boundingRect);
     }
 }
 
@@ -56,7 +58,8 @@ class EraseAction extends Action {
         for (let i = 0; i < this.#lines.length; i += 1) {
             if (this.#lines.hasOwnProperty(i)) {
                 this.#layer.lines[i] = this.#lines[i];
-                this.postRegionUpdate(this.#lines[i].boundingRect);
+                if (this.#layer.is_code)
+                    this.postRegionUpdate(this.#lines[i].boundingRect);
             }
         }
     }
@@ -65,7 +68,8 @@ class EraseAction extends Action {
         for (let i = 0; i < this.#lines.length; i += 1) {
             if (this.#lines[i] != undefined) {
                 delete this.#layer.lines[i];
-                this.postRegionUpdate(this.#lines[i].boundingRect);
+                if (this.#layer.is_code)
+                    this.postRegionUpdate(this.#lines[i].boundingRect);
             }
         }
     }
