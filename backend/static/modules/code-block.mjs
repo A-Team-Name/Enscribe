@@ -158,7 +158,7 @@ class CodeBlock extends HTMLElement {
 
         // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
-            .addEventListener("click", () => this.#close());
+            .addEventListener("click", () => this.close());
 
         this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
@@ -194,12 +194,12 @@ class CodeBlock extends HTMLElement {
     async execute() {
             // Disable the run button until we finish executing to prevent double-clicks.
             this.#run.disabled = true;
-            
+
             // Only transcribe when user has made changes to code block
             if (this.getAttribute("state") == "stale"){
                 await this.transcribeCodeBlockImage();
             }
-                
+
             // On run, we perform text recognition, so the block is no longer stale.
             this.setAttribute("state", "executed");
 
@@ -407,7 +407,7 @@ class CodeBlock extends HTMLElement {
         this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
-            this.#close();
+            this.close();
         }
     }
 
@@ -427,7 +427,7 @@ class CodeBlock extends HTMLElement {
         }
     }
 
-    #close() {
+    close() {
         this.remove();
     }
 
@@ -504,7 +504,7 @@ class CodeBlock extends HTMLElement {
             this.#controls.style["display"] = "block";
             this.#selection.classList.remove("tentative");
             this.#tick.style["display"] = "inline-block";
-            
+
             // enable displaying text representation
             this.#text_toggle.disabled = false;
             this.#showOutput();
