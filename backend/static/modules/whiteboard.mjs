@@ -741,8 +741,6 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = this.#active_page.id;
         this.addSelection(this.#last_selection);
-
-        return this.#last_selection;
     }
 
     /**
