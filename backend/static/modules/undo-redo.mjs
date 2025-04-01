@@ -16,6 +16,7 @@ class DrawAction extends Action {
     #index;
 
     constructor(layer, index, line) {
+        super();
         this.#layer = layer;
         this.#line = line;
         this.#index = index;
@@ -38,6 +39,7 @@ class EraseAction extends Action {
     #lines;
 
     constructor(layer, lines) {
+        super();
         this.#layer = layer;
         // A sparse array of erased lines, at their original indices in this.#layer
         this.#lines = lines;
