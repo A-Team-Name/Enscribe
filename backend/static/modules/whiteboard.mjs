@@ -1,4 +1,4 @@
-import { DrawAction } from './undo-redo.mjs';
+import { DrawAction, EraseAction } from './undo-redo.mjs';
 import { CodeBlock } from '/static/modules/code-block.mjs';
 import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
 
@@ -754,7 +754,11 @@ class Whiteboard extends HTMLElement {
 
             this.#writing = false;
         }
-        // TODO Record erase action
+
+        if (this.#erased_lines.length > 0) {
+            this.#active_page.recordAction(new EraseAction(this.active_layer, this.#erased_lines));
+            this.#erased_lines = [];
+        }
     }
 
     #erase(x, y) {
