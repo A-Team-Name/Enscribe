@@ -762,7 +762,6 @@ class Whiteboard extends HTMLElement {
     }
 
     #erase(x, y) {
-        console.log("erasing")
         let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
 
         // Update any blocks that contained erased lines.
