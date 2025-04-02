@@ -63,7 +63,24 @@ window.addEventListener(
             switch (event.data.setting) {
             case "defaultLanguage":
                 selectLanguage(event.data.value);
+                break;
+            case "undo":
+                // Disable the undo and redo buttons if we can't undo/redo on the current page.
+                document.getElementById("undo").disabled = !event.data.undo;
+                document.getElementById("redo").disabled = !event.data.redo;
+                break;
             }
         }
     }
 )
+
+// Use buttons with the for attribute to click the corresponding radio. Buttons are easier to click
+// than labels because the pointer can move before lifting, and a click event will still fire.
+onEvent("click", "button[for]",
+        (button) => document.getElementById(button.getAttribute("for")).click(),
+        // Disable default "immediate application" behaviour of onEvent: wait for real clicks.
+        false);
+
+document.getElementById("undo").addEventListener("click", () => whiteboard.undo());
+document.getElementById("redo").addEventListener("click", () => whiteboard.redo());
+
