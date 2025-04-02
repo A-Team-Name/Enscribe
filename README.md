@@ -46,7 +46,7 @@ If you are contributing to this project we would greatly appreciate you setup ou
 
 Now whenever you attempt to commit, our ruff formatting checks will be ran automatically.
 
-### Jupyter 
+### Jupyter
 To start up a local jupyter server:
 
 `jupyter server --ServerApp.disable_check_xsrf=True`
@@ -56,6 +56,15 @@ Set the environment variables using the url from the command output which follow
 `http://JUPYTER_URL:JUPYTER_PORT/?token=JUPYTER_TOKEN`
 
 ## Frontend Implementation Notes
+### Frontend Testing
+
+We use [Jest](https://jestjs.io) for frontend (JS) unit testing. The environment variable is necessary to enable ECMAScript module support in Jest, which is [currently experimental](https://jestjs.io/docs/ecmascript-modules).
+
+``` bash
+$ npm install
+$ NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
+```
+
 ### User Interface DOM Layout
 The user interface is composed of several overlapping elements, including a mixture of canvases and divs. See `layering_example.html` (accessible at route `/layering`) for an example of how we can use these layers. Below is a rough illustration of how the DOM is structured:
 

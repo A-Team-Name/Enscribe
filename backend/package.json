@@ -1,0 +1,16 @@
+{
+  "name": "enscribe",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "static/main_app.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "keywords": [],
+  "description": "Write code by hand"
+}
