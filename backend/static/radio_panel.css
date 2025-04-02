@@ -1,0 +1,6 @@
+@import '/static/common.css';
+
+::slotted(button[disabled]) {
+    background-color: var(--ui-accent-color) !important;
+    color: var(--default-background-color);
+}

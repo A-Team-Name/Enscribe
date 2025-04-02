@@ -1,17 +1,5 @@
 @import './common.css';
 
-/* || UI Elements */
-fieldset {
-    border: var(--thin-border) solid var(--ui-border-color);
-    border-radius: var(--thin-border);
-    /* Small padding so most of internal area is in children. */
-    padding: 0.2rem;
-    /* Add large padding to child elements to make them easier to hit. */
-    > *:not(legend) {
-        padding: 0.5rem;
-    }
-}
-
 /* || Whiteboard interaction */
 body {
     /* display: flex forces main to not overflow from body */
@@ -30,7 +18,7 @@ main {
 
 #help-dialog {
     width: 75%;
-    
+
 }
 
 
@@ -59,4 +47,3 @@ main {
 #help-dialog h3{
     font-size: 100%;
 }
-
