@@ -20,24 +20,20 @@
         </button>
       </div>
 
-      <fieldset class="spaced-bar">
-        <input id="tool-pan" type="radio" name="tool" value="pan">
-        <button for="tool-pan" title="Pan" class="material-symbols-outlined">
+      <radio-panel id="tool">
+        <button value="pan" title="Pan" class="material-symbols-outlined">
           drag_pan
         </button>
-        <input id="tool-select" type="radio" name="tool" value="select" />
-        <button for="tool-select" class="material-symbols-outlined">
+        <button value="select" class="material-symbols-outlined">
           select
         </button>
-        <input id="tool-write" type="radio" name="tool" value="write" checked/>
-        <button for="tool-write" class="material-symbols-outlined">
+        <button value="write" class="material-symbols-outlined" disabled>
           edit
         </button>
-        <input id="tool-erase" type="radio" name="tool" value="erase">
-        <button for="tool-erase" class="material-symbols-outlined">
+        <button value="erase" class="material-symbols-outlined">
           ink_eraser
         </button>
-      </fieldset>
+      </radio-panel>
 
       <label>
         Pen Width
@@ -59,16 +55,10 @@
         <input id="show-annotations" type="checkbox" checked/>
         Show Annotations
       </label>
-      <fieldset class="spaced-bar">
-        <input id="layer-code" type="radio" name="layer" value="code" checked/>
-        <button for="layer-code">
-          Code
-        </button>
-        <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
-        <button for="layer-annotations">
-          Annotation
-        </button>
-      </fieldset>
+      <radio-panel id="layer">
+        <button value="code" disabled>Code</button>
+        <button value="annotations">Annotations</button>
+      </radio-panel>
       <div>
         <button id="open-help">
           Help
@@ -90,17 +80,13 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      <fieldset>
-        <legend>Touch Behaviour</legend>
-        <input type="radio" id="touch-action-pan" name="touch-action" value="pan" checked/>
-        <button for="touch-action-pan">
-          Pan
-        </button>
-        <input type="radio" id="touch-action-auto" name="touch-action" value="auto"/>
-        <button for="touch-action-auto">
-          Auto (match pen and mouse)
-        </button>
-      </fieldset>
+      <div>
+        <label for="touch-action">Touch Behaviour</label>
+        <select name="touch-action">
+          <option value="pan">Pan</option>
+          <option value="auto">Auto (match pen and mouse)</option>
+        </select>
+      </div>
       <div>
         <label>Default Language</label>
         <select id="default-language" name="default-language">
@@ -193,7 +179,7 @@
         <h4>Background</h4>
         <p>Choose between grid squares, lines, or dots as your background.</p><br>
       </div>
-      
+
 
 
     </dialog>
