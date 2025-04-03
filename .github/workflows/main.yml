@@ -34,6 +34,16 @@ jobs:
           cd backend
           poetry run ruff check --output-format=github .
 
+      - name: npm install
+        run: |
+          cd backend
+          npm install
+
+      - name: npm test
+        run: |
+          cd backend
+          NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
+
   build:
     needs: test
     runs-on: ubuntu-latest
