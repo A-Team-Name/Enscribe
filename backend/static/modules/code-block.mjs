@@ -29,7 +29,7 @@ const code_block_template = `
 </div>
 `;
 
-const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
 class CodeBlock extends HTMLElement {
     static languages = {
