@@ -1,6 +1,6 @@
 import { DrawAction, EraseAction, CreateSelectionAction, CloseSelectionAction } from './undo-redo.mjs';
-import { CodeBlock } from '/static/modules/code-block.mjs';
-import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from '/static/modules/shapeUtils.mjs';
+import { CodeBlock } from './code-block.mjs';
+import { rectanglesOverlapping, rectangleUnion, circleBoundingRect, circlesOverlapping } from './shapeUtils.mjs';
 
 const whiteboard_template = `
 <style>
