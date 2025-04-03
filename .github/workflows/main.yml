@@ -2,7 +2,9 @@ name: Build, Test and Publish Image
 
 on:
   push:
-    branches: [main, dev, demo]
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 
 jobs:
   test:
@@ -46,6 +48,7 @@ jobs:
 
   build:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
         contents: read
