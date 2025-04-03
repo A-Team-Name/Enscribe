@@ -1,5 +1,5 @@
-import { onEvent } from '/static/modules/reactivity.mjs';
-import { rectanglesOverlapping } from '/static/modules/shapeUtils.mjs';
+import { onEvent } from './reactivity.mjs';
+import { rectanglesOverlapping } from './shapeUtils.mjs';
 
 const code_block_template = `
 <link rel="stylesheet" href="/static/code_block.css">
