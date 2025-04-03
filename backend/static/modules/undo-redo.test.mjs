@@ -1,12 +1,13 @@
 import { DrawAction, EraseAction } from './undo-redo.mjs';
 let layer, manual_layer;
-const init_layer = {
-    "lines": ['a', 'b', 'c', 'd'],
-};
 
 beforeEach(() => {
-    layer = structuredClone(init_layer);
-    manual_layer = structuredClone(init_layer);
+    layer = {
+        lines: ['a', 'b', 'c', 'd'],
+    };
+    manual_layer = {
+        lines: ['a', 'b', 'c', 'd'],
+    };
 })
 
 test('undo draw', () => {

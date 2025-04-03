@@ -12,5 +12,9 @@
     "jest": "^29.7.0"
   },
   "keywords": [],
-  "description": "Write code by hand"
+  "description": "Write code by hand",
+  "dependencies": {
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^26.0.0"
+  }
 }
