@@ -61,6 +61,7 @@ Set the environment variables using the url from the command output which follow
 We use [Jest](https://jestjs.io) for frontend (JS) unit testing. The environment variable is necessary to enable ECMAScript module support in Jest, which is [currently experimental](https://jestjs.io/docs/ecmascript-modules).
 
 ``` bash
+$ cd backend
 $ npm install
 $ NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
 ```
