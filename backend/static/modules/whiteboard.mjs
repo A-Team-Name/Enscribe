@@ -322,107 +322,129 @@ class Whiteboard extends HTMLElement {
         this.#notebooks_dialog = document.getElementById("notebooks-dialog");
 
         const saveNotebookDialog = document.getElementById("save-notebook-dialog");
-        const savedPopup = document.getElementById("saved-popup");
 
-        // Save button - saves notebook in JSON format
-        document.getElementById("save")
-            .addEventListener("click", async () => {
+        // // Save button - saves notebook in JSON format
+        // document.getElementById("save")
+        //     .addEventListener("click", async () => {
                 
-                const jsonString = JSON.stringify(Array.from(this.#pages.entries()), null, 2); // Convert array to JSON string 
-                const notebookFormData = new FormData();
-                notebookFormData.append("canvas", jsonString);
+        //         const jsonString = JSON.stringify(Array.from(this.#pages.entries()), null, 2); // Convert array to JSON string 
+        //         const notebookFormData = new FormData();
+        //         notebookFormData.append("canvas", jsonString);
                 
-                // If notebook hasn't been saved yet
-                if (this.#notebook_name == "" ){
-                    saveNotebookDialog.showModal();
-                    document.getElementById("save-notebook-name")
-                        .addEventListener("click", async () => {
-                            console.log(document.getElementById("notebook-name-input").value)
-                            this.#notebook_name = document.getElementById("notebook-name-input").value;
-                            this.#notebook_name_label.textContent = this.#notebook_name
-                            saveNotebookDialog.close();
-                            notebookFormData.append("notebook_name", this.#notebook_name);
-                            notebookFormData.append("notebook_id", -1);
-                            await fetch("/save_notebook/", {
-                                method: "POST",
-                                body: notebookFormData,
-                                credentials: 'include',
-                                headers: {
-                                    "X-CSRFTOKEN" : csrftoken
-                                }
-                            })
-                                .then((rsp) => rsp.json())
-                                .then((json) => {
-                                    this.#notebooks = json["notebooks"];
-                                    this.#notebook_id = json["notebook_id"];
-                                    // Display the saved popup
-                                    savedPopup.className = "show";
+        //         // If notebook hasn't been saved yet
+        //         if (this.#notebook_name == "" ){
+        //             saveNotebookDialog.showModal();
+        //             document.getElementById("save-notebook-name")
+        //                 .addEventListener("click", async () => {
+        //                     console.log(document.getElementById("notebook-name-input").value)
+        //                     this.#notebook_name = document.getElementById("notebook-name-input").value;
+        //                     this.#notebook_name_label.textContent = this.#notebook_name
+        //                     saveNotebookDialog.close();
+        //                     notebookFormData.append("notebook_name", this.#notebook_name);
+        //                     notebookFormData.append("notebook_id", -1);
+        //                     await fetch("/save_notebook/", {
+        //                         method: "POST",
+        //                         body: notebookFormData,
+        //                         credentials: 'include',
+        //                         headers: {
+        //                             "X-CSRFTOKEN" : csrftoken
+        //                         }
+        //                     })
+        //                         .then((rsp) => rsp.json())
+        //                         .then((json) => {
+        //                             this.#notebooks = json["notebooks"];
+        //                             this.#notebook_id = json["notebook_id"];
+        //                             // Display the saved popup
+        //                             savedPopup.className = "show";
         
-                                    // After 2.9s seconds, hide the save popup
-                                    setTimeout(function(){ savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
+        //                             // After 2.9s seconds, hide the save popup
+        //                             setTimeout(function(){ savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
                             
-                                    const container = document.getElementById("notebooks-container");
-                                    container.innerHTML = ""; // Clear existing notebooks
-                                    // Reinsert updated notebooks
-                                    this.#notebooks.forEach(notebook => {
-                                        const div = document.createElement("div");
-                                        div.classList.add("notebook-div");
-                                        div.setAttribute("data-notebook-id", notebook.id);
-                                        div.innerHTML = `
-                                            ${notebook.notebook_name} -- ${notebook.notebook_created_at} -- 
-                                            <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
-                                            <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
-                                        `;
+        //                             const container = document.getElementById("notebooks-container");
+        //                             container.innerHTML = ""; // Clear existing notebooks
+        //                             // Reinsert updated notebooks
+        //                             this.#notebooks.forEach(notebook => {
+        //                                 const div = document.createElement("div");
+        //                                 div.classList.add("notebook-div");
+        //                                 div.setAttribute("data-notebook-id", notebook.id);
+        //                                 div.innerHTML = `
+        //                                     ${notebook.notebook_name} -- ${notebook.notebook_created_at} -- 
+        //                                     <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
+        //                                     <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
+        //                                 `;
                                 
-                                        container.appendChild(div);
-                                    });
-                                    this.applyNotebookEventListeners();
-                                })
-                                .catch((error) => console.error("Error:", error));
-                        })
-                }
-                // If notebook has previous been saved
-                else{
-                    notebookFormData.append("notebook_name", this.#notebook_name);
-                    notebookFormData.append("notebook_id", this.#notebook_id);
-                    await fetch("/save_notebook/", {
-                        method: "POST",
-                        body: notebookFormData,
-                        credentials: 'include',
-                        headers: {
-                            "X-CSRFTOKEN" : csrftoken
-                        }
-                    })
-                        .then((rsp) => rsp.json())
-                        .then((json) => {
-                            this.#notebooks = json["notebooks"];
-                            this.#notebook_id = json["notebook_id"];
-                            // Display the saved popup
-                            savedPopup.className = "show";
+        //                                 container.appendChild(div);
+        //                             });
+        //                             this.applyNotebookEventListeners();
+        //                         })
+        //                         .catch((error) => console.error("Error:", error));
+        //                 })
+        //         }
+        //         // If notebook has previous been saved
+        //         else{
+        //             notebookFormData.append("notebook_name", this.#notebook_name);
+        //             notebookFormData.append("notebook_id", this.#notebook_id);
+        //             await fetch("/save_notebook/", {
+        //                 method: "POST",
+        //                 body: notebookFormData,
+        //                 credentials: 'include',
+        //                 headers: {
+        //                     "X-CSRFTOKEN" : csrftoken
+        //                 }
+        //             })
+        //                 .then((rsp) => rsp.json())
+        //                 .then((json) => {
+        //                     this.#notebooks = json["notebooks"];
+        //                     this.#notebook_id = json["notebook_id"];
+        //                     // Display the saved popup
+        //                     savedPopup.className = "show";
 
-                            // After 2.9s seconds, hide the save popup
-                            setTimeout(function(){ savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
-                            const container = document.getElementById("notebooks-container"); 
-                            container.innerHTML = ""; // Clear existing notebooks
-                            // Reinsert updated notebooks
-                            this.#notebooks.forEach(notebook => {
-                                const div = document.createElement("div");
-                                div.classList.add("notebook-div");
-                                div.setAttribute("data-notebook-id", notebook.id);
-                                div.innerHTML = `
-                                    ${notebook.notebook_name} -- ${notebook.notebook_created_at} -- 
-                                    <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
-                                    <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
-                                `;
+        //                     // After 2.9s seconds, hide the save popup
+        //                     setTimeout(function(){ savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
+        //                     const container = document.getElementById("notebooks-container"); 
+        //                     container.innerHTML = ""; // Clear existing notebooks
+        //                     // Reinsert updated notebooks
+        //                     this.#notebooks.forEach(notebook => {
+        //                         const div = document.createElement("div");
+        //                         div.classList.add("notebook-div");
+        //                         div.setAttribute("data-notebook-id", notebook.id);
+        //                         div.innerHTML = `
+        //                             ${notebook.notebook_name} -- ${notebook.notebook_created_at} -- 
+        //                             <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
+        //                             <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
+        //                         `;
                         
-                                container.appendChild(div);
-                            });
-                            this.applyNotebookEventListeners();
-                        })
-                        .catch((error) => console.error("Error:", error));
-                }
+        //                         container.appendChild(div);
+        //                     });
+        //                     this.applyNotebookEventListeners();
+        //                 })
+        //                 .catch((error) => console.error("Error:", error));
+        //         }
                             
-            });
+        //     });
+
+        document.getElementById("save").addEventListener("click", async () => {
+            const jsonString = JSON.stringify(Array.from(this.#pages.entries()), null, 2);
+            const notebookFormData = new FormData();
+            notebookFormData.append("canvas", jsonString);
+        
+            if (this.#notebook_name === "") {
+                saveNotebookDialog.showModal();
+                document.getElementById("save-notebook-name").addEventListener("click", async () => {
+                    this.#notebook_name = document.getElementById("notebook-name-input").value;
+                    this.#notebook_name_label.textContent = this.#notebook_name;
+                    saveNotebookDialog.close();
+                    notebookFormData.append("notebook_name", this.#notebook_name);
+                    notebookFormData.append("notebook_id", -1);
+                    await this.saveNotebook(notebookFormData);
+                }, { once: true });  // Ensures event listener runs only once
+            } else {
+                notebookFormData.append("notebook_name", this.#notebook_name);
+                notebookFormData.append("notebook_id", this.#notebook_id);
+                await this.saveNotebook(notebookFormData);
+            }
+        });
+        
 
         // File save button
         document.getElementById("save_file")
@@ -565,6 +587,49 @@ class Whiteboard extends HTMLElement {
         this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
         // TODO: Add code to load page state from local storage here
         this.#newPage();
+    }
+
+    async saveNotebook(notebookFormData) {
+        try {
+            const response = await fetch("/save_notebook/", {
+                method: "POST",
+                body: notebookFormData,
+                credentials: "include",
+                headers: { "X-CSRFTOKEN": csrftoken }
+            });
+            const json = await response.json();
+
+            this.#notebooks = json["notebooks"];
+            this.#notebook_id = json["notebook_id"];
+    
+            // Show saved popup
+            const savedPopup = document.getElementById("saved-popup");
+            savedPopup.className = "show";
+            setTimeout(() => { savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
+            
+            this.updateNotebookList();
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+    
+    updateNotebookList() {
+        const container = document.getElementById("notebooks-container");
+        container.innerHTML = ""; // Clear existing notebooks
+    
+        this.#notebooks.forEach(notebook => {
+            const div = document.createElement("div");
+            div.classList.add("notebook-div");
+            div.setAttribute("data-notebook-id", notebook.id);
+            div.innerHTML = `
+                ${notebook.notebook_name} -- ${notebook.notebook_created_at} -- 
+                <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
+                <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
+            `;
+            container.appendChild(div);
+        });
+    
+        this.applyNotebookEventListeners();
     }
 
     applyNotebookEventListeners() {
