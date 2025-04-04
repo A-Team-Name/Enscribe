@@ -7,7 +7,15 @@
   </head>
   <body>
     <header class="spaced-bar tool-bar">
-      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+      <div class="spaced-bar">
+        <img id="language-logo" width="48px" height="48px"/>
+        <select id="default-language" name="default-language" title="Default Language">
+          <option value="python3">Python</option>
+          <option value="dyalog_apl">APL</option>
+          <option value="lambda-calculus">λ Calculus</option>
+        </select>
+      </div>
+
       <div class="spaced-bar">
         <button class="material-symbols-outlined" title="Save Notebook" id="save">
           save
@@ -27,24 +35,20 @@
         </button>
       </div>
 
-      <fieldset class="spaced-bar">
-        <input id="tool-pan" type="radio" name="tool" value="pan">
-        <button for="tool-pan" title="Pan" class="material-symbols-outlined">
+      <radio-panel id="tool">
+        <button value="pan" title="Pan" class="material-symbols-outlined">
           drag_pan
         </button>
-        <input id="tool-select" type="radio" name="tool" value="select" />
-        <button for="tool-select" class="material-symbols-outlined">
+        <button value="select" class="material-symbols-outlined">
           select
         </button>
-        <input id="tool-write" type="radio" name="tool" value="write" checked/>
-        <button for="tool-write" class="material-symbols-outlined">
+        <button value="write" class="material-symbols-outlined" disabled>
           edit
         </button>
-        <input id="tool-erase" type="radio" name="tool" value="erase">
-        <button for="tool-erase" class="material-symbols-outlined">
+        <button value="erase" class="material-symbols-outlined">
           ink_eraser
         </button>
-      </fieldset>
+      </radio-panel>
 
       <label>
         Pen Width
@@ -58,7 +62,7 @@
       <input id="line-color" type="color" value="#ffffff"/>
 
       <div class="spaced-bar">
-        <button id="undo" title="Undo" class="material-symbols-outlined">undo</button>
+        <button id="undo" title="Undo" class="material-symbols-outlined" disabled>undo</button>
         <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
       </div>
 
@@ -66,17 +70,14 @@
         <input id="show-annotations" type="checkbox" checked/>
         Show Annotations
       </label>
-      <fieldset class="spaced-bar">
-        <input id="layer-code" type="radio" name="layer" value="code" checked/>
-        <button for="layer-code">
-          Code
-        </button>
-        <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
-        <button for="layer-annotations">
-          Annotation
-        </button>
-      </fieldset>
+      <radio-panel id="layer">
+        <button value="code" disabled>Code</button>
+        <button value="annotations">Annotations</button>
+      </radio-panel>
       <div>
+        <button id="open-help">
+          Help
+        </button>
         <button id="open-settings">
           Settings
         </button>
@@ -94,23 +95,11 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      <fieldset>
-        <legend>Touch Behaviour</legend>
-        <input type="radio" id="touch-action-pan" name="touch-action" value="pan" checked/>
-        <button for="touch-action-pan">
-          Pan
-        </button>
-        <input type="radio" id="touch-action-auto" name="touch-action" value="auto"/>
-        <button for="touch-action-auto">
-          Auto (match pen and mouse)
-        </button>
-      </fieldset>
       <div>
-        <label>Default Language</label>
-        <select id="default-language" name="default-language">
-          <option value="python3">Python</option>
-          <option value="dyalog_apl">APL</option>
-          <option value="lambda-calculus">λ Calculus</option>
+        <label for="touch-action">Touch Behaviour</label>
+        <select name="touch-action">
+          <option value="pan">Pan</option>
+          <option value="auto">Auto (match pen and mouse)</option>
         </select>
       </div>
       <div>
@@ -157,6 +146,78 @@
       <button id="save-notebook-name">Save</button>
     </dialog>
     <div id="saved-popup">Saved</div>
+    
+    <!-- HELP MENU -->
+    <dialog id="help-dialog">
+      <h1>Help</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <div>
+        <h2>Writing & Erasing Code</h2>
+        <img src="/static/help-menu/writing_and_erasing.png" alt="Writing and Erasing Menu">
+        <ul>
+          <li><span class="material-symbols-outlined">edit</span>  With "Code" selected, use the pen to write executable lines of code. </li>
+          <li><span class="material-symbols-outlined">ink_eraser</span> Use the eraser to remove a character. </li>
+          <li>Adjust the pen or eraser size using the sliders.</li>
+          <li>Change the pen colour as needed.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Annotating Code</h2>
+        <img src="/static/help-menu/annotation_toggle.png" alt="Annotation Toggle">
+        <ul>
+          <li>Select "Annotation" mode to add non-executable comments using the pen </li>
+          <li>Toggle "Show Annotations" to display or hide annotations </li>
+          <li>Customise the pen colour for annotations</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Running Code</h2>
+          <img src="/static/help-menu/code_block.png" alt="Code Block Selection">
+        <ul>
+          <li><span class="material-symbols-outlined"></span>  Use the selection tool to draw a box around the code you want to run.</li>
+          <li>If auto-execution is enabled, the code runs instantly otherwise click ▶.</li>
+          <li>Click the language icon to switch execution languages.</li>
+          <li><span class="material-symbols-outlined">output</span>  Display or hide transcribed code.</li>
+          <li><span class="material-symbols-outlined">text_fields</span>  Display or hide execution output.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Changing Incorrect Characters</h2>
+        <img src="/static/help-menu/incorrect_prediction.png" alt="Incorrect Character Prediction">
+        <p>If handwriting recognition misinterprets a character, click it and the most likely characters will be shown, select one of these characters to replace it.</p>
+      </div>
+      <div>
+        <h2>Opening a new tab</h2>
+        <img src="/static/help-menu/tabs.png" alt="Opening a tab">
+        <p>Click the "+" icon next to existing tabs to open a blank whiteboard while keeping existing work.</p>
+        <p>Double-click a tab to rename it.</p>
+      </div>
+      <div>
+        <h2>Settings Menu</h2>
+        <p>Customise your experience by changing settings</p><br>
+
+        <h4>Touch Behaviour</h4>
+        <p>Choose Between</p>
+        <ul>
+          <li>Pen for drawing, touch for panning</li>
+          <li>Pen and touch with the same behavior</li>
+        </ul><br>
+
+        <h4>Default Language</h4>
+        <p>Set the default programming language for new code block selections. </p><br>
+
+        <h4>Automatically execute new selections</h4>
+        <p>Enable/disable automatic execution of selected code (enabled by default).</p><br>
+
+        <h4>Background</h4>
+        <p>Choose between grid squares, lines, or dots as your background.</p><br>
+      </div>
+
+
+
+    </dialog>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>
 </html>

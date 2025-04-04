@@ -1,17 +1,5 @@
 @import './common.css';
 
-/* || UI Elements */
-fieldset {
-    border: var(--thin-border) solid var(--ui-border-color);
-    border-radius: var(--thin-border);
-    /* Small padding so most of internal area is in children. */
-    padding: 0.2rem;
-    /* Add large padding to child elements to make them easier to hit. */
-    > *:not(legend) {
-        padding: 0.5rem;
-    }
-}
-
 /* || Whiteboard interaction */
 body {
     /* display: flex forces main to not overflow from body */
@@ -26,6 +14,82 @@ html, body {
 main {
     /* let the whiteboard scroll */
     overflow: hidden;
+}
+
+#saved-popup {
+    visibility: hidden; 
+    min-width: 250px; 
+    margin-left: -125px; 
+    background-color: #333;
+    color: #fff; 
+    text-align: center; 
+    border-radius: 2px; 
+    padding: 16px; 
+    position: fixed; 
+    z-index: 1; 
+    left: 50%; 
+    bottom: 30px; 
+  }
+  
+  
+#saved-popup.show {
+    visibility: visible; 
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  }
+  
+  /* Animations to fade the saved popup in and out */
+  @-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+  
+  @keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+  
+  @-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
+  
+  @keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
+#help-dialog {
+    width: 75%;
+
+}
+
+
+/* Help Menu */
+#help-dialog img{
+    margin: 10px;
+    max-width: 90%;
+}
+
+#help-dialog ul{
+    padding:revert;
+}
+
+#help-dialog div{
+    margin-bottom: 30px;
+}
+
+#help-dialog h1{
+    font-size: 150%;
+}
+
+#help-dialog h2{
+    font-size: 140%;
+}
+
+#help-dialog h3{
+    font-size: 100%;
 }
 
 #saved-popup {

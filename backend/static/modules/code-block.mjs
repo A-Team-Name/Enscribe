@@ -7,6 +7,8 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
+  <span id="loader"></span>
+  <span id="tick"></span>
   <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
   <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
@@ -70,6 +72,8 @@ class CodeBlock extends HTMLElement {
     #run;
     /** The controls block. */
     #controls;
+    /** The tick icon */
+    #tick;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -85,6 +89,8 @@ class CodeBlock extends HTMLElement {
         this.#text = shadowRoot.getElementById("text");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
+        this.#tick = shadowRoot.getElementById("tick");
+        this.#tick.style["display"] = "none";
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
         this.#text_toggle = shadowRoot.getElementById("show-text")
@@ -120,7 +126,8 @@ class CodeBlock extends HTMLElement {
         this.#language_button.addEventListener("click",(e) => {
                 if (select_language.open) {
                     select_language.close();
-                } else {
+                }
+                else{
                     select_language.show();
                 }
                 e.stopPropagation();
@@ -151,7 +158,15 @@ class CodeBlock extends HTMLElement {
 
         // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
-            .addEventListener("click", () => this.#close());
+            .addEventListener("click", () => {
+                // Defer responsibility for deleting the block to the whiteboard,
+                // which can record an associated CloseSelectionAction.
+                // The contents of a message must be pure JSON, so we can't simply pass
+                // a reference to the code block. The index is sufficiently unambiguous.
+                window.postMessage({
+                    "deleteCodeBlock": Array.from(this.parentElement.childNodes).indexOf(this)
+                });
+            });
 
         this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
@@ -187,10 +202,16 @@ class CodeBlock extends HTMLElement {
     async execute() {
             // Disable the run button until we finish executing to prevent double-clicks.
             this.#run.disabled = true;
-            await this.transcribeCodeBlockImage();
+
+            // Only transcribe when user has made changes to code block
+            if (this.getAttribute("state") == "stale"){
+                await this.transcribeCodeBlockImage();
+            }
+
             // On run, we perform text recognition, so the block is no longer stale.
             this.setAttribute("state", "executed");
-            this.executeTranscribedCode();
+
+            await this.executeTranscribedCode();
 
             // Re-enable the run button now code has executed.
             this.#run.disabled = false;
@@ -394,7 +415,7 @@ class CodeBlock extends HTMLElement {
         this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
-            this.#close();
+            this.close();
         }
     }
 
@@ -414,7 +435,7 @@ class CodeBlock extends HTMLElement {
         }
     }
 
-    #close() {
+    close() {
         this.remove();
     }
 
@@ -480,11 +501,22 @@ class CodeBlock extends HTMLElement {
             // They might still want to see the output, so don't mess with that.
             this.#hideText();
             this.#text_toggle.disabled = true;
+            this.#tick.style["display"] = "none";
+            break;
+        case "running":
+            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "none";
             break;
         case "executed":
+            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "inline-block";
+
             // enable displaying text representation
             this.#text_toggle.disabled = false;
             this.#showOutput();
+
             break;
         }
     }

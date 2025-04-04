@@ -5,19 +5,20 @@
 <head>
   <meta charset="utf-8">
   <title>Login</title>
+  <link href="/static/login_register.css" rel="stylesheet"/>
 </head>
 
 <body>
   <main>
+    <h1>Enscribe</h1>
     <h2>Log In</h2>
       <form method="post">
         {% csrf_token %}
         {{ form }}
         <button type="submit">Log In</button>
       </form>
-      <p><a href="{% url 'password_reset' %}">Password Reset</a></p>
+      <p class="password-reset"><a href="{% url 'password_reset' %}">Password Reset</a></p>
   </main>
 </body>
 
 </html>
-
