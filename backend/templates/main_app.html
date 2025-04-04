@@ -7,7 +7,15 @@
   </head>
   <body>
     <header class="spaced-bar tool-bar">
-      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+      <div class="spaced-bar">
+        <img id="language-logo" width="48px" height="48px"/>
+        <select id="default-language" name="default-language" title="Default Language">
+          <option value="python3">Python</option>
+          <option value="dyalog_apl">APL</option>
+          <option value="lambda-calculus">λ Calculus</option>
+        </select>
+      </div>
+
       <div class="spaced-bar">
         <button class="material-symbols-outlined" title="Save Notebook" id="save">
           save
@@ -85,14 +93,6 @@
         <select name="touch-action">
           <option value="pan">Pan</option>
           <option value="auto">Auto (match pen and mouse)</option>
-        </select>
-      </div>
-      <div>
-        <label>Default Language</label>
-        <select id="default-language" name="default-language">
-          <option value="python3">Python</option>
-          <option value="dyalog_apl">APL</option>
-          <option value="lambda-calculus">λ Calculus</option>
         </select>
       </div>
       <div>
