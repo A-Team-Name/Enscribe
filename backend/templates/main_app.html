@@ -12,12 +12,18 @@
         <button class="material-symbols-outlined" title="Save Notebook" id="save">
           save
         </button>
-        <button class="material-symbols-outlined" title="New Notebook" id="new">
-          note_add
+        <button class="material-symbols-outlined" title="Download Notebook" id="save_file">
+          file_save
         </button>
+        <!-- <button class="material-symbols-outlined" title="New Notebook" id="new">
+          note_add
+        </button> -->
         <input type="file" id="fileInput" style="display: none;">
-        <button class="material-symbols-outlined" title="Open Notebook" id="open">
-          folder_open
+        <button class="material-symbols-outlined" title="Open Notebook from File" id="open">
+          file_open
+        </button>
+        <button class="material-symbols-outlined" title="Open Saved Notebooks" id="open_from_account">
+          book
         </button>
       </div>
 
@@ -124,6 +130,33 @@
         <button type="submit">Log Out</button>
       </form>
     </dialog>
+    <dialog id="notebooks-dialog">
+      <h1>Notebooks</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      
+      <div id="notebooks-container">
+        {% for notebook in notebooks %}
+          <div class="notebook-div" data-notebook-id="{{notebook.id}}">
+            {{notebook.notebook_name}} --  {{notebook.notebook_created_at}} -- 
+            <button class="open-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Open Notebook">draw</button>
+            <button class="delete-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Delete Notebook">delete</button>
+          </div>
+        {% endfor %}
+      </div>
+      
+    </dialog>
+    <dialog id="save-notebook-dialog">
+      <h1>Save Notebook</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <label for="notebook-name-input">Notebook Name:</label>
+      <input type="text" id="notebook-name-input" name="notebook-name-input">
+      <button id="save-notebook-name">Save</button>
+    </dialog>
+    <div id="saved-popup">Saved</div>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>
 </html>

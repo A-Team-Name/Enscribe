@@ -1,17 +1,11 @@
 from django.db import models  # noqa: F401
+from django.contrib.auth.models import User
 
 
-class CodeBlockPrediction(models.Model):
-    predicted_text = models.CharField(max_length=50)
-
-
-class TopPredictions(models.Model):
-    code_block = models.ForeignKey(CodeBlockPrediction, on_delete=models.CASCADE)
-    position = models.IntegerField()
-
-
-class CharacterPrediction(models.Model):
-    prediction_set = models.ForeignKey(TopPredictions, on_delete=models.CASCADE)
-    character = models.CharField(max_length=1)
-    probability = models.FloatField()
-    rank = models.IntegerField()
+class Notebook(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="entries")
+    notebook_name = models.CharField(max_length=255)
+    notebook_data = models.JSONField()
+    notebook_created_at = models.DateTimeField(
+        auto_now_add=True
+    )  # Automatically sets the timestamp
