@@ -100,3 +100,8 @@
     transform: rotate(45deg);
     margin: 5px;
 }
+
+.toggle-box {
+    display: flex;
+    align-items: start;
+}
