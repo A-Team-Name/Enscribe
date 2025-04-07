@@ -9,8 +9,6 @@ const code_block_template = `
   <button id="run" class="material-symbols-outlined">play_arrow</button>
   <span id="loader"></span>
   <span id="tick"></span>
-  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
-  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
   <button id="language-switch">
     <img height="24" src="/static/logos/apl.svg" alt="APL"/>
   </button>
@@ -19,9 +17,15 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
+  <div class="toggle-box">
+    <label class="material-symbols-outlined clickable"><input id="show-text" name="show-text" type="checkbox" class="toggle-button"/>text_fields</label>
+    <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
+  </div>
   <dialog id="predictions" class="ui-window clickable"></dialog>
-  <textarea id="output" class="ui-window clickable"></textarea>
+  <div class="toggle-box">
+    <label class="material-symbols-outlined clickable"><input id="show-output" name="show-output" type="checkbox" class="toggle-button"/>output</label>
+    <textarea id="output" class="ui-window clickable"></textarea>
+  </div>
 </div>
 `;
 
@@ -74,6 +78,8 @@ class CodeBlock extends HTMLElement {
     #controls;
     /** The tick icon */
     #tick;
+    /** The container for the entire output column */
+    #output_column;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
@@ -85,6 +91,7 @@ class CodeBlock extends HTMLElement {
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = code_block_template;
 
+        this.#output_column = shadowRoot.getElementById("output-column");
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
         this.#output = shadowRoot.getElementById("output");
@@ -447,10 +454,12 @@ class CodeBlock extends HTMLElement {
         // inactive tabs/pages, which also relies on visibility. TODO: Avoid this potential
         // interaction entirely.
         this.#controls.style.removeProperty("visibility");
+        this.#output_column.style.removeProperty("visibility");
     }
 
     #hideControls() {
         this.#controls.style.visibility = "hidden";
+        this.#output_column.style.visibility = "hidden";
     }
 
     #showOutput() {
