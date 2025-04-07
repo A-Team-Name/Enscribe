@@ -99,7 +99,7 @@ dialog::backdrop {
 
 
 .ui-group {
-    padding: 0.5rem;
+    padding: 0.25rem;
     border: var(--thin-border) solid var(--ui-border-color);
     border-radius: 3px;
 }

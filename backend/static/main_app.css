@@ -47,3 +47,19 @@ main {
 #help-dialog h3{
     font-size: 100%;
 }
+
+input[type="range"] {
+    width: 7rem;
+}
+
+label:has(input#show-annotations:checked) {
+    & #annotations-off {
+        display: none;
+    }
+}
+
+label:has(input#show-annotations:not(:checked)) {
+    & #annotations-on {
+        display: none;
+    }
+}
