@@ -107,6 +107,14 @@
           <option value="dots">Dots</option>
         </select>
       </div>
+      <div>
+        <label for="model">Handwriting Recognition Model</label>
+        <select id="model" name="model">
+          <option value="cnn-lambda">CNN</option>
+          <option value="trocr-lambda">TrOCR</option>
+          <option value="shape-lambda">Shape Context</option>
+        </select>
+      </div>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>

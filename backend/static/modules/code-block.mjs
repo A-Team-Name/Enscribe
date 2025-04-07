@@ -79,6 +79,9 @@ class CodeBlock extends HTMLElement {
     #language_logo;
     #language_button;
 
+    /** Handwriting recognition model selected in settings */
+    #selectedModel
+
     constructor() {
         super();
 
@@ -91,6 +94,7 @@ class CodeBlock extends HTMLElement {
         this.#controls = shadowRoot.getElementById("controls");
         this.#tick = shadowRoot.getElementById("tick");
         this.#tick.style["display"] = "none";
+        this.#selectedModel = document.getElementById("model");
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
         this.#text_toggle = shadowRoot.getElementById("show-text")
@@ -226,6 +230,7 @@ class CodeBlock extends HTMLElement {
         const imageFormData = new FormData();
         imageFormData.append("img", selectionContents); // Add the image file to the form data
         imageFormData.append("name", "image_unique_id");
+        imageFormData.append("model_name", this.#selectedModel.value);
 
         return fetch("/image_to_text/", {
             method: "POST",

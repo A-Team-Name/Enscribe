@@ -18,13 +18,12 @@ main {
 
 #help-dialog {
     width: 75%;
-
 }
 
 
 /* Help Menu */
 #help-dialog img{
-    margin: 10px
+    margin: 10px;
     max-width: 90%;
 }
 
