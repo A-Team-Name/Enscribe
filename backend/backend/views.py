@@ -219,15 +219,16 @@ def save_notebook(request):
             user=request.user, notebook_name=notebook_name, notebook_data=canvas
         )
         id_to_return = new_notebook.id
-    # If existing then update to latest version of canvas
+    # If existing then update to latest version of canvas and update name
     else:
         existing_notebook = Notebook.objects.get(id=notebook_id)
         existing_notebook.notebook_data = canvas
+        existing_notebook.notebook_name = notebook_name
         existing_notebook.save()
         id_to_return = existing_notebook.id
 
     updated_user_notebooks = Notebook.objects.filter(user=request.user).values(
-        "id", "notebook_name", "notebook_created_at", "notebook_data"
+        "id", "notebook_name", "notebook_modified_at", "notebook_data"
     )
 
     return JsonResponse(

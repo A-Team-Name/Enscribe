@@ -17,21 +17,23 @@
       </div>
 
       <div class="spaced-bar">
+        <button class="material-symbols-outlined" title="New Notebook" id="new">
+          note_add
+        </button>
+        <button class="material-symbols-outlined" title="Open Saved Notebooks" id="open_from_account">
+          folder_open
+        </button>
         <button class="material-symbols-outlined" title="Save Notebook" id="save">
           save
         </button>
+      </div>
+      <div class="spaced-bar">
         <button class="material-symbols-outlined" title="Download Notebook" id="save_file">
-          file_save
+          download
         </button>
-        <!-- <button class="material-symbols-outlined" title="New Notebook" id="new">
-          note_add
-        </button> -->
         <input type="file" id="fileInput" style="display: none;">
-        <button class="material-symbols-outlined" title="Open Notebook from File" id="open">
-          file_open
-        </button>
-        <button class="material-symbols-outlined" title="Open Saved Notebooks" id="open_from_account">
-          book
+        <button class="material-symbols-outlined" title="Open Notebook from File" id="open_file">
+          upload
         </button>
       </div>
 
@@ -128,9 +130,12 @@
       <div id="notebooks-container">
         {% for notebook in notebooks %}
           <div class="notebook-div" data-notebook-id="{{notebook.id}}">
-            {{notebook.notebook_name}} --  {{notebook.notebook_created_at}} -- 
-            <button class="open-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Open Notebook">draw</button>
-            <button class="delete-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Delete Notebook">delete</button>
+            <div>{{notebook.notebook_name}}</div>
+            <div>{{notebook.notebook_modified_at| timesince}} ago</div>
+            <div>
+              <button class="open-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Open Notebook">draw</button>
+              <button class="delete-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Delete Notebook">delete</button>
+            </div>
           </div>
         {% endfor %}
       </div>
@@ -146,7 +151,7 @@
       <button id="save-notebook-name">Save</button>
     </dialog>
     <div id="saved-popup">Saved</div>
-    
+
     <!-- HELP MENU -->
     <dialog id="help-dialog">
       <h1>Help</h1>

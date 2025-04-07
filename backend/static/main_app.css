@@ -36,7 +36,6 @@ main {
     visibility: visible; 
     /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
     However, delay the fade out process for 2.5 seconds */
-    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
     animation: fadein 0.5s, fadeout 0.5s 2.5s;
   }
   
@@ -60,13 +59,30 @@ main {
     from {bottom: 30px; opacity: 1;}
     to {bottom: 0; opacity: 0;}
   }
+
+  #notebooks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 1rem;
+  }
+  
+  .notebook-div {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+  }
+
+/* Help Menu */
 #help-dialog {
     width: 75%;
 
 }
 
-
-/* Help Menu */
 #help-dialog img{
     margin: 10px;
     max-width: 90%;
@@ -91,48 +107,3 @@ main {
 #help-dialog h3{
     font-size: 100%;
 }
-
-#saved-popup {
-    visibility: hidden; 
-    min-width: 250px; 
-    margin-left: -125px; 
-    background-color: #333;
-    color: #fff; 
-    text-align: center; 
-    border-radius: 2px; 
-    padding: 16px; 
-    position: fixed; 
-    z-index: 1; 
-    left: 50%; 
-    bottom: 30px; 
-  }
-  
-  
-#saved-popup.show {
-    visibility: visible; 
-    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
-    However, delay the fade out process for 2.5 seconds */
-    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  }
-  
-  /* Animations to fade the saved popup in and out */
-  @-webkit-keyframes fadein {
-    from {bottom: 0; opacity: 0;}
-    to {bottom: 30px; opacity: 1;}
-  }
-  
-  @keyframes fadein {
-    from {bottom: 0; opacity: 0;}
-    to {bottom: 30px; opacity: 1;}
-  }
-  
-  @-webkit-keyframes fadeout {
-    from {bottom: 30px; opacity: 1;}
-    to {bottom: 0; opacity: 0;}
-  }
-  
-  @keyframes fadeout {
-    from {bottom: 30px; opacity: 1;}
-    to {bottom: 0; opacity: 0;}
-  }

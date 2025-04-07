@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ),
                 ("notebook_name", models.CharField(max_length=255)),
                 ("notebook_data", models.JSONField()),
-                ("notebook_created_at", models.DateTimeField(auto_now_add=True)),
+                ("notebook_modified_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "user",
                     models.ForeignKey(
