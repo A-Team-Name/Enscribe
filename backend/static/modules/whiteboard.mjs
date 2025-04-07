@@ -687,6 +687,9 @@ class Whiteboard extends HTMLElement {
                 first = false;
             }
 
+            // Load the page's scroll position (the Page object's scroll values will get set when switching to a different page)
+            this.#container.scrollTo(page.scrollLeft, page.scrollTop);
+
             // Reconstruct each line of code layer
             var line_objs = [];
             for (var code_line of page.layers[0].lines){
