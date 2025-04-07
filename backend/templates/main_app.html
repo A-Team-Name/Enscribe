@@ -48,37 +48,33 @@
         </button>
       </radio-panel>
 
-      <div class="spaced-bar" style="gap: 1rem">
-        <div class="spaced-bar">
-          <label for="pen-width">
-            Pen Size
-          </label>
-          <input id="pen-width" name="pen-width" type="range" value="3" min="1" max="30"/>
-        </div>
-
-        <div class="spaced-bar">
-          <label for="eraser-width">
-            Eraser Size
-          </label>
-          <input id="eraser-width" name="eraser-width" type="range" value="20" min="5" max="30"/>
-        </div>
-
-        <div class="spaced-bar">
-          <label for="line-color" class="material-symbols-outlined">palette</label>
-          <input id="line-color" name="line-color" type="color" value="#ffffff"/>
-        </div>
-      </div>
-
-      <div class="spaced-bar" style="gap: 1rem">
-        <radio-panel id="layer">
-          <button value="code" disabled>Code</button>
-          <button value="annotations">Notes</button>
-        </radio-panel>
-        <label>
-          <input id="show-annotations" type="checkbox" checked/>
-          Show Notes
+      <div class="left-stack">
+        <label for="pen-width">
+          Pen Size
         </label>
+        <input id="pen-width" name="pen-width" type="range" value="3" min="1" max="30"/>
       </div>
+
+      <div class="left-stack">
+        <label for="eraser-width">
+          Eraser Size
+        </label>
+        <input id="eraser-width" name="eraser-width" type="range" value="20" min="5" max="30"/>
+      </div>
+
+      <div class="spaced-bar">
+        <label for="line-color" class="material-symbols-outlined">palette</label>
+        <input id="line-color" name="line-color" type="color" value="#ffffff"/>
+      </div>
+
+      <radio-panel id="layer">
+        <button value="code" disabled>Code</button>
+        <button value="annotations">Notes</button>
+      </radio-panel>
+      <label>
+        <input id="show-annotations" type="checkbox" checked/>
+        Show Notes
+      </label>
 
       <div>
         <button id="open-help">

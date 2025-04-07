@@ -122,6 +122,11 @@ dialog::backdrop {
     align-items: center;
 }
 
+.left-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
 fieldset {
     border: var(--thin-border) solid var(--ui-border-color);
     border-radius: var(--thin-border);
