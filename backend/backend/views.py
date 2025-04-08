@@ -152,6 +152,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
 def image_to_text(request):
     if request.method == "POST":
         image = request.FILES["img"]
+        model_name = request.POST.get("model_name")
 
         # load image and convert to grayscale based on alpha channel
         img = Image.open(image)
@@ -167,7 +168,7 @@ def image_to_text(request):
             f"http://{settings.HANDWRITING_URL}:{settings.HANDWRITING_PORT}/translate"
         )
 
-        files = {"image": temp_image}
+        files = {"image": temp_image, "json": json.dumps({"model": model_name})}
 
         response = requests.post(request_url, files=files)
 
