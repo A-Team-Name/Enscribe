@@ -28,45 +28,54 @@
         </button>
       </div>
 
+      <div class="spaced-bar">
+        <button id="undo" title="Undo" class="material-symbols-outlined" disabled>undo</button>
+        <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
+      </div>
+
       <radio-panel id="tool">
-        <button value="pan" title="Pan" class="material-symbols-outlined">
-          drag_pan
-        </button>
-        <button value="select" class="material-symbols-outlined">
-          select
-        </button>
         <button value="write" class="material-symbols-outlined" disabled>
           edit
         </button>
         <button value="erase" class="material-symbols-outlined">
           ink_eraser
         </button>
+        <button value="select" class="material-symbols-outlined">
+          select
+        </button>
+        <button value="pan" title="Pan" class="material-symbols-outlined">
+          drag_pan
+        </button>
       </radio-panel>
 
-      <label>
-        Pen Width
-        <input id="pen-width" type="range" value="3" min="1" max="30"/>
-      </label>
-      <label>
-        Eraser Width
-        <input id="eraser-width" type="range" value="20" min="5" max="30"/>
-      </label>
-
-      <input id="line-color" type="color" value="#ffffff"/>
-
-      <div class="spaced-bar">
-        <button id="undo" title="Undo" class="material-symbols-outlined" disabled>undo</button>
-        <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
+      <div class="left-stack">
+        <label for="pen-width">
+          Pen Size
+        </label>
+        <input id="pen-width" name="pen-width" type="range" value="3" min="1" max="30"/>
       </div>
 
-      <label>
-        <input id="show-annotations" type="checkbox" checked/>
-        Show Annotations
-      </label>
+      <div class="left-stack">
+        <label for="eraser-width">
+          Eraser Size
+        </label>
+        <input id="eraser-width" name="eraser-width" type="range" value="20" min="5" max="30"/>
+      </div>
+
+      <div class="spaced-bar">
+        <label for="line-color" class="material-symbols-outlined">palette</label>
+        <input id="line-color" name="line-color" type="color" value="#ffffff"/>
+      </div>
+
       <radio-panel id="layer">
         <button value="code" disabled>Code</button>
-        <button value="annotations">Annotations</button>
+        <button value="annotations">Notes</button>
       </radio-panel>
+      <label>
+        <input id="show-annotations" type="checkbox" checked/>
+        Show Notes
+      </label>
+
       <div>
         <button id="open-help">
           Help
