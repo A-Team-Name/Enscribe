@@ -398,6 +398,16 @@ class Whiteboard extends HTMLElement {
             this.#notebook_name = this.#notebook_name_label.textContent;
         });
 
+        document.getElementById("new").addEventListener("click", async () => {
+            this.#closeAllPages();
+            this.#newPage();
+            this.#notebook_name = "";
+            this.#notebook_name_label.textContent = "Untitled Notebook";
+            this.#notebook_id = -1;
+            localStorage.setItem("current_notebook_id", -1);
+
+        });
+
         document.getElementById("save").addEventListener("click", async () => {
             const jsonString = this.serialiseNotebook();
             const notebookFormData = new FormData();
@@ -462,6 +472,7 @@ class Whiteboard extends HTMLElement {
                         this.#notebook_name = file.name.replace(".json", "");
                         this.#notebook_name_label.textContent = this.#notebook_name;
                         this.loadNotebook(event.target.result);
+                        localStorage.setItem("current_notebook_id", this.#notebook_id);
                     } catch (error) {
                         console.error("Invalid JSON file:", error);
                         alert("Could not load Notebook: Invalid format.");
@@ -525,7 +536,29 @@ class Whiteboard extends HTMLElement {
         this.#pages = new Map();
         this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
         // TODO: Add code to load page state from local storage here
+        var current_notebook_id = localStorage.getItem("current_notebook_id");
         this.#newPage();
+        if ((current_notebook_id != null) && (current_notebook_id != -1)){
+            const notebookFormData = new FormData();
+            notebookFormData.append("notebook_id", current_notebook_id);
+            fetch("/get_notebook_data/", {
+                method: "POST",
+                body: notebookFormData,
+                credentials: 'include',
+                headers: {
+                    "X-CSRFTOKEN" : csrftoken
+                }
+            })
+                .then((rsp) => rsp.json())
+                .then((json) => {
+                    // Load the returned notebook and display notebook name
+                    this.loadNotebook(json["notebook_data"]);
+                    this.#notebook_name = json["notebook_name"]
+                    this.#notebook_name_label.textContent = json["notebook_name"];
+                    this.#notebook_id = json["notebook_id"];
+                })
+                .catch((error) => console.error("Error:", error));  
+        }
     }
 
     /**
@@ -587,6 +620,7 @@ class Whiteboard extends HTMLElement {
             setTimeout(() => { savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
             
             this.updateNotebookList();
+            localStorage.setItem("current_notebook_id", this.#notebook_id);
         } catch (error) {
             console.error("Error:", error);
         }
@@ -636,6 +670,7 @@ class Whiteboard extends HTMLElement {
                         this.#notebook_name = json["notebook_name"]
                         this.#notebook_name_label.textContent = json["notebook_name"];
                         this.#notebook_id = json["notebook_id"];
+                        localStorage.setItem("current_notebook_id", this.#notebook_id);
                         this.#notebooks_dialog.close();
                     })
                     .catch((error) => console.error("Error:", error));
