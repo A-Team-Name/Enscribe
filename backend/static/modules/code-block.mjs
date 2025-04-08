@@ -226,11 +226,14 @@ class CodeBlock extends HTMLElement {
     async transcribeCodeBlockImage() {
         let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
 
+        let language = this.getAttribute("language");
+        let complete_model = this.#selectedModel.value + "-" + language;
+
         // Put the screen capture image into FormData object
         const imageFormData = new FormData();
         imageFormData.append("img", selectionContents); // Add the image file to the form data
         imageFormData.append("name", "image_unique_id");
-        imageFormData.append("model_name", this.#selectedModel.value);
+        imageFormData.append("model_name", complete_model);
 
         return fetch("/image_to_text/", {
             method: "POST",
