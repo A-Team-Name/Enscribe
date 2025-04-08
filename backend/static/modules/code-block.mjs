@@ -80,7 +80,7 @@ class CodeBlock extends HTMLElement {
     #language_button;
 
     /** Handwriting recognition model selected in settings */
-    #selectedModel
+    #selectedModel;
 
     constructor() {
         super();
