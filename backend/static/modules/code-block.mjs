@@ -51,6 +51,7 @@ class CodeBlock extends HTMLElement {
         "state",
         "language",
         "predicted-text",
+        "execution-output",
         "predictions"
     ];
 
@@ -237,11 +238,7 @@ class CodeBlock extends HTMLElement {
             .then((rsp) => rsp.json())
             .then((json) => {
                 this.setAttribute("predicted-text", json.predicted_text);
-                this.setAttribute("predictions", JSON.stringify(json.predictions));
-                this.#text.textContent = json.predicted_text;
-                this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
-                this.predictions_dict = json.predictions["predictions"]
-                this.refreshClickableCharacters();
+                this.setAttribute("predictions", JSON.stringify(json.predictions["predictions"]));
             })
             .catch((error) => console.error("Error:", error));
     }
@@ -370,14 +367,19 @@ class CodeBlock extends HTMLElement {
                     // content_type = line.type
                     output += line.content
                 }
-                this.#output.value = output;
+                this.setAttribute("execution-output", output);
             })
             .catch((error) => console.error("Error:", error));
     }
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("state", "resizing");
+        if (this.getAttribute("restored")){
+            this.setAttribute("state", "executed");
+        }
+        else{
+            this.setAttribute("state", "resizing");
+        }
         if (!this.hasAttribute("language")) {
             // TODO: Implement a better language selection policy.
             this.setAttribute("language", "python3");
@@ -549,6 +551,19 @@ class CodeBlock extends HTMLElement {
             break;
         case "state":
             this.updateState(oldValue, newValue);
+            break;
+        case "predictions":
+            // Update the change character predictions UI
+            this.#predictions.value = newValue;
+            this.predictions_dict = JSON.parse(newValue);
+            this.refreshClickableCharacters();
+            break;
+        case "predicted-text":
+            // Update the text box to show the predicted text
+            this.#text.textContent = newValue;
+            break;
+        case "execution-output":
+            this.#output.value = newValue;
             break;
         }
     }

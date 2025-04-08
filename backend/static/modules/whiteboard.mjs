@@ -541,7 +541,19 @@ class Whiteboard extends HTMLElement {
     serialiseNotebook() {
         this.#active_page.scrollLeft = this.#container.scrollLeft;
         this.#active_page.scrollTop = this.#container.scrollTop;
-        const jsonString = JSON.stringify(Array.from(this.#pages.entries()), null, 2); // Convert array to JSON string 
+        var code_block_list = []
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            // Convert HTML elements attributes to dict
+            var attributes_dict = Array.from(block.attributes).reduce((acc, attr) => {
+                acc[attr.name] = attr.value;
+                return acc;
+            }, {});
+            code_block_list.push(attributes_dict);
+        }
+
+        var whiteboard_dict = {"pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list}
+        const jsonString =JSON.stringify(whiteboard_dict, null, 2)
+
         return jsonString
     }
 
@@ -665,7 +677,10 @@ class Whiteboard extends HTMLElement {
 
     // Load a notebook on the canvas using JSON 
     loadNotebook(notebook_data){
-        const pages = JSON.parse(notebook_data); 
+        const notebook = JSON.parse(notebook_data); 
+        const pages = notebook["pages"];
+        const code_blocks = notebook["code_blocks"];
+
         // Close all existing tabs
         this.#closeAllPages();
 
@@ -705,6 +720,11 @@ class Whiteboard extends HTMLElement {
 
             this.#pages.get(page_id).layers[1].lines = line_objs
           }
+
+        // Restore each code block
+        for (const code_block of code_blocks){
+            this.#restoreSelection(code_block)
+        }
 
         // Switch to the first page
         this.#switchToPage(first_page_id);
@@ -1075,6 +1095,27 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = this.#active_page.id;
+        this.#last_selection.setAttribute("predicted-text","");
+        this.#last_selection.setAttribute("execution-output","");
+        this.#last_selection.setAttribute("predictions",{});
+        this.#last_selection.setAttribute("restored", false);
+        this.addSelection(this.#last_selection);
+    }
+
+    #restoreSelection(code_block_attributes) {
+        this.#last_selection = document.createElement("code-block");
+        this.#last_selection.dataset.x = code_block_attributes["data-x"];
+        this.#last_selection.dataset.y = code_block_attributes["data-y"];
+        this.#last_selection.dataset.width = code_block_attributes["data-width"];
+        this.#last_selection.dataset.height = code_block_attributes["data-height"];
+        this.#last_selection.setAttribute("language", code_block_attributes["language"]);
+        this.#last_selection.whiteboard = this;
+        this.#last_selection.dataset.page = code_block_attributes["data-page"];
+        this.#last_selection.setAttribute("state", "executed");
+        this.#last_selection.setAttribute("predicted-text",code_block_attributes["predicted-text"]);
+        this.#last_selection.setAttribute("execution-output", code_block_attributes["execution-output"]);
+        this.#last_selection.setAttribute("predictions",code_block_attributes["predictions"]);
+        this.#last_selection.setAttribute("restored", true);
         this.addSelection(this.#last_selection);
     }
 
