@@ -216,9 +216,6 @@ class CodeBlock extends HTMLElement {
 
             // Re-enable the run button now code has executed.
             this.#run.disabled = false;
-
-            // Update list of code blocks in local storage
-            this.updateLocalStorage();
     }
     async transcribeCodeBlockImage() {
         let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
@@ -516,7 +513,12 @@ class CodeBlock extends HTMLElement {
         case "predictions":
             // Update the change character predictions UI
             this.#predictions.value = newValue;
-            this.predictions_dict = JSON.parse(newValue);
+            try{
+                this.predictions_dict = JSON.parse(newValue);
+            }
+            catch (error) {
+                console.log("Error loading predictions dictionary: " + error)
+            }
             this.refreshClickableCharacters();
             break;
         case "predicted-text":
