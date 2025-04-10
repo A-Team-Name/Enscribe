@@ -55,6 +55,7 @@ class CodeBlock extends HTMLElement {
         "state",
         "language",
         "predicted-text",
+        "execution-output",
         "predictions"
     ];
 
@@ -226,9 +227,6 @@ class CodeBlock extends HTMLElement {
 
             // Re-enable the run button now code has executed.
             this.#run.disabled = false;
-
-            // Update list of code blocks in local storage
-            this.updateLocalStorage();
     }
     async transcribeCodeBlockImage() {
         let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
@@ -252,11 +250,7 @@ class CodeBlock extends HTMLElement {
             .then((rsp) => rsp.json())
             .then((json) => {
                 this.setAttribute("predicted-text", json.predicted_text);
-                this.setAttribute("predictions", JSON.stringify(json.predictions));
-                this.#text.textContent = json.predicted_text;
-                this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
-                this.predictions_dict = json.predictions["predictions"]
-                this.refreshClickableCharacters();
+                this.setAttribute("predictions", JSON.stringify(json.predictions["predictions"]));
             })
             .catch((error) => console.error("Error:", error));
     }
@@ -323,45 +317,6 @@ class CodeBlock extends HTMLElement {
 
     }
 
-    updateLocalStorage () {
-        var code_block_list = localStorage.getItem("code_block_list");
-
-        // Convert HTML elements attributes to dict
-        var attributes_dict = Array.from(this.attributes).reduce((acc, attr) => {
-            acc[attr.name] = attr.value;
-            return acc;
-        }, {});
-
-        // If no existing code blocks then create list in local storage
-        if (code_block_list == null){
-            localStorage.setItem("code_block_list", JSON.stringify([attributes_dict]))
-        }
-        else{
-            code_block_list = JSON.parse(code_block_list)
-            var existing = false;
-            // Loop through each code block in local storage
-            for (const code_block of code_block_list){
-                // If code block is already in list
-                if ((code_block["data-x"] == attributes_dict["data-x"]) && (code_block["data-y"] == attributes_dict["data-y"])){
-                    // Update with new attributes
-                    var removed_code_block_list = code_block_list.filter(item => item !== code_block);
-                    var updated_code_block_list = code_block_list.concat(removed_code_block_list)
-                    localStorage.setItem("code_block_list", JSON.stringify(updated_code_block_list))
-                    existing = true;
-                    break;
-
-                }
-            }
-            // If code block is not in list then add to list in local storage
-            if (!existing){
-                var new_code_block_list = code_block_list.concat(attributes_dict)
-                localStorage.setItem("code_block_list", JSON.stringify(new_code_block_list))
-            }
-
-        }
-
-    }
-
     async executeTranscribedCode() {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
@@ -385,14 +340,19 @@ class CodeBlock extends HTMLElement {
                     // content_type = line.type
                     output += line.content
                 }
-                this.#output.value = output;
+                this.setAttribute("execution-output", output);
             })
             .catch((error) => console.error("Error:", error));
     }
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("state", "resizing");
+        if (this.getAttribute("restored")){
+            this.setAttribute("state", "executed");
+        }
+        else{
+            this.setAttribute("state", "resizing");
+        }
         if (!this.hasAttribute("language")) {
             // TODO: Implement a better language selection policy.
             this.setAttribute("language", "python3");
@@ -566,6 +526,24 @@ class CodeBlock extends HTMLElement {
             break;
         case "state":
             this.updateState(oldValue, newValue);
+            break;
+        case "predictions":
+            // Update the change character predictions UI
+            this.#predictions.value = newValue;
+            try{
+                this.predictions_dict = JSON.parse(newValue);
+            }
+            catch (error) {
+                console.log("Error loading predictions dictionary: " + error)
+            }
+            this.refreshClickableCharacters();
+            break;
+        case "predicted-text":
+            // Update the text box to show the predicted text
+            this.#text.textContent = newValue;
+            break;
+        case "execution-output":
+            this.#output.value = newValue;
             break;
         }
     }

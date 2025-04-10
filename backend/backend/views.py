@@ -9,6 +9,7 @@ import requests
 import numpy as np
 from websocket import create_connection
 from backend.utils import send_execute_request, generate
+from backend.models import Notebook
 
 from PIL import Image
 
@@ -21,7 +22,8 @@ def draw(request: WSGIRequest) -> HttpResponse:
 
 @login_required
 def index(request: WSGIRequest) -> HttpResponse:
-    return render(request, "main_app.html")
+    user_notebooks = Notebook.objects.filter(user=request.user)
+    return render(request, "main_app.html", {"notebooks": user_notebooks})
 
 
 @login_required
@@ -204,6 +206,61 @@ def image_to_text(request):
         )
 
     return HttpResponse("upload failed")
+
+
+@login_required
+def save_notebook(request):
+    canvas = request.POST.get("canvas")
+    notebook_name = request.POST.get("notebook_name")
+    notebook_id = request.POST.get("notebook_id")
+
+    # Create new notebook if not already existing
+    if notebook_id == "-1":
+        new_notebook = Notebook.objects.create(
+            user=request.user, notebook_name=notebook_name, notebook_data=canvas
+        )
+        id_to_return = new_notebook.id
+    # If existing then update to latest version of canvas and update name
+    else:
+        existing_notebook = Notebook.objects.get(id=notebook_id)
+        existing_notebook.notebook_data = canvas
+        existing_notebook.notebook_name = notebook_name
+        existing_notebook.save()
+        id_to_return = existing_notebook.id
+
+    updated_user_notebooks = Notebook.objects.filter(user=request.user).values(
+        "id", "notebook_name", "notebook_modified_at", "notebook_data"
+    )
+
+    return JsonResponse(
+        {"notebook_id": id_to_return, "notebooks": list(updated_user_notebooks)}
+    )
+
+
+# Return the canvas of notebook of given ID
+@login_required
+def get_notebook_data(request):
+    notebook_id = request.POST.get("notebook_id")
+    this_notebook = Notebook.objects.get(id=notebook_id)
+
+    return JsonResponse(
+        {
+            "notebook_data": this_notebook.notebook_data,
+            "notebook_name": this_notebook.notebook_name,
+            "notebook_id": this_notebook.id,
+        }
+    )
+
+
+# Delete notebook with given ID
+@login_required
+def delete_notebook(request):
+    notebook_id = request.POST.get("notebook_id")
+
+    this_notebook = Notebook.objects.get(id=notebook_id)
+    this_notebook.delete()
+
+    return HttpResponse("success")
 
 
 # Get the top predicted character for each position and construct a string
