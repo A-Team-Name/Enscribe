@@ -185,7 +185,7 @@ def image_to_text(request):
             top_character_predictions_set = []
 
             # Loop through top 3 predicted characters for that position
-            for j in range(0, 3):
+            for j in range(len(top_characters[i])):
                 top_character_predictions_set.append(
                     {
                         "character": top_characters[i][j],
