@@ -8,7 +8,7 @@ import json
 import requests
 import numpy as np
 from websocket import create_connection
-from backend.utils import send_execute_request, generate
+from backend.utils import send_execute_request
 from backend.models import Notebook
 
 from PIL import Image
@@ -17,17 +17,54 @@ from io import BytesIO
 
 
 def draw(request: WSGIRequest) -> HttpResponse:
+    """Get request for /draw
+
+    Args:
+        request (WSGIRequest): GET request
+
+    Returns:
+        HttpResponse: Response with canvas_drawing.html
+    """
     return render(request, "canvas_drawing.html")
 
 
 @login_required
 def index(request: WSGIRequest) -> HttpResponse:
+    """Get request for /index
+
+    Requires:
+        - user to be logged in
+
+    Args:
+        request (WSGIRequest): GET request
+
+    Returns:
+        HttpResponse: Response with the html for the main app
+    """
     user_notebooks = Notebook.objects.filter(user=request.user)
     return render(request, "main_app.html", {"notebooks": user_notebooks})
 
 
 @login_required
 def execute(request: WSGIRequest) -> HttpResponse:
+    """Execute a provided string in the given language using a jupyter kernel
+
+    Accepted languages:
+        - python3
+        - dyalog_apl
+        - lambda-calculus
+
+    Requires:
+        - user to be logged in
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - language: The language to execute the code in
+            - code: The code to execute
+
+    Returns:
+        HttpResponse: Response with the output of the code execution
+    """
     # https://stackoverflow.com/questions/54475896/interact-with-jupyter-notebooks-via-api
     # The token is written on stdout when you start the notebook
     base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
@@ -151,7 +188,17 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
 
 @login_required
-def image_to_text(request):
+def image_to_text(request: WSGIRequest) -> HttpResponse:
+    """Convert an image to text using the handwriting recognition model
+    Requires:
+        - user to be logged in
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - model_name: The name of the model to use for conversion
+            - FILE: img: The image to convert to text
+    Returns:
+        HttpResponse: Response with a dictionary containing the predicted characters and their probabilities
+    """
     if request.method == "POST":
         image = request.FILES["img"]
         model_name = request.POST.get("model_name")
@@ -264,7 +311,17 @@ def delete_notebook(request):
 
 
 # Get the top predicted character for each position and construct a string
-def create_predicted_code_block(code_block_prediction_dict):
+def create_predicted_code_block(
+    code_block_prediction_dict: dict[str, list[list[str | float]]],
+) -> str:
+    """Generates the string from the predicted characters
+
+    Args:
+        code_block_prediction_dict (dict[str, list[list[str  |  float]]]): Character predictions
+
+    Returns:
+        str: Predicted string
+    """
     predicted_characters_list = []
     all_top_predictions = code_block_prediction_dict["predictions"]
 
@@ -276,9 +333,3 @@ def create_predicted_code_block(code_block_prediction_dict):
     predicted_string = "".join(predicted_characters_list)
 
     return predicted_string
-
-
-def get_random_lambda_line(request: WSGIRequest) -> HttpResponse:
-    new_lambda_line = generate()
-
-    return JsonResponse({"lambda_line": new_lambda_line})
