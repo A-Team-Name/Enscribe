@@ -17,7 +17,7 @@ from io import BytesIO
 
 
 def draw(request: WSGIRequest) -> HttpResponse:
-    """Get reguest for /draw
+    """Get request for /draw
 
     Args:
         request (WSGIRequest): GET request
