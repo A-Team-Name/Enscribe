@@ -60,6 +60,11 @@
 #text {
     width: 200px;
     height: 40px;
+    white-space: pre;
+}
+
+#output{
+    white-space: pre;
 }
 
 .predicted-text-span:hover{
