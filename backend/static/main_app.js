@@ -84,3 +84,9 @@ onEvent("click", "button[for]",
 document.getElementById("undo").addEventListener("click", () => whiteboard.undo());
 document.getElementById("redo").addEventListener("click", () => whiteboard.redo());
 
+window.addEventListener('beforeunload', (event) => {
+    // Standard message not always shown; still needed for some browsers to trigger the dialog
+    event.preventDefault(); 
+    event.returnValue = ''; // Required for Chrome to show the confirmation dialog
+});
+

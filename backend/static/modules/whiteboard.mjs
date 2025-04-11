@@ -48,6 +48,14 @@ const whiteboard_template = `
     flex-wrap: nowrap;
     width: 100%;
     gap: 0.5rem;
+    align-items: center;
+}
+
+#notebook-name-label-container{
+    width:15%;
+    text-align:center;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /* Cursors */
@@ -80,6 +88,9 @@ const whiteboard_template = `
 }
 </style>
 <div id="tab-bar" class="tool-bar">
+  <div id="notebook-name-label-container">
+    <label id="notebook-name-label">Untitled Notebook</label>
+  </div>
   <button class="material-symbols-outlined" id="new-tab">add</button>
 </div>
 <div id="container">
@@ -89,6 +100,8 @@ const whiteboard_template = `
   </div>
 </div>
 `;
+
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 function fillCircle(ctx, x, y, radius) {
     const circle = new Path2D();
@@ -111,11 +124,17 @@ function interpretColor(color) {
 }
 
 class Line {
-    constructor(color, lineWidth, start) {
+    constructor(color, lineWidth, points) {
         this.color = color;
         this.lineWidth = lineWidth;
-        this.points = [start];
-        this.boundingRect = circleBoundingRect(start, lineWidth/2);
+        if (Array.isArray(points)){
+            this.points = points;
+            this.recomputeBoundingRect();
+            
+        } else {
+            this.points = [points];
+            this.boundingRect = circleBoundingRect(points, lineWidth/2);
+        }
     }
 
     addPoint(point) {
@@ -243,6 +262,7 @@ class Page {
             new Layer("annotations", false),
         ];
         this.id = id;
+        this.name = "";
         // Scroll position of page, updated when switching away from a given page.
         this.scrollLeft = 0;
         this.scrollTop = 0;
@@ -343,6 +363,11 @@ class Whiteboard extends HTMLElement {
     #new_tab;
     #pages;
     #line_colors;
+    #notebook_name;
+    #notebook_name_label;
+    #notebook_id;
+    #notebooks;
+    #notebooks_dialog;
 
     constructor() {
         super();
@@ -354,6 +379,110 @@ class Whiteboard extends HTMLElement {
         this.#drawing = shadowRoot.getElementById("drawing").getContext("2d");
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
+        this.#notebook_name = "";
+        this.#notebook_name_label = shadowRoot.getElementById("notebook-name-label");
+        this.#notebook_id = -1;
+        this.#notebooks = null;
+        this.#notebooks_dialog = document.getElementById("notebooks-dialog");
+
+        const saveNotebookDialog = document.getElementById("save-notebook-dialog");
+
+        this.#notebook_name_label.addEventListener("dblclick", () => {
+            this.#notebook_name_label.setAttribute("contenteditable", "true");
+            this.#notebook_name_label.focus();
+        });
+
+        // Disable contenteditable when the label loses focus.
+        this.#notebook_name_label.addEventListener("focusout", () => {
+            this.#notebook_name_label.removeAttribute("contenteditable");
+            this.#notebook_name = this.#notebook_name_label.textContent;
+        });
+
+        document.getElementById("new").addEventListener("click", async () => {
+            this.#closeAllPages();
+            this.#newPage();
+            this.#notebook_name = "";
+            this.#notebook_name_label.textContent = "Untitled Notebook";
+            this.#notebook_id = -1;
+            localStorage.setItem("current_notebook_id", -1);
+
+        });
+
+        document.getElementById("save").addEventListener("click", async () => {
+            const jsonString = this.serialiseNotebook();
+            const notebookFormData = new FormData();
+            notebookFormData.append("canvas", jsonString);
+        
+            if (this.#notebook_name === "") {
+                saveNotebookDialog.showModal();
+                document.getElementById("save-notebook-name").addEventListener("click", async () => {
+                    this.#notebook_name = document.getElementById("notebook-name-input").value;
+                    this.#notebook_name_label.textContent = this.#notebook_name;
+                    saveNotebookDialog.close();
+                    notebookFormData.append("notebook_name", this.#notebook_name);
+                    notebookFormData.append("notebook_id", -1);
+                    await this.saveNotebook(notebookFormData);
+                }, { once: true });  // Ensures event listener runs only once
+            } else {
+                notebookFormData.append("notebook_name", this.#notebook_name);
+                notebookFormData.append("notebook_id", this.#notebook_id);
+                await this.saveNotebook(notebookFormData);
+            }
+        });
+        
+
+        // File save button
+        document.getElementById("save_file")
+            .addEventListener("click", () => {
+                // If notebook name hasn't been set, show popup
+                if (this.#notebook_name == ""){
+                    saveNotebookDialog.showModal();
+                    document.getElementById("save-notebook-name").addEventListener("click", async () => {
+                        this.#notebook_name = document.getElementById("notebook-name-input").value;
+                        this.#notebook_name_label.textContent = this.#notebook_name;
+                        saveNotebookDialog.close();
+                        this.downloadNotebook(this.#notebook_name)
+                    }, { once: true }); 
+                }
+                else{
+                    this.downloadNotebook(this.#notebook_name)
+                }
+            });
+
+        // Open Saved Notebooks Button
+        document.getElementById("open_from_account")
+        .addEventListener("click", () => this.#notebooks_dialog.showModal());
+
+        // Open From File Button - opens hidden file input button
+        document.getElementById("open_file")
+            .addEventListener("click", () => {
+                document.getElementById('fileInput').click();
+            
+            });
+
+        
+        // Open file input selection
+        document.getElementById('fileInput').addEventListener('change', (event) =>  {
+            let file = event.target.files[0]; // Get the selected file
+            if (file) {
+                const reader = new FileReader();
+    
+                reader.onload = (event) => {
+                    try {
+                        this.#notebook_name = file.name.replace(".json", "");
+                        this.#notebook_name_label.textContent = this.#notebook_name;
+                        this.loadNotebook(event.target.result);
+                        localStorage.setItem("current_notebook_id", this.#notebook_id);
+                    } catch (error) {
+                        console.error("Invalid JSON file:", error);
+                        alert("Could not load Notebook: Invalid format.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        this.applyNotebookEventListeners();
 
         // Default default language (used on hard reload)
         this.dataset.defaultLanguage = "python3";
@@ -407,7 +536,29 @@ class Whiteboard extends HTMLElement {
         this.#pages = new Map();
         this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
         // TODO: Add code to load page state from local storage here
+        var current_notebook_id = localStorage.getItem("current_notebook_id");
         this.#newPage();
+        if ((current_notebook_id != null) && (current_notebook_id != -1)){
+            const notebookFormData = new FormData();
+            notebookFormData.append("notebook_id", current_notebook_id);
+            fetch("/get_notebook_data/", {
+                method: "POST",
+                body: notebookFormData,
+                credentials: 'include',
+                headers: {
+                    "X-CSRFTOKEN" : csrftoken
+                }
+            })
+                .then((rsp) => rsp.json())
+                .then((json) => {
+                    // Load the returned notebook and display notebook name
+                    this.loadNotebook(json["notebook_data"]);
+                    this.#notebook_name = json["notebook_name"]
+                    this.#notebook_name_label.textContent = json["notebook_name"];
+                    this.#notebook_id = json["notebook_id"];
+                })
+                .catch((error) => console.error("Error:", error));  
+        }
     }
 
     /**
@@ -418,6 +569,203 @@ class Whiteboard extends HTMLElement {
             if (block.dataset.page == this.#active_page.id)
                 block.notifyUpdate(region);
         }
+    }
+
+    serialiseNotebook() {
+        this.#active_page.scrollLeft = this.#container.scrollLeft;
+        this.#active_page.scrollTop = this.#container.scrollTop;
+        var code_block_list = []
+        for (const block of this.#ui.querySelectorAll("code-block")) {
+            // Convert HTML elements attributes to dict
+            var attributes_dict = Array.from(block.attributes).reduce((acc, attr) => {
+                acc[attr.name] = attr.value;
+                return acc;
+            }, {});
+            code_block_list.push(attributes_dict);
+        }
+
+        var whiteboard_dict = {"pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list}
+        const jsonString =JSON.stringify(whiteboard_dict, null, 2)
+
+        return jsonString
+    }
+
+    downloadNotebook(notebook_name){
+        const jsonString = this.serialiseNotebook();
+        const blob = new Blob([jsonString], { type: "application/json" }); // Create a Blob
+        const link = document.createElement("a"); // Create a temporary link
+        link.href = URL.createObjectURL(blob); // Create a URL for the Blob
+        link.download = notebook_name + ".json"; // Set filename
+        document.body.appendChild(link);
+        link.click(); // Trigger download
+        document.body.removeChild(link); // Cleanup
+    }
+
+    async saveNotebook(notebookFormData) {
+        try {
+            const response = await fetch("/save_notebook/", {
+                method: "POST",
+                body: notebookFormData,
+                credentials: "include",
+                headers: { "X-CSRFTOKEN": csrftoken }
+            });
+            const json = await response.json();
+
+            this.#notebooks = json["notebooks"];
+            this.#notebook_id = json["notebook_id"];
+    
+            // Show saved popup
+            const savedPopup = document.getElementById("saved-popup");
+            savedPopup.className = "show";
+            setTimeout(() => { savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
+            
+            this.updateNotebookList();
+            localStorage.setItem("current_notebook_id", this.#notebook_id);
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+    
+    updateNotebookList() {
+        const container = document.getElementById("notebooks-container");
+        container.innerHTML = ""; // Clear existing notebooks
+    
+        this.#notebooks.forEach(notebook => {
+            const div = document.createElement("div");
+            div.classList.add("notebook-div");
+            div.setAttribute("data-notebook-id", notebook.id);
+            div.innerHTML = `
+                <div> ${notebook.notebook_name} </div>
+                <div> ${this.timeSince(notebook.notebook_modified_at)} </div>
+                <div>
+                    <button class="open-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Open Notebook">draw</button>
+                    <button class="delete-notebook material-symbols-outlined" data-notebook-id="${notebook.id}" title="Delete Notebook">delete</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    
+        this.applyNotebookEventListeners();
+    }
+
+    applyNotebookEventListeners() {
+        // Open notebook button for each notebook
+        document.querySelectorAll(".open-notebook").forEach(button => {
+            button.addEventListener("click", () => {
+                let notebook_id = button.getAttribute("data-notebook-id");
+                const notebookFormData = new FormData();
+                notebookFormData.append("notebook_id", notebook_id);
+                return fetch("/get_notebook_data/", {
+                    method: "POST",
+                    body: notebookFormData,
+                    credentials: 'include',
+                    headers: {
+                        "X-CSRFTOKEN" : csrftoken
+                    }
+                })
+                    .then((rsp) => rsp.json())
+                    .then((json) => {
+                        // Load the returned notebook and display notebook name
+                        this.loadNotebook(json["notebook_data"]);
+                        this.#notebook_name = json["notebook_name"]
+                        this.#notebook_name_label.textContent = json["notebook_name"];
+                        this.#notebook_id = json["notebook_id"];
+                        localStorage.setItem("current_notebook_id", this.#notebook_id);
+                        this.#notebooks_dialog.close();
+                    })
+                    .catch((error) => console.error("Error:", error));
+            });  
+
+        });
+            
+        // Delete notebook button for each notebook
+        document.querySelectorAll(".delete-notebook").forEach(button => {
+            button.addEventListener("click", () => {
+                let notebook_id = button.getAttribute("data-notebook-id");
+                const notebookFormData = new FormData();
+                notebookFormData.append("notebook_id", notebook_id);
+
+                // Check if selected notebook exists
+                var div = document.querySelector(`.notebook-div[data-notebook-id='${notebook_id}']`);
+                if (div) {
+                    // Remove DOM element
+                    div.remove();
+                } else {
+                    console.log("Div not found with notebookId:", notebook_id);
+                }
+
+                // POST request to remove entry in DB
+                return fetch("/delete_notebook/", {
+                    method: "POST",
+                    body: notebookFormData,
+                    credentials: 'include',
+                    headers: {
+                        "X-CSRFTOKEN" : csrftoken
+                    }
+                })
+                    .then((rsp) => console.log(rsp))
+                    .catch((error) => console.error("Error:", error));
+            })}
+        );
+
+    };
+
+    // Load a notebook on the canvas using JSON 
+    loadNotebook(notebook_data){
+        const notebook = JSON.parse(notebook_data); 
+        const pages = notebook["pages"];
+        const code_blocks = notebook["code_blocks"];
+
+        // Close all existing tabs
+        this.#closeAllPages();
+
+        // Create a new pages map
+        this.#pages = new Map();
+
+        var first = true;
+
+        // For each page in saved notebook
+        for (const [key, page] of pages) {
+            // Create a new page
+            var page_id = this.#newPage();
+            this.#tab_bar.querySelector(`button[data-id='${page_id}'] > span`).textContent = page.name;
+            this.#pages.get(page_id).name = page.name;
+
+            // Store the ID of the first page id
+            if (first) {
+                var first_page_id = page_id;
+                first = false;
+            }
+
+            // Load the page's scroll position (the Page object's scroll values will get set when switching to a different page)
+            this.#container.scrollTo(page.scrollLeft, page.scrollTop);
+
+            // Reconstruct each line of code layer
+            var line_objs = [];
+            for (var code_line of page.layers[0].lines){
+                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
+                line_objs.push(line)
+            }
+
+            this.#pages.get(page_id).layers[0].lines = line_objs
+
+            // Reconstruct each line of annotations layer
+            var line_objs = [];
+            for (var code_line of page.layers[1].lines){
+                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
+                line_objs.push(line)
+            }
+
+            this.#pages.get(page_id).layers[1].lines = line_objs
+          }
+
+        // Restore each code block
+        for (const code_block of code_blocks){
+            this.#restoreSelection(code_block)
+        }
+
+        // Switch to the first page
+        this.#switchToPage(first_page_id);
     }
 
     connectedCallback() {
@@ -439,6 +787,28 @@ class Whiteboard extends HTMLElement {
                     this.handleRegionUpdate(event.data.regionUpdate);
                 }
             })
+    }
+
+    timeSince(date) {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    
+        const intervals = [
+            { label: 'year', seconds: 31536000 },
+            { label: 'month', seconds: 2592000 },
+            { label: 'day', seconds: 86400 },
+            { label: 'hour', seconds: 3600 },
+            { label: 'minute', seconds: 60 },
+            { label: 'second', seconds: 1 },
+        ];
+    
+        for (const interval of intervals) {
+            const count = Math.floor(seconds / interval.seconds);
+            if (count > 0) {
+                return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
+            }
+        }
+    
+        return 'just now';
     }
 
     // This get/set API exposes hex color values even if the line color is auto.
@@ -468,6 +838,8 @@ class Whiteboard extends HTMLElement {
             id += 1;
         }
 
+        this.#pages.set(id, new Page(id));
+
         let tab = document.createElement("button");
         tab.dataset.id = id;
         tab.classList.add("spaced-bar");
@@ -483,6 +855,7 @@ class Whiteboard extends HTMLElement {
         let label = "Tab " + id;
         let label_element = document.createElement("span");
         label_element.innerHTML = label;
+        this.#pages.get(id).name = label
 
         // Enable label editing on double-click.
         tab.addEventListener(
@@ -495,7 +868,10 @@ class Whiteboard extends HTMLElement {
         // Disable contenteditable when the label loses focus.
         label_element.addEventListener(
             "focusout",
-            () => label_element.removeAttribute("contenteditable"));
+            () => {
+                label_element.removeAttribute("contenteditable");
+                this.#pages.get(id).name = label_element.textContent;
+            });
 
         tab.appendChild(label_element);
 
@@ -515,7 +891,6 @@ class Whiteboard extends HTMLElement {
         // Add the new tab at the end of the list, before the new tab button.
         this.#tab_bar.insertBefore(tab, this.#new_tab);
 
-        this.#pages.set(id, new Page(id));
         this.#switchToPage(id);
 
         return id;
@@ -588,6 +963,24 @@ class Whiteboard extends HTMLElement {
         // Delete associated code blocks
         for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
             block.remove();
+        }
+    }
+
+    // Close all existing pages, including the last tab
+    #closeAllPages() {
+        for (var id of Array.from(this.#pages.keys())){
+            id = parseInt(id);
+
+            let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
+
+            // Delete the page and its associated tab
+            this.#pages.delete(id);
+            page_tab.remove();
+
+            // Delete associated code blocks
+            for (const block of this.#ui.querySelectorAll(`code-block[data-page='${id}']`)) {
+                block.remove();
+            }
         }
     }
 
@@ -740,6 +1133,27 @@ class Whiteboard extends HTMLElement {
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = this.#active_page.id;
+        this.#last_selection.setAttribute("predicted-text","");
+        this.#last_selection.setAttribute("execution-output","");
+        this.#last_selection.setAttribute("predictions",{});
+        this.#last_selection.setAttribute("restored", false);
+        this.addSelection(this.#last_selection);
+    }
+
+    #restoreSelection(code_block_attributes) {
+        this.#last_selection = document.createElement("code-block");
+        this.#last_selection.dataset.x = code_block_attributes["data-x"];
+        this.#last_selection.dataset.y = code_block_attributes["data-y"];
+        this.#last_selection.dataset.width = code_block_attributes["data-width"];
+        this.#last_selection.dataset.height = code_block_attributes["data-height"];
+        this.#last_selection.setAttribute("language", code_block_attributes["language"]);
+        this.#last_selection.whiteboard = this;
+        this.#last_selection.dataset.page = code_block_attributes["data-page"];
+        this.#last_selection.setAttribute("state", "executed");
+        this.#last_selection.setAttribute("predicted-text",code_block_attributes["predicted-text"]);
+        this.#last_selection.setAttribute("execution-output", code_block_attributes["execution-output"]);
+        this.#last_selection.setAttribute("predictions",code_block_attributes["predictions"]);
+        this.#last_selection.setAttribute("restored", true);
         this.addSelection(this.#last_selection);
     }
 
