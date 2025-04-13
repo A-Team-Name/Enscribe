@@ -190,12 +190,15 @@ def execute(request: WSGIRequest) -> HttpResponse:
 @login_required
 def image_to_text(request: WSGIRequest) -> HttpResponse:
     """Convert an image to text using the handwriting recognition model
+
     Requires:
         - user to be logged in
+
     Args:
         request (WSGIRequest): POST request with the following fields:
             - model_name: The name of the model to use for conversion
             - FILE: img: The image to convert to text
+
     Returns:
         HttpResponse: Response with a dictionary containing the predicted characters and their probabilities
     """
