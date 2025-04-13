@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .views import RegisterView
 
 urlpatterns = [
     path("", views.index),
@@ -12,4 +13,5 @@ urlpatterns = [
     path("save_notebook/", views.save_notebook),
     path("get_notebook_data/", views.get_notebook_data),
     path("delete_notebook/", views.delete_notebook),
+    path("register/", RegisterView.as_view(), name="register"),
 ]

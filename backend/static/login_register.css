@@ -30,3 +30,76 @@ main, form {
 .password-reset {
     font-size: 80%;
 }
+
+/* register.hmtl */
+
+.form-field {
+    margin-bottom: 1em;
+}
+  
+.info-icon {
+    cursor: pointer;
+    margin-left: 0.3125em;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 16em;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 0.375em;
+    padding: 0.625em 0.625em 0.625em 1.25em;
+    position: absolute;
+    z-index: 1;
+    bottom: 1.5em; 
+    left: 50%;
+    margin-left: -8em;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.field-errors {
+    background-color: #a40b0b;
+    color: #b30000;
+    border: 0.0625em solid #ff9999;
+    padding: 0.5em;
+    margin-top: 0.25em;
+    border-radius: 0.25em;
+    font-size: 0.9em;
+}
+
+.field-errors ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.25em 0;
+}
+
+.divider hr {
+    flex: 1;
+    border: none;
+    border-top: 0.0625em solid #ccc;
+}
+
+.divider span {
+    padding: 0 0.625em;
+    color: #555;
+    font-size: 0.875em;
+}

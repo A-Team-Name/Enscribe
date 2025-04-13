@@ -3,6 +3,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from .forms import CustomUserCreationForm
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
 
 import json
 import requests
@@ -14,6 +17,12 @@ from backend.models import Notebook
 from PIL import Image
 
 from io import BytesIO
+
+
+class RegisterView(CreateView):
+    form_class = CustomUserCreationForm
+    template_name = "registration/register.html"
+    success_url = reverse_lazy("login")
 
 
 def draw(request: WSGIRequest) -> HttpResponse:
