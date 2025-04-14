@@ -293,7 +293,7 @@ class CodeBlock extends HTMLElement {
                     character_button.className = "char-button character-button";
 
                     // Set text content to predicted character and its probability
-                    character_button.textContent = character_prediction["character"] + "        -       " + character_prediction["probability"];
+                    character_button.textContent = character_prediction["character"] + "        -       " + parseFloat(character_prediction["probability"]).toFixed(2);
 
                     // Add event listener to replace selected character with the new chosen character
                     character_button.onclick = (e) => {
