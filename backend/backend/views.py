@@ -197,6 +197,64 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
 
 @login_required
+def restart_kernel(request: WSGIRequest) -> HttpResponse:
+    """Restart the Juyter kernel in the given language
+
+    Accepted languages:
+        - python3
+        - dyalog_apl
+        - lambda-calculus
+
+    Requires:
+        - user to be logged in
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - language: The language of the kernel to restart
+
+    Returns:
+        HttpResponse: Success if restart was successful
+    """
+
+    base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
+    headers = {
+        "Authorization": "Token {settings.JUPYTER_TOKEN}",
+        "Cookie": request.headers["Cookie"],
+    }
+
+    url = base + "/api/kernels"
+
+    # Get language from frontend request
+    language = request.POST.get("language")
+
+    # Get list of existing kernels
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return HttpResponse("Could not connect to Jupyter Server")
+
+    # Get kernel ID of active kernel in given language
+    existing_kernel = False
+    if response:
+        for kernel in json.loads(response.text):
+            if kernel["name"] == language:
+                kernel_id = kernel["id"]
+                existing_kernel = True
+
+    if not existing_kernel:
+        return HttpResponse("No active kernel in given language")
+
+    # Restart kernel
+    url = base + "/api/kernels/restart"
+    try:
+        response = requests.post(url, params={"kernel_id": kernel_id}, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return HttpResponse("Could not restart kernel")
+
+    return HttpResponse("Restarted Kernel")
+
+
+@login_required
 def image_to_text(request: WSGIRequest) -> HttpResponse:
     """Convert an image to text using the handwriting recognition model
 

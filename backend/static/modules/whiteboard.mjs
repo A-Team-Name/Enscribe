@@ -58,6 +58,11 @@ const whiteboard_template = `
     overflow: hidden;
 }
 
+#restart-kernel{
+    margin-left: auto;
+    margin-right: 1em;
+}
+
 /* Cursors */
 :host([data-tool="select"]) {
     cursor: crosshair;
@@ -92,6 +97,12 @@ const whiteboard_template = `
     <label id="notebook-name-label">Untitled Notebook</label>
   </div>
   <button class="material-symbols-outlined" id="new-tab">add</button>
+    <select id="restart-kernel" name="restart-kernel" title="Restart Kernel">
+        <option value="" hidden selected>Restart Kernel</option>
+        <option value="python3">Python</option>
+        <option value="dyalog_apl" >APL</option>
+        <option value="lambda-calculus">λ Calculus</option>
+    </select>
 </div>
 <div id="container">
   <div id="surface">
@@ -368,6 +379,7 @@ class Whiteboard extends HTMLElement {
     #notebook_id;
     #notebooks;
     #notebooks_dialog;
+    #restart_kernel;
 
     constructor() {
         super();
@@ -384,6 +396,7 @@ class Whiteboard extends HTMLElement {
         this.#notebook_id = -1;
         this.#notebooks = null;
         this.#notebooks_dialog = document.getElementById("notebooks-dialog");
+        this.#restart_kernel = shadowRoot.getElementById("restart-kernel");
 
         const saveNotebookDialog = document.getElementById("save-notebook-dialog");
 
@@ -481,6 +494,34 @@ class Whiteboard extends HTMLElement {
                 reader.readAsText(file);
             }
         });
+
+        this.#restart_kernel.addEventListener("change", () => {
+            setTimeout(() => {
+              this.#restart_kernel.selectedIndex = 0; // Reset to the default "restart kernel"
+            }, 100); // Give the form a moment to submit
+
+            const restartFormData = new FormData();
+            restartFormData.append("language", this.getAttribute("language"));
+
+            return fetch("/restart_kernel/", {
+                method: "POST",
+                body: restartFormData,
+                credentials: 'include',
+                headers: {
+                    "X-CSRFTOKEN" : csrftoken
+                }
+            })
+                .then((rsp) => rsp.text())
+                .then((message) => {
+                    // Show restarted popup
+                    const restartedPopup = document.getElementById("restarted-popup");
+                    restartedPopup.innerText = message;
+                    restartedPopup.className = "show popup";
+                    setTimeout(() => { restartedPopup.className = restartedPopup.className.replace("show", ""); }, 2900);
+                    
+                })
+                .catch((error) => console.error("Error:", error));
+          });
 
         this.applyNotebookEventListeners();
 
@@ -616,7 +657,7 @@ class Whiteboard extends HTMLElement {
     
             // Show saved popup
             const savedPopup = document.getElementById("saved-popup");
-            savedPopup.className = "show";
+            savedPopup.className = "show popup";
             setTimeout(() => { savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
             
             this.updateNotebookList();
