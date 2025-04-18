@@ -13,10 +13,10 @@ The `urlpatterns` list routes URLs to views.
 """
 urlpatterns = [
     path("", views.index),
-    path("index/", views.index),
-    path("execute/", views.execute),
-    path("image_to_text/", views.image_to_text),
-    path("save_notebook/", views.save_notebook),
-    path("get_notebook_data/", views.get_notebook_data),
-    path("delete_notebook/", views.delete_notebook),
+    path("index/", views.index, name="index"),
+    path("execute/", views.execute, name="execute"),
+    path("image_to_text/", views.image_to_text, name="image_to_text"),
+    path("save_notebook/", views.save_notebook, name="save_notebook"),
+    path("get_notebook_data/", views.get_notebook_data, name="get_notebook_data"),
+    path("delete_notebook/", views.delete_notebook, name="delete_notebook"),
 ]
