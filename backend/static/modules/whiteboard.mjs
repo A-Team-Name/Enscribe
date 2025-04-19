@@ -141,7 +141,7 @@ class Line {
         if (Array.isArray(points)){
             this.points = points;
             this.recomputeBoundingRect();
-            
+
         } else {
             this.points = [points];
             this.boundingRect = circleBoundingRect(points, lineWidth/2);
@@ -425,7 +425,7 @@ class Whiteboard extends HTMLElement {
             const jsonString = this.serialiseNotebook();
             const notebookFormData = new FormData();
             notebookFormData.append("canvas", jsonString);
-        
+
             if (this.#notebook_name === "") {
                 saveNotebookDialog.showModal();
                 document.getElementById("save-notebook-name").addEventListener("click", async () => {
@@ -442,7 +442,7 @@ class Whiteboard extends HTMLElement {
                 await this.saveNotebook(notebookFormData);
             }
         });
-        
+
 
         // File save button
         document.getElementById("save_file")
@@ -455,7 +455,7 @@ class Whiteboard extends HTMLElement {
                         this.#notebook_name_label.textContent = this.#notebook_name;
                         saveNotebookDialog.close();
                         this.downloadNotebook(this.#notebook_name)
-                    }, { once: true }); 
+                    }, { once: true });
                 }
                 else{
                     this.downloadNotebook(this.#notebook_name)
@@ -470,16 +470,16 @@ class Whiteboard extends HTMLElement {
         document.getElementById("open_file")
             .addEventListener("click", () => {
                 document.getElementById('fileInput').click();
-            
+
             });
 
-        
+
         // Open file input selection
         document.getElementById('fileInput').addEventListener('change', (event) =>  {
             let file = event.target.files[0]; // Get the selected file
             if (file) {
                 const reader = new FileReader();
-    
+
                 reader.onload = (event) => {
                     try {
                         this.#notebook_name = file.name.replace(".json", "");
@@ -518,7 +518,7 @@ class Whiteboard extends HTMLElement {
                     restartedPopup.innerText = message;
                     restartedPopup.className = "show popup";
                     setTimeout(() => { restartedPopup.className = restartedPopup.className.replace("show", ""); }, 2900);
-                    
+
                 })
                 .catch((error) => console.error("Error:", error));
           });
@@ -598,7 +598,7 @@ class Whiteboard extends HTMLElement {
                     this.#notebook_name_label.textContent = json["notebook_name"];
                     this.#notebook_id = json["notebook_id"];
                 })
-                .catch((error) => console.error("Error:", error));  
+                .catch((error) => console.error("Error:", error));
         }
     }
 
@@ -654,23 +654,23 @@ class Whiteboard extends HTMLElement {
 
             this.#notebooks = json["notebooks"];
             this.#notebook_id = json["notebook_id"];
-    
+
             // Show saved popup
             const savedPopup = document.getElementById("saved-popup");
             savedPopup.className = "show popup";
             setTimeout(() => { savedPopup.className = savedPopup.className.replace("show", ""); }, 2900);
-            
+
             this.updateNotebookList();
             localStorage.setItem("current_notebook_id", this.#notebook_id);
         } catch (error) {
             console.error("Error:", error);
         }
     }
-    
+
     updateNotebookList() {
         const container = document.getElementById("notebooks-container");
         container.innerHTML = ""; // Clear existing notebooks
-    
+
         this.#notebooks.forEach(notebook => {
             const div = document.createElement("div");
             div.classList.add("notebook-div");
@@ -685,7 +685,7 @@ class Whiteboard extends HTMLElement {
             `;
             container.appendChild(div);
         });
-    
+
         this.applyNotebookEventListeners();
     }
 
@@ -715,10 +715,10 @@ class Whiteboard extends HTMLElement {
                         this.#notebooks_dialog.close();
                     })
                     .catch((error) => console.error("Error:", error));
-            });  
+            });
 
         });
-            
+
         // Delete notebook button for each notebook
         document.querySelectorAll(".delete-notebook").forEach(button => {
             button.addEventListener("click", () => {
@@ -751,9 +751,9 @@ class Whiteboard extends HTMLElement {
 
     };
 
-    // Load a notebook on the canvas using JSON 
+    // Load a notebook on the canvas using JSON
     loadNotebook(notebook_data){
-        const notebook = JSON.parse(notebook_data); 
+        const notebook = JSON.parse(notebook_data);
         const pages = notebook["pages"];
         const code_blocks = notebook["code_blocks"];
 
@@ -832,7 +832,7 @@ class Whiteboard extends HTMLElement {
 
     timeSince(date) {
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    
+
         const intervals = [
             { label: 'year', seconds: 31536000 },
             { label: 'month', seconds: 2592000 },
@@ -841,14 +841,14 @@ class Whiteboard extends HTMLElement {
             { label: 'minute', seconds: 60 },
             { label: 'second', seconds: 1 },
         ];
-    
+
         for (const interval of intervals) {
             const count = Math.floor(seconds / interval.seconds);
             if (count > 0) {
                 return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
             }
         }
-    
+
         return 'just now';
     }
 
@@ -893,7 +893,7 @@ class Whiteboard extends HTMLElement {
             "click",
             () => this.#switchToPage(tab.dataset.id));
 
-        let label = "Tab " + id;
+        let label = "Page " + id;
         let label_element = document.createElement("span");
         label_element.innerHTML = label;
         this.#pages.get(id).name = label
