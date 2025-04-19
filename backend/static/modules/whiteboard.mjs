@@ -97,12 +97,12 @@ const whiteboard_template = `
     <label id="notebook-name-label">Untitled Notebook</label>
   </div>
   <button class="material-symbols-outlined" id="new-tab">add</button>
-    <select id="restart-kernel" name="restart-kernel" title="Restart Kernel">
-        <option value="" hidden selected>Restart Kernel</option>
-        <option value="python3">Python</option>
-        <option value="dyalog_apl" >APL</option>
-        <option value="lambda-calculus">λ Calculus</option>
-    </select>
+  <select id="restart-kernel" name="restart-kernel" title="Restart Kernel">
+      <option value="" hidden selected>Restart Kernel</option>
+      <option value="python3">Python</option>
+      <option value="dyalog_apl" >APL</option>
+      <option value="lambda-calculus">λ Calculus</option>
+  </select>
 </div>
 <div id="container">
   <div id="surface">
