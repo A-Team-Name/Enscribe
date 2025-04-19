@@ -16,6 +16,7 @@ urlpatterns = [
     path("", views.index),
     path("index/", views.index),
     path("execute/", views.execute),
+    path("restart_kernel/", views.restart_kernel),
     path("image_to_text/", views.image_to_text),
     path("save_notebook/", views.save_notebook),
     path("get_notebook_data/", views.get_notebook_data),

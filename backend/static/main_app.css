@@ -16,7 +16,7 @@ main {
     overflow: hidden;
 }
 
-#saved-popup {
+.popup {
     visibility: hidden; 
     min-width: 250px; 
     margin-left: -125px; 
@@ -32,7 +32,7 @@ main {
   }
   
   
-#saved-popup.show {
+.popup.show {
     visibility: visible; 
     /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
     However, delay the fade out process for 2.5 seconds */
