@@ -347,7 +347,8 @@ class CodeBlock extends HTMLElement {
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        if (this.getAttribute("restored")){
+        // The attribute value (String) "false" is truthy, so manually compare to it.
+        if (this.hasAttribute("restored") && this.getAttribute("restored") !== "false") {
             this.setAttribute("state", "executed");
         }
         else{
