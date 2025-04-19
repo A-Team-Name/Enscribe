@@ -143,7 +143,7 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      
+
       <div id="notebooks-container">
         {% for notebook in notebooks %}
           <div class="notebook-div" data-notebook-id="{{notebook.id}}">
@@ -156,7 +156,7 @@
           </div>
         {% endfor %}
       </div>
-      
+
     </dialog>
     <dialog id="save-notebook-dialog">
       <h1>Save Notebook</h1>
@@ -182,26 +182,27 @@
         <ul>
           <li><span class="material-symbols-outlined">edit</span>  With "Code" selected, use the pen to write executable lines of code. </li>
           <li><span class="material-symbols-outlined">ink_eraser</span> Use the eraser to remove a character. </li>
-          <li>Adjust the pen or eraser size using the sliders.</li>
-          <li>Change the pen colour as needed.</li>
+          <li>Adjust the pen and eraser size using the sliders.</li>
+          <li><span class="material-symbols-outlined">palette</span>Change the pen colour.</li>
         </ul>
       </div>
       <div>
         <h2>Annotating Code</h2>
         <img src="/static/help-menu/annotation_toggle.png" alt="Annotation Toggle">
         <ul>
-          <li>Select "Annotation" mode to add non-executable comments using the pen </li>
-          <li>Toggle "Show Annotations" to display or hide annotations </li>
-          <li>Customise the pen colour for annotations</li>
+          <li>Select "Notes" mode to add non-executable notes using the pen.</li>
+          <li>Toggle "Show Notes" to display or hide notes.</li>
+          <li>The pen colour for notes can also be customised, but should be kept distinct from the colour used for code.</li>
         </ul>
       </div>
       <div>
         <h2>Running Code</h2>
-          <img src="/static/help-menu/code_block.png" alt="Code Block Selection">
+        <img src="/static/help-menu/code_block.png" alt="Code Block Selection">
         <ul>
-          <li><span class="material-symbols-outlined"></span>  Use the selection tool to draw a box around the code you want to run.</li>
-          <li>If auto-execution is enabled, the code runs instantly otherwise click ▶.</li>
-          <li>Click the language icon to switch execution languages.</li>
+          <li><span class="material-symbols-outlined"></span>  Use the selection tool (<span class="material-symbols-outlined">select</span>) to draw a box around the code you want to run (a "code block").</li>
+          <li>Use the drop-down on the toolbar to change the default language for new code blocks.</li>
+          <li>If auto-execution is enabled, the code runs instantly; otherwise, click ▶.</li>
+          <li>Click the language icon to change the language of a block.</li>
           <li><span class="material-symbols-outlined">output</span>  Display or hide transcribed code.</li>
           <li><span class="material-symbols-outlined">text_fields</span>  Display or hide execution output.</li>
         </ul>
@@ -209,33 +210,40 @@
       <div>
         <h2>Changing Incorrect Characters</h2>
         <img src="/static/help-menu/incorrect_prediction.png" alt="Incorrect Character Prediction">
-        <p>If handwriting recognition misinterprets a character, click it and the most likely characters will be shown, select one of these characters to replace it.</p>
+        <p>If handwriting recognition misinterprets a character, click it and the most likely characters will be shown. Click an alternative prediction to use it.</p>
       </div>
       <div>
-        <h2>Opening a new tab</h2>
-        <img src="/static/help-menu/tabs.png" alt="Opening a tab">
-        <p>Click the "+" icon next to existing tabs to open a blank whiteboard while keeping existing work.</p>
-        <p>Double-click a tab to rename it.</p>
+        <h2>Notebooks and Pages</h2>
+        <img src="/static/help-menu/notebook_management.png" alt="Managing notebooks">
+        <p>Notebooks are saved on the server so they can be accessed across devices.</p>
+        <p>You can also download and upload local copies of notebooks.</p>
+        <img src="/static/help-menu/tabs.png" alt="Notebook pages toolbar">
+        <ul>
+          <li>Click the "+" icon to create a new page within the current notebook.</li>
+          <li>State (including variable definitions) is shared across all pages in a notebook.</li>
+          <li>Use the "Restart Kernel" drop-down to reset this state for a given language.</li>
+          <li>Double-click the name of a notebook or page to rename it.</li>
+        </ul>
       </div>
       <div>
         <h2>Settings Menu</h2>
-        <p>Customise your experience by changing settings</p><br>
+        <p>Customise your experience by changing settings.</p><br>
 
         <h4>Touch Behaviour</h4>
-        <p>Choose Between</p>
+        <p>Choose between:</p>
         <ul>
-          <li>Pen for drawing, touch for panning</li>
-          <li>Pen and touch with the same behavior</li>
+          <li>Pen for drawing, touch for panning;</li>
+          <li>Pen and touch having the same behaviour.</li>
         </ul><br>
-
-        <h4>Default Language</h4>
-        <p>Set the default programming language for new code block selections. </p><br>
 
         <h4>Automatically execute new selections</h4>
         <p>Enable/disable automatic execution of selected code (enabled by default).</p><br>
 
         <h4>Background</h4>
-        <p>Choose between grid squares, lines, or dots as your background.</p><br>
+        <p>Choose between grid squares, lines, and dots.</p><br>
+
+        <h4>Handwriting Recognition Model</h4>
+        <p>Choose which model is used to recognise handwriting.</p>
       </div>
 
 
