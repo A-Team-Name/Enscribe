@@ -496,12 +496,13 @@ class Whiteboard extends HTMLElement {
         });
 
         this.#restart_kernel.addEventListener("change", () => {
+
+            const restartFormData = new FormData();
+            restartFormData.append("language", this.#restart_kernel.value);
+
             setTimeout(() => {
               this.#restart_kernel.selectedIndex = 0; // Reset to the default "restart kernel"
             }, 100); // Give the form a moment to submit
-
-            const restartFormData = new FormData();
-            restartFormData.append("language", this.getAttribute("language"));
 
             return fetch("/restart_kernel/", {
                 method: "POST",
