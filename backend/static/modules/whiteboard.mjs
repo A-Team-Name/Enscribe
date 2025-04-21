@@ -723,6 +723,10 @@ class Whiteboard extends HTMLElement {
         // Delete notebook button for each notebook
         document.querySelectorAll(".delete-notebook").forEach(button => {
             button.addEventListener("click", () => {
+                // Give the user a chance to cancel the action.
+                if (!confirm("Permanently delete this notebook?")) {
+                    return;
+                }
                 let notebook_id = button.getAttribute("data-notebook-id");
                 const notebookFormData = new FormData();
                 notebookFormData.append("notebook_id", notebook_id);
@@ -982,6 +986,11 @@ class Whiteboard extends HTMLElement {
     #closePage(id) {
         id = parseInt(id);
         if (this.#pages.size <= 1) {
+            return;
+        }
+
+        // Allow the user to cancel deleting the page
+        if (!confirm("Permanently delete this page?")) {
             return;
         }
 
