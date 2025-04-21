@@ -383,7 +383,7 @@ class Whiteboard extends HTMLElement {
 
     constructor() {
         super();
-        const shadowRoot = this.attachShadow({mode: 'closed'});
+        const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = whiteboard_template;
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
