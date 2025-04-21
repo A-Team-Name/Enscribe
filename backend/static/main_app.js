@@ -1,7 +1,7 @@
-import { Whiteboard } from '/static/modules/whiteboard.mjs';
-import { onEvent, setAttribute } from '/static/modules/reactivity.mjs';
-import { CodeBlock } from '/static/modules/code-block.mjs';
-import { RadioPanel } from '/static/modules/radio-panel.mjs';
+import { Whiteboard } from './modules/whiteboard.mjs';
+import { onEvent, setAttribute } from './modules/reactivity.mjs';
+import { CodeBlock } from './modules/code-block.mjs';
+import { RadioPanel } from './modules/radio-panel.mjs';
 
 const settingsDialog = document.getElementById("settings-dialog");
 const helpDialog = document.getElementById("help-dialog");
@@ -86,7 +86,6 @@ document.getElementById("redo").addEventListener("click", () => whiteboard.redo(
 
 window.addEventListener('beforeunload', (event) => {
     // Standard message not always shown; still needed for some browsers to trigger the dialog
-    event.preventDefault(); 
+    event.preventDefault();
     event.returnValue = ''; // Required for Chrome to show the confirmation dialog
 });
-
