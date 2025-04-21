@@ -1,4 +1,10 @@
-function rectanglesOverlapping(a, b) {
+/**
+ * @module shapeUtils
+ */
+/**
+ * test if two rectangles are overlapping
+ */
+export function rectanglesOverlapping(a, b) {
     return !(
       a.right < b.left ||
       a.left > b.right ||
@@ -7,8 +13,10 @@ function rectanglesOverlapping(a, b) {
     );
 }
 
-/// Computes whether point is in rect
-function pointInRect(point, rect) {
+/**
+ * Computes whether point is in rect
+ */
+export function pointInRect(point, rect) {
     return !(
         rect.right < point.x
             || rect.left > point.x
@@ -17,8 +25,10 @@ function pointInRect(point, rect) {
     );
 }
 
-/// Computes a rectangle that perfectly fits a and b
-function rectangleUnion(a, b) {
+/**
+ * Computes a rectangle that perfectly fits a and b
+ */
+export function rectangleUnion(a, b) {
     return {
         right: Math.max(a.right, b.right),
         left: Math.min(a.left, b.left),
@@ -27,8 +37,10 @@ function rectangleUnion(a, b) {
     };
 }
 
-/// Compute the bounding rectangle of a circle {y, x}, with the supplied radius
-function circleBoundingRect(point, radius) {
+/**
+ * Compute the bounding rectangle of a circle {y, x}, with the supplied radius
+ */
+export function circleBoundingRect(point, radius) {
     return {
         right: point.x + radius,
         left: point.x - radius,
@@ -43,7 +55,7 @@ function circleBoundingRect(point, radius) {
  * @param {DOMPoint} b
  * @returns DOMPoint - distance between a and b
  */
-function distance2(a, b) {
+export function distance2(a, b) {
     return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 }
 
@@ -54,15 +66,6 @@ function distance2(a, b) {
  * @param {float} radius_b
  * @returns bool - whether circles a and b overlap
  */
-function circlesOverlapping(point_a, radius_a, point_b, radius_b) {
+export function circlesOverlapping(point_a, radius_a, point_b, radius_b) {
     return distance2(point_a, point_b) <= (radius_a ** 2 + radius_b ** 2);
 }
-
-export {
-    rectanglesOverlapping,
-    pointInRect,
-    rectangleUnion,
-    circleBoundingRect,
-    distance2,
-    circlesOverlapping
-};

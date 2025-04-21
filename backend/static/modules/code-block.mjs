@@ -1,3 +1,7 @@
+/**
+ * @module code-block
+ */
+
 import { onEvent } from '/static/modules/reactivity.mjs';
 import { rectanglesOverlapping } from '/static/modules/shapeUtils.mjs';
 
@@ -31,7 +35,10 @@ const code_block_template = `
 
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-class CodeBlock extends HTMLElement {
+/**
+ * A code block element, that can be used to run handwritten code.
+ */
+export class CodeBlock extends HTMLElement {
     static languages = {
         "python3": {
             "logo": "/static/logos/python.svg",
@@ -551,4 +558,3 @@ class CodeBlock extends HTMLElement {
 }
 
 customElements.define("code-block", CodeBlock);
-export { CodeBlock };
