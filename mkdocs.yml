@@ -1,0 +1,14 @@
+site_name: Enscribe Documentation
+
+theme:
+  name: "material"
+
+nav:
+  - Overview: index.md
+  - Models: models.md
+  - Utils: utils.md
+  - Views: views.md
+
+plugins:
+  - monorepo
+  - mkdocstrings

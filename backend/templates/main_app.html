@@ -6,70 +6,89 @@
     <link href="/static/main_app.css" rel="stylesheet"/>
   </head>
   <body>
-    <header class="spaced-bar">
-      <img id="language-logo" width="48px" height="48px" alt="APL Logo" src="https://raw.githubusercontent.com/abrudz/logos/refs/heads/main/apl/green.svg"/>
+    <header class="spaced-bar tool-bar">
       <div class="spaced-bar">
-        <button class="material-symbols-outlined" title="Save Notebook" id="save">
-          save
-        </button>
+        <img id="language-logo" width="48px" height="48px"/>
+        <select id="default-language" name="default-language" title="Default Language">
+          <option value="python3" disabled="">Python</option>
+          <option value="dyalog_apl" disabled="">APL</option>
+          <option value="lambda-calculus">λ Calculus</option>
+        </select>
+      </div>
+
+      <div class="spaced-bar">
         <button class="material-symbols-outlined" title="New Notebook" id="new">
           note_add
         </button>
-        <button class="material-symbols-outlined" title="Open Notebook" id="open">
+        <button class="material-symbols-outlined" title="Open Saved Notebooks" id="open_from_account">
           folder_open
+        </button>
+        <button class="material-symbols-outlined" title="Save Notebook" id="save">
+          save
+        </button>
+      </div>
+      <div class="spaced-bar">
+        <button class="material-symbols-outlined" title="Download Notebook" id="save_file">
+          download
+        </button>
+        <input type="file" id="fileInput" style="display: none;" accept="application/json">
+        <button class="material-symbols-outlined" title="Open Notebook from File" id="open_file">
+          upload
         </button>
       </div>
 
-      <fieldset class="spaced-bar">
-        <input id="tool-pan" type="radio" name="tool" value="pan">
-        <label title="Pan" for="tool-pan" class="material-symbols-outlined">
-          drag_pan
-        </label>
-        <input id="tool-select" type="radio" name="tool" value="select" />
-        <label for="tool-select" class="material-symbols-outlined">
-          select
-        </label>
-        <input id="tool-write" type="radio" name="tool" value="write" checked/>
-        <label for="tool-write" class="material-symbols-outlined">
-          edit
-        </label>
-        <input id="tool-erase" type="radio" name="tool" value="erase">
-        <label for="tool-erase" class="material-symbols-outlined">
-          ink_eraser
-        </label>
-      </fieldset>
-
-      <label>
-        Pen Width
-        <input id="pen-width" type="range" value="3" min="1" max="30"/>
-      </label>
-      <label>
-        Eraser Width
-        <input id="eraser-width" type="range" value="20" min="5" max="30"/>
-      </label>
-
-      <input id="line-color" type="color" value="#ffffff"/>
-
       <div class="spaced-bar">
-        <button id="undo" title="Undo" class="material-symbols-outlined">undo</button>
+        <button id="undo" title="Undo" class="material-symbols-outlined" disabled>undo</button>
         <button id="redo" title="Redo" class="material-symbols-outlined" disabled>redo</button>
       </div>
 
+      <radio-panel id="tool">
+        <button value="write" class="material-symbols-outlined" disabled>
+          edit
+        </button>
+        <button value="erase" class="material-symbols-outlined">
+          ink_eraser
+        </button>
+        <button value="select" class="material-symbols-outlined">
+          select
+        </button>
+        <button value="pan" title="Pan" class="material-symbols-outlined">
+          drag_pan
+        </button>
+      </radio-panel>
+
+      <div class="left-stack">
+        <label for="pen-width">
+          Pen Size
+        </label>
+        <input id="pen-width" name="pen-width" type="range" value="3" min="1" max="30"/>
+      </div>
+
+      <div class="left-stack">
+        <label for="eraser-width">
+          Eraser Size
+        </label>
+        <input id="eraser-width" name="eraser-width" type="range" value="20" min="5" max="30"/>
+      </div>
+
+      <div class="spaced-bar">
+        <label for="line-color" class="material-symbols-outlined">palette</label>
+        <input id="line-color" name="line-color" type="color" value="#ffffff"/>
+      </div>
+
+      <radio-panel id="layer">
+        <button value="code" disabled>Code</button>
+        <button value="annotations">Notes</button>
+      </radio-panel>
       <label>
         <input id="show-annotations" type="checkbox" checked/>
-        Show Annotations
+        Show Notes
       </label>
-      <fieldset class="spaced-bar">
-        <label>
-          <input id="layer-code" type="radio" name="layer" value="code" checked/>
-          Code
-        </label>
-        <label>
-          <input id="layer-annotations" type="radio" name="layer" value="annotations"/>
-          Annotation
-        </label>
-      </fieldset>
+
       <div>
+        <button id="open-help">
+          Help
+        </button>
         <button id="open-settings">
           Settings
         </button>
@@ -87,29 +106,148 @@
       <form method="dialog" class="close">
         <button class="material-symbols-outlined">close</button>
       </form>
-      <fieldset>
-        <legend>Touch Behaviour</legend>
-        <label>
-          <input type="radio" name="touch-action" value="pan" checked/>
-          Pan
-        </label>
-        <label>
-          <input type="radio" name="touch-action" value="auto"/>
-          Auto (match pen and mouse)
-        </label>
-      </fieldset>
       <div>
-        <label>Default Language</label>
-        <select id="default-language" name="default-language">
-          <option value="python3">Python</option>
-          <option value="dyalog_apl">APL</option>
-          <option value="lambda-calculus">λ Calculus</option>
+        <label for="touch-action">Touch Behaviour</label>
+        <select name="touch-action">
+          <option value="pan">Pan</option>
+          <option value="auto">Auto (match pen and mouse)</option>
+        </select>
+      </div>
+      <div>
+        <label><input name="auto-execute" type="checkbox" value="on" checked/> Automatically execute new selections.</label>
+      </div>
+      <div>
+        <label for="background-selection">Background</label>
+        <select id="background-selection" name="background-selection">
+          <option value="squares">Squares</option>
+          <option value="none">None</option>
+          <option value="lines">Lines</option>
+          <option value="dots">Dots</option>
+        </select>
+      </div>
+      <div>
+        <label for="model">Handwriting Recognition Model</label>
+        <select id="model" name="model">
+          <option value="cnn">CNN</option>
+          <option value="trocr">TrOCR</option>
+          <option value="shape">Shape Context</option>
         </select>
       </div>
       <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>
       </form>
+    </dialog>
+    <dialog id="notebooks-dialog">
+      <h1>Notebooks</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+
+      <div id="notebooks-container">
+        {% for notebook in notebooks %}
+          <div class="notebook-div" data-notebook-id="{{notebook.id}}">
+            <div>{{notebook.notebook_name}}</div>
+            <div>{{notebook.notebook_modified_at| timesince}} ago</div>
+            <div>
+              <button class="open-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Open Notebook">draw</button>
+              <button class="delete-notebook material-symbols-outlined" data-notebook-id="{{notebook.id}}" title="Delete Notebook">delete</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </dialog>
+    <dialog id="save-notebook-dialog">
+      <h1>Save Notebook</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <label for="notebook-name-input">Notebook Name:</label>
+      <input type="text" id="notebook-name-input" name="notebook-name-input">
+      <button id="save-notebook-name">Save</button>
+    </dialog>
+    <div id="saved-popup" class="popup">Saved</div>
+    <div id="restarted-popup" class="popup">Restarted</div>
+
+    <!-- HELP MENU -->
+    <dialog id="help-dialog">
+      <h1>Help</h1>
+      <form method="dialog" class="close">
+        <button class="material-symbols-outlined">close</button>
+      </form>
+      <div>
+        <h2>Writing & Erasing Code</h2>
+        <img src="/static/help-menu/writing_and_erasing.png" alt="Writing and Erasing Menu">
+        <ul>
+          <li><span class="material-symbols-outlined">edit</span>  With "Code" selected, use the pen to write executable lines of code. </li>
+          <li><span class="material-symbols-outlined">ink_eraser</span> Use the eraser to remove a character. </li>
+          <li>Adjust the pen and eraser size using the sliders.</li>
+          <li><span class="material-symbols-outlined">palette</span>Change the pen colour.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Annotating Code</h2>
+        <img src="/static/help-menu/annotation_toggle.png" alt="Annotation Toggle">
+        <ul>
+          <li>Select "Notes" mode to add non-executable notes using the pen.</li>
+          <li>Toggle "Show Notes" to display or hide notes.</li>
+          <li>The pen colour for notes can also be customised, but should be kept distinct from the colour used for code.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Running Code</h2>
+        <img src="/static/help-menu/code_block.png" alt="Code Block Selection">
+        <ul>
+          <li><span class="material-symbols-outlined"></span>  Use the selection tool (<span class="material-symbols-outlined">select</span>) to draw a box around the code you want to run (a "code block").</li>
+          <li>Use the drop-down on the toolbar to change the default language for new code blocks.</li>
+          <li>If auto-execution is enabled, the code runs instantly; otherwise, click ▶.</li>
+          <li>Click the language icon to change the language of a block.</li>
+          <li><span class="material-symbols-outlined">output</span>  Display or hide transcribed code.</li>
+          <li><span class="material-symbols-outlined">text_fields</span>  Display or hide execution output.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Changing Incorrect Characters</h2>
+        <img src="/static/help-menu/incorrect_prediction.png" alt="Incorrect Character Prediction">
+        <p>If handwriting recognition misinterprets a character, click it and the most likely characters will be shown. Click an alternative prediction to use it.</p>
+      </div>
+      <div>
+        <h2>Notebooks and Pages</h2>
+        <img src="/static/help-menu/notebook_management.png" alt="Managing notebooks">
+        <p>Notebooks are saved on the server so they can be accessed across devices.</p>
+        <p>You can also download and upload local copies of notebooks.</p>
+        <img src="/static/help-menu/tabs.png" alt="Notebook pages toolbar">
+        <ul>
+          <li>Click the "+" icon to create a new page within the current notebook.</li>
+          <li>State (including variable definitions) is shared across all pages in a notebook.</li>
+          <li>Use the "Restart Kernel" drop-down to reset this state for a given language.</li>
+          <li>Double-click the name of a notebook or page to rename it.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Settings Menu</h2>
+        <p>Customise your experience by changing settings.</p><br>
+
+        <h4>Touch Behaviour</h4>
+        <p>Choose between:</p>
+        <ul>
+          <li>Pen for drawing, touch for panning;</li>
+          <li>Pen and touch having the same behaviour.</li>
+        </ul><br>
+
+        <h4>Automatically execute new selections</h4>
+        <p>Enable/disable automatic execution of selected code (enabled by default).</p><br>
+
+        <h4>Background</h4>
+        <p>Choose between grid squares, lines, and dots.</p><br>
+
+        <h4>Handwriting Recognition Model</h4>
+        <p>Choose which model is used to recognise handwriting.</p>
+      </div>
+
+
+
     </dialog>
     <script src="/static/main_app.js" type="module" charset="utf-8"></script>
   </body>

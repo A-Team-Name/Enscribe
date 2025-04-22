@@ -43,20 +43,70 @@
 }
 
 #predictions {
-    display: flex;
     flex-direction: column;
     gap: 0.25rem;
 
-    width: 200px;
-    height: 100px;
-    display: none;
+    position: relative;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+
+    min-height: 100px;
+    &[open] {
+        display: flex;
+    }
 }
 
 #text {
     width: 200px;
     height: 40px;
+    white-space: pre;
+}
+
+#output{
+    white-space: pre;
 }
 
 .predicted-text-span:hover{
     cursor: default;
+}
+
+/* Loader CSS obtained from: https://cssloaders.github.io/ */
+#loader {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--ui-focus-color);
+    border-bottom-color: var(--ui-accent-color);
+    border-radius: 50%;
+    display: none;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+/* Only show the loader when the run button is disabled (while waiting for execution) */
+#run[disabled] ~ #loader {
+    display: inline-block;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#tick {
+    height: 13px;
+    width: 5px;
+    border-bottom: 3px solid green;
+    border-right: 3px solid green;
+    transform: rotate(45deg);
+    margin: 5px;
+}
+
+.toggle-box {
+    display: flex;
+    align-items: start;
 }

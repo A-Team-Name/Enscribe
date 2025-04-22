@@ -2,7 +2,9 @@ name: Build, Test and Publish Image
 
 on:
   push:
-    branches: [main, dev, demo]
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 
 jobs:
   test:
@@ -34,8 +36,19 @@ jobs:
           cd backend
           poetry run ruff check --output-format=github .
 
+      - name: npm install
+        run: |
+          cd backend
+          npm install
+
+      - name: npm test
+        run: |
+          cd backend
+          NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
+
   build:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
         contents: read

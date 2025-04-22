@@ -25,7 +25,7 @@
     :root {
         color-scheme: dark only;
         --default-background-color: black;
-        *:not(:disabled) {
+        *:not(:disabled):not(a) {
             color: white;
         }
     }
@@ -52,16 +52,20 @@ code {
     font-family: bqn386;
 }
 
-button, select {
+button, select, label:has(input[type="checkbox"].toggle-button) {
     background-color: var(--ui-background-color);
     border: 0.1rem solid var(--ui-border-color);
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
-    &:not([disabled]):hover {
-        background-color: var(--ui-focus-color);
-    }
+
     &.material-symbols-outlined {
         border-radius: 1rem;
+    }
+}
+
+button {
+    &:not([disabled]):hover {
+        background-color: var(--ui-focus-color);
     }
 }
 
@@ -95,9 +99,17 @@ dialog::backdrop {
 
 
 .ui-group {
-    padding: 0.5rem;
+    padding: 0.25rem;
     border: var(--thin-border) solid var(--ui-border-color);
     border-radius: 3px;
+}
+
+.tool-bar {
+    padding: 0.5em;
+    background: var(--ui-background-color);
+    border-color: var(--ui-border-color);
+    border-width: 1px;
+    border-bottom-style: solid;
 }
 
 .spaced-bar {
@@ -108,6 +120,22 @@ dialog::backdrop {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+}
+
+.left-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+fieldset {
+    border: var(--thin-border) solid var(--ui-border-color);
+    border-radius: var(--thin-border);
+    /* Small padding so most of internal area is in children. */
+    padding: 0.2rem;
+    /* Add large padding to child elements to make them easier to hit. */
+    > *:not(legend) {
+        padding: 0.5rem;
+    }
 }
 
 dialog {
@@ -140,4 +168,23 @@ dialog {
 /* mix-blend-mode: difference makes lambda show up against background */
 img[src$="lambda.svg"] {
     mix-blend-mode: difference;
+}
+
+/* Toggle Button-style checkboxes */
+input[type="checkbox"].toggle-button {
+    display: none;
+}
+
+/* TODO convert to button-based solution */
+label:has(input[type="checkbox"].toggle-button):hover {
+    background-color: var(--ui-focus-color);
+}
+
+label:has(input[type="checkbox"].toggle-button:checked) {
+    background-color: var(--ui-accent-color);
+    color: var(--default-background-color);
+
+    &:hover {
+        background-color: color-mix(in hsl, var(--ui-accent-color), white 10%) !important;
+    }
 }

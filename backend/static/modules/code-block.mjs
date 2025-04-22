@@ -7,8 +7,8 @@ const code_block_template = `
 <div id="selection" class="selection"></div>
 <div id="controls" class="ui-window clickable">
   <button id="run" class="material-symbols-outlined">play_arrow</button>
-  <label class="material-symbols-outlined"><input id="show-output" name="show-output" type="checkbox"/>output</label>
-  <label class="material-symbols-outlined"><input id="show-text" name="show-text" type="checkbox"/>text_fields</label>
+  <span id="loader"></span>
+  <span id="tick"></span>
   <button id="language-switch">
     <img height="24" src="/static/logos/apl.svg" alt="APL"/>
   </button>
@@ -17,9 +17,15 @@ const code_block_template = `
 </div>
 </div>
 <div id="output-column">
-  <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
-  <div contenteditable="true" id="predictions" class="ui-window clickable "></div>
-  <textarea id="output" class="ui-window clickable"></textarea>
+  <div class="toggle-box">
+    <label class="material-symbols-outlined clickable"><input id="show-text" name="show-text" type="checkbox" class="toggle-button"/>text_fields</label>
+    <div contenteditable="true" id="text" class="ui-window clickable resizeable"></div>
+  </div>
+  <dialog id="predictions" class="ui-window clickable"></dialog>
+  <div class="toggle-box">
+    <label class="material-symbols-outlined clickable"><input id="show-output" name="show-output" type="checkbox" class="toggle-button"/>output</label>
+    <textarea id="output" class="ui-window clickable"></textarea>
+  </div>
 </div>
 `;
 
@@ -49,6 +55,7 @@ class CodeBlock extends HTMLElement {
         "state",
         "language",
         "predicted-text",
+        "execution-output",
         "predictions"
     ];
 
@@ -60,20 +67,27 @@ class CodeBlock extends HTMLElement {
     #anchor_y;
     /** Predicted text representation of code. */
     #text;
-    /* Character predictions from server. */
-    #buttons_container;
+    #text_toggle;
     /* Div for buttons for each character */
     #predictions;
     /* Code evaluation result from server. */
     #output;
+    #output_toggle;
     /** The run button. */
     #run;
     /** The controls block. */
     #controls;
+    /** The tick icon */
+    #tick;
+    /** The container for the entire output column */
+    #output_column;
 
     /** Icon showing the logo for this block's language. */
     #language_logo;
     #language_button;
+
+    /** Handwriting recognition model selected in settings */
+    #selectedModel;
 
     constructor() {
         super();
@@ -81,27 +95,61 @@ class CodeBlock extends HTMLElement {
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = code_block_template;
 
+        this.#output_column = shadowRoot.getElementById("output-column");
         this.#selection = shadowRoot.getElementById("selection");
         this.#text = shadowRoot.getElementById("text");
-        this.#predictions = shadowRoot.getElementById("predictions");
         this.#output = shadowRoot.getElementById("output");
         this.#controls = shadowRoot.getElementById("controls");
+        this.#tick = shadowRoot.getElementById("tick");
+        this.#tick.style["display"] = "none";
+        this.#selectedModel = document.getElementById("model");
         // Set up text and output display toggle checkboxes.
         let programText = shadowRoot.getElementById("text");
-        onEvent("change", shadowRoot.getElementById("show-text"),
-            (show) => programText.style["display"] = show.checked ? "block" : "none");
+        this.#text_toggle = shadowRoot.getElementById("show-text")
+        onEvent("change", this.#text_toggle,
+            (toggle) => {
+                if (toggle.checked)
+                    this.#showText();
+                else
+                    this.#hideText();
+            },
+            false
+        );
 
         let programOutput = shadowRoot.getElementById("output");
-        onEvent("change", shadowRoot.getElementById("show-output"),
-            (show) => programOutput.style["display"] = show.checked ? "block" : "none");
+        this.#output_toggle = shadowRoot.getElementById("show-output");
+        onEvent("change", this.#output_toggle,
+            (toggle) => {
+                if (toggle.checked)
+                    this.#showOutput();
+                else
+                    this.#hideOutput();
+            },
+            false
+        );
 
         // Set up language switching UI.
         this.#language_logo = shadowRoot.querySelector("#language-switch > img");
 
         let select_language = shadowRoot.getElementById("select-language");
         this.#language_button = shadowRoot.querySelector("#language-switch");
-        this.#language_button.addEventListener("click",
-            () => select_language.show());
+
+        // Open language selection menu if closed, close menu if already open
+        this.#language_button.addEventListener("click",(e) => {
+                if (select_language.open) {
+                    select_language.close();
+                }
+                else{
+                    select_language.show();
+                }
+                e.stopPropagation();
+            });
+
+        select_language.addEventListener("click", (e) => {
+                select_language.show();
+                e.stopPropagation();
+            });
+
         // Generate buttons for each language.
         for (const language in CodeBlock.languages) {
             let lang_props = CodeBlock.languages[language];
@@ -113,32 +161,28 @@ class CodeBlock extends HTMLElement {
             <img height="24" src="${lang_props.logo}" alt="${lang_props.name}"/>`;
             select_language.appendChild(language_label);
             language_label.addEventListener("click",
-                () => {
+                (e) => {
                     this.setAttribute("language", language);
                     select_language.close();
+                    e.stopPropagation()
                 });
         }
 
         // Delete selection when close button is clicked.
         shadowRoot.getElementById("close")
-            .addEventListener("click", () => this.#close());
+            .addEventListener("click", () => {
+                // Defer responsibility for deleting the block to the whiteboard,
+                // which can record an associated CloseSelectionAction.
+                // The contents of a message must be pure JSON, so we can't simply pass
+                // a reference to the code block. The index is sufficiently unambiguous.
+                window.postMessage({
+                    "deleteCodeBlock": Array.from(this.parentElement.childNodes).indexOf(this)
+                });
+            });
 
         this.#run = shadowRoot.getElementById("run");
         // Post screen capture image to '/image_to_text' when run button is clicked
-        this.#run.addEventListener("click", async () => {
-            // Disable the run button until we finish executing to prevent double-clicks.
-            this.#run.disabled = true;
-            await this.transcribeCodeBlockImage();
-            // On run, we perform text recognition, so the block is no longer stale.
-            this.setAttribute("state", "executed");
-            this.executeTranscribedCode();
-
-            // Re-enable the run button now code has executed.
-            this.#run.disabled = false;
-
-            // Update list of code blocks in local storage
-            this.updateLocalStorage();
-        });
+        this.#run.addEventListener("click", () => this.execute());
 
         // Stop pointer events from "leaking" to the whiteboard when we don't want them to.
         this.addEventListener("pointerdown",
@@ -149,15 +193,52 @@ class CodeBlock extends HTMLElement {
         this.#anchor_x = this.#anchor_y = 0;
         /// A reference to the whiteboard this selection is on, used for image extraction.
         this.whiteboard = null;
+
+        this.#predictions = shadowRoot.getElementById("predictions");
+        this.#predictions.close();
+
+        // Close menus on click anywhere outside the element
+        document.addEventListener("click",(e) => {
+            this.#predictions.close()
+            select_language.close()
+        });
+
+        // Ensure menus are not closed when their element is clicked on
+        this.#predictions.addEventListener("click",(e) => {
+            this.#predictions.show()
+            e.stopPropagation()
+        });
+
     }
 
+    async execute() {
+            // Disable the run button until we finish executing to prevent double-clicks.
+            this.#run.disabled = true;
+
+            // Only transcribe when user has made changes to code block
+            if (this.getAttribute("state") == "stale"){
+                await this.transcribeCodeBlockImage();
+            }
+
+            // On run, we perform text recognition, so the block is no longer stale.
+            this.setAttribute("state", "executed");
+
+            await this.executeTranscribedCode();
+
+            // Re-enable the run button now code has executed.
+            this.#run.disabled = false;
+    }
     async transcribeCodeBlockImage() {
         let selectionContents = await this.whiteboard.extractCode(DOMRect.fromRect(this.dataset));
+
+        let language = this.getAttribute("language");
+        let complete_model = this.#selectedModel.value + "-" + language;
 
         // Put the screen capture image into FormData object
         const imageFormData = new FormData();
         imageFormData.append("img", selectionContents); // Add the image file to the form data
         imageFormData.append("name", "image_unique_id");
+        imageFormData.append("model_name", complete_model);
 
         return fetch("/image_to_text/", {
             method: "POST",
@@ -169,11 +250,7 @@ class CodeBlock extends HTMLElement {
             .then((rsp) => rsp.json())
             .then((json) => {
                 this.setAttribute("predicted-text", json.predicted_text);
-                this.setAttribute("predictions", JSON.stringify(json.predictions));
-                this.#text.textContent = json.predicted_text;
-                this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
-                this.predictions_dict = json.predictions["predictions"]
-                this.refreshClickableCharacters();
+                this.setAttribute("predictions", JSON.stringify(json.predictions["predictions"]));
             })
             .catch((error) => console.error("Error:", error));
     }
@@ -186,7 +263,7 @@ class CodeBlock extends HTMLElement {
         var text = this.#text.textContent;
 
         // Clear previous buttons
-        this.#text.innerHTML = ""; 
+        this.#text.innerHTML = "";
 
         // Loop through each character in predicted text field
         text.split("").forEach((char, index) => {
@@ -199,22 +276,24 @@ class CodeBlock extends HTMLElement {
             span.onclick = (e) =>{
                 e.stopPropagation();
                 // Unhide the predictions box
-                this.#predictions.style["display"] = "flex"
+                this.#predictions.show()
+                this.#predictions.focus()
+
                 // Get the predictions for this position in the predicted text
                 var character_predictions = this.predictions_dict[index];
 
                 // Clear predictions field
                 this.#predictions.innerHTML = "";
 
-                // Loop through each prediction 
+                // Loop through each prediction
                 for (const character_prediction of character_predictions){
                     // Create a button
                     const character_button = document.createElement("button");
 
                     character_button.className = "char-button character-button";
 
-                    // Set text content to predicted character and its probability 
-                    character_button.textContent = character_prediction["character"] + "        -       " + character_prediction["probability"];
+                    // Set text content to predicted character and its probability
+                    character_button.textContent = character_prediction["character"] + "        -       " + parseFloat(character_prediction["probability"]).toFixed(2);
 
                     // Add event listener to replace selected character with the new chosen character
                     character_button.onclick = (e) => {
@@ -223,63 +302,28 @@ class CodeBlock extends HTMLElement {
                         this.#text.textContent = new_text
                         this.predicted_text = new_text
 
+                        // Close predictions menu when user has clicked on a character
+                        this.#predictions.close()
+                        e.stopPropagation();
+
                         this.refreshClickableCharacters();
                     }
 
                     this.#predictions.appendChild(character_button);
                 }
-            } 
+            }
             this.#text.appendChild(span);
         });
 
     }
 
-    updateLocalStorage () {
-        var code_block_list = localStorage.getItem("code_block_list");
-
-        // Convert HTML elements attributes to dict
-        var attributes_dict = Array.from(this.attributes).reduce((acc, attr) => {
-            acc[attr.name] = attr.value;
-            return acc;
-        }, {});
-        
-        // If no existing code blocks then create list in local storage
-        if (code_block_list == null){
-            localStorage.setItem("code_block_list", JSON.stringify([attributes_dict]))
-        }
-        else{
-            code_block_list = JSON.parse(code_block_list)
-            var existing = false;
-            // Loop through each code block in local storage 
-            for (const code_block of code_block_list){
-                // If code block is already in list
-                if ((code_block["data-x"] == attributes_dict["data-x"]) && (code_block["data-y"] == attributes_dict["data-y"])){
-                    // Update with new attributes
-                    var removed_code_block_list = code_block_list.filter(item => item !== code_block);
-                    var updated_code_block_list = code_block_list.concat(removed_code_block_list)
-                    localStorage.setItem("code_block_list", JSON.stringify(updated_code_block_list))
-                    existing = true;
-                    break;
-
-                }
-            }
-            // If code block is not in list then add to list in local storage
-            if (!existing){
-                var new_code_block_list = code_block_list.concat(attributes_dict)
-                localStorage.setItem("code_block_list", JSON.stringify(new_code_block_list))
-            }
-            
-        }
-
-    }
-
-    executeTranscribedCode() {
+    async executeTranscribedCode() {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
         executeFormData.append("language", this.getAttribute("language"));
-        executeFormData.append("code", this.#text.value);
+        executeFormData.append("code", this.#text.textContent);
 
-        fetch("/execute/", {
+        return fetch("/execute/", {
             method: "POST",
             body: executeFormData,
             credentials: 'include',
@@ -296,14 +340,20 @@ class CodeBlock extends HTMLElement {
                     // content_type = line.type
                     output += line.content
                 }
-                this.#output.value = output;
+                this.setAttribute("execution-output", output);
             })
             .catch((error) => console.error("Error:", error));
     }
 
     connectedCallback() {
         // Hide the UI initially so it doesn't flash up before the first pointermove event
-        this.setAttribute("state", "resizing");
+        // The attribute value (String) "false" is truthy, so manually compare to it.
+        if (this.hasAttribute("restored") && this.getAttribute("restored") !== "false") {
+            this.setAttribute("state", "executed");
+        }
+        else{
+            this.setAttribute("state", "resizing");
+        }
         if (!this.hasAttribute("language")) {
             // TODO: Implement a better language selection policy.
             this.setAttribute("language", "python3");
@@ -341,7 +391,7 @@ class CodeBlock extends HTMLElement {
         this.setAttribute("state", "stale");
         // This cleans up a selection if the user just clicked without dragging.
         if (this.dataset.width == 0 || this.dataset.height == 0) {
-            this.#close();
+            this.close();
         }
     }
 
@@ -361,29 +411,90 @@ class CodeBlock extends HTMLElement {
         }
     }
 
-    #close() {
+    close() {
         this.remove();
     }
 
+    #showControls() {
+        // We may prefer to not use display="none" to hide stuff where feasible because it means we
+        // don't have to remember what to set it back to when we display the element.
+        //
+        // We can't just set visibility to "visible" here because this would override hiding
+        // inactive tabs/pages, which also relies on visibility. TODO: Avoid this potential
+        // interaction entirely.
+        this.#controls.style.removeProperty("visibility");
+        this.#output_column.style.removeProperty("visibility");
+    }
 
-    setStyle() {
-        switch (this.getAttribute("state")) {
+    #hideControls() {
+        this.#controls.style.visibility = "hidden";
+        this.#output_column.style.visibility = "hidden";
+    }
+
+    #showOutput() {
+        // We have to use display rather than visibility for text and output because Safari doesn't
+        // handle visibility="collapse" properly. We would have to use visibility="hidden", which
+        // would leave the output floating part-way down the selection height if it was the only one
+        // visible.
+        this.#output.style.removeProperty("display");
+        this.#output_toggle.checked = true;
+    }
+
+    #hideOutput() {
+        this.#output.style.display = "none";
+        this.#output_toggle.checked = false;
+    }
+
+    #showText() {
+        this.#text.style.removeProperty("display");
+        this.#text_toggle.checked = true;
+    }
+
+    #hideText() {
+        this.#text.style.display = "none";
+        this.#text_toggle.checked = false;
+    }
+
+    updateState(oldState, newState) {
+        // By separating logic for leaving and entering states, the intention of the code is
+        // clearer, and it's less repetitive.
+        switch (oldState) {
         case "resizing":
-            // loop through all the children of the shadow root
-            this.#controls.style["display"] = "none";
-            this.#selection.classList.remove("tentative");
+            this.#showControls();
             break;
         case "stale":
-            this.#controls.style["display"] = "block";
+            this.#selection.classList.remove("tentative");
+            break;
+        }
+
+        switch (newState) {
+        case "resizing":
+            this.#hideControls();
+            this.#hideOutput();
+            this.#hideText();
+            break;
+        case "stale":
             this.#selection.classList.add("tentative");
+            // The text representation is no longer valid, so hide it, and don't let user show it.
+            // They might still want to see the output, so don't mess with that.
+            this.#hideText();
+            this.#text_toggle.disabled = true;
+            this.#tick.style["display"] = "none";
             break;
         case "running":
             this.#controls.style["display"] = "block";
             this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "none";
             break;
         case "executed":
             this.#controls.style["display"] = "block";
             this.#selection.classList.remove("tentative");
+            this.#tick.style["display"] = "inline-block";
+
+            // enable displaying text representation
+            this.#text_toggle.disabled = false;
+            this.#showOutput();
+
             break;
         }
     }
@@ -407,9 +518,33 @@ class CodeBlock extends HTMLElement {
             let newLanguage = CodeBlock.languages[newValue];
             this.#language_logo.src = newLanguage.logo;
             this.#language_logo.alt = newLanguage.name;
+            if (oldValue !== newValue) {
+                // The current text representation is no longer valid, so the block becomes stale.
+                this.setAttribute("state", "stale");
+            }
+            // Update the application-level default language to match what we set here.
+            window.postMessage({"setting": "defaultLanguage", "value": newValue});
             break;
         case "state":
-            this.setStyle();
+            this.updateState(oldValue, newValue);
+            break;
+        case "predictions":
+            // Update the change character predictions UI
+            this.#predictions.value = newValue;
+            try{
+                this.predictions_dict = JSON.parse(newValue);
+            }
+            catch (error) {
+                console.log("Error loading predictions dictionary: " + error)
+            }
+            this.refreshClickableCharacters();
+            break;
+        case "predicted-text":
+            // Update the text box to show the predicted text
+            this.#text.textContent = newValue;
+            break;
+        case "execution-output":
+            this.#output.value = newValue;
             break;
         }
     }
