@@ -1,17 +1,9 @@
 # Welcome to Enscribe Documentation
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+This section of the documentation explains our frontend and primary backend microservices.
 
-## Commands
+## Frontend
+The frontend is a bespoke JavaScript application that provides users with a whiteboard interface to handwrite code.
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Backend
+The backend is a Django application that both serves the frontend and provides several API endpoints for the frontend to interact with (as Mentioned in the [API documentation](api.md)).
