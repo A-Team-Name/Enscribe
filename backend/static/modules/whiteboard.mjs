@@ -5,7 +5,8 @@
 import { DrawAction, EraseAction, CreateSelectionAction, CloseSelectionAction } from './undo-redo.mjs';
 import { CodeBlock } from './code-block.mjs';
 import { fillCircle, strokeCircle } from './shapeUtils.mjs';
-import { Line, Layer, Page, interpretColor } from './notebook.mjs';
+import { Line, Page, interpretColor } from './notebook.mjs';
+import * as shapeUtils from './shapeUtils.mjs';
 
 const whiteboard_template = `
 <style>
@@ -45,7 +46,6 @@ const whiteboard_template = `
 }
 
 #tab-bar {
-    /* TODO: Do firefox-style overflow: scroll tabs, and keep new tab button visible */
     /* Put tab bar above canvases etc */
     z-index: 1;
     cursor: auto;
@@ -119,9 +119,15 @@ const whiteboard_template = `
 
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+/**
+ * The main page surface on which the user can write code.
+ *
+ * Handles input, notebook state and rendering handwriting.
+ */
 export class Whiteboard extends HTMLElement {
     static observedAttributes = [
         "data-touch-action",
+        "data-line-width",
         "data-eraser-width",
         "data-layer",
         "data-tool",
@@ -138,19 +144,43 @@ export class Whiteboard extends HTMLElement {
     #surface;
     #ui;
 
-    // Drawing state
+    // Interaction state
+    /**
+     * Whiteboard rendering context.
+     * @type {CanvasRenderingContext2D}
+     */
     #drawing;
-    /** Starting X coordinate of most recent panning event */
+    /**
+     * Starting X coordinate of most recent panning event
+     * @type {number}
+     */
     #start_x;
-    /** Starting Y coordinate of most recent panning event */
+    /**
+     * Starting Y coordinate of most recent panning event
+     * @type {number}
+     */
     #start_y;
-    #pointer_active;
+    /**
+     * The selection that is currently being resized/created, if any.
+     * @type {?CodeBlock}
+     */
     #last_selection;
-    #writing;
-    /** Lines that have been erased in the current stroke of the eraser, if any */
+    /**
+     * Whether the user is currently interacting with the whiteboard using a pointer.
+     * @type {boolean}
+     */
+    #touching;
+    /**
+     * Lines that have been erased in the current stroke of the eraser, if any.
+     * @type {Line[]}
+     */
     #erased_lines;
 
     // Tabs/Pages
+    /**
+     * The active/selected page.
+     * @type {Page}
+     */
     #active_page;
     #tab_bar;
     #new_tab;
@@ -165,7 +195,7 @@ export class Whiteboard extends HTMLElement {
 
     constructor() {
         super();
-        const shadowRoot = this.attachShadow({mode: 'open'});
+        const shadowRoot = this.attachShadow({ mode: 'open' });
         shadowRoot.innerHTML = whiteboard_template;
         this.#container = shadowRoot.getElementById("container");
         this.#surface = shadowRoot.getElementById("surface");
@@ -182,20 +212,22 @@ export class Whiteboard extends HTMLElement {
 
         const saveNotebookDialog = document.getElementById("save-notebook-dialog");
 
+        // Make the notebook's name editable
         this.#notebook_name_label.addEventListener("dblclick", () => {
             this.#notebook_name_label.setAttribute("contenteditable", "true");
             this.#notebook_name_label.focus();
         });
 
-        // Disable contenteditable when the label loses focus.
+        // Disable contenteditable when the label loses focus
         this.#notebook_name_label.addEventListener("focusout", () => {
             this.#notebook_name_label.removeAttribute("contenteditable");
             this.#notebook_name = this.#notebook_name_label.textContent;
         });
 
+        // Create a new, blank notebook
         document.getElementById("new").addEventListener("click", async () => {
-            this.#closeAllPages();
-            this.#newPage();
+            this.closeAllPages();
+            this.newPage();
             this.#notebook_name = "";
             this.#notebook_name_label.textContent = "Untitled Notebook";
             this.#notebook_id = -1;
@@ -203,6 +235,7 @@ export class Whiteboard extends HTMLElement {
 
         });
 
+        // Save the notebook on the server
         document.getElementById("save").addEventListener("click", async () => {
             const jsonString = this.serialiseNotebook();
             const notebookFormData = new FormData();
@@ -226,11 +259,11 @@ export class Whiteboard extends HTMLElement {
         });
 
 
-        // File save button
+        // Local save/download button
         document.getElementById("save_file")
             .addEventListener("click", () => {
                 // If notebook name hasn't been set, show popup
-                if (this.#notebook_name == ""){
+                if (this.#notebook_name == "") {
                     saveNotebookDialog.showModal();
                     document.getElementById("save-notebook-name").addEventListener("click", async () => {
                         this.#notebook_name = document.getElementById("notebook-name-input").value;
@@ -239,16 +272,16 @@ export class Whiteboard extends HTMLElement {
                         this.downloadNotebook(this.#notebook_name)
                     }, { once: true });
                 }
-                else{
+                else {
                     this.downloadNotebook(this.#notebook_name)
                 }
             });
 
-        // Open Saved Notebooks Button
+        // Open saved notebooks button
         document.getElementById("open_from_account")
-        .addEventListener("click", () => this.#notebooks_dialog.showModal());
+            .addEventListener("click", () => this.#notebooks_dialog.showModal());
 
-        // Open From File Button - opens hidden file input button
+        // Open from file button. This triggers the hidden file input on the toolbar.
         document.getElementById("open_file")
             .addEventListener("click", () => {
                 document.getElementById('fileInput').click();
@@ -257,7 +290,7 @@ export class Whiteboard extends HTMLElement {
 
 
         // Open file input selection
-        document.getElementById('fileInput').addEventListener('change', (event) =>  {
+        document.getElementById('fileInput').addEventListener('change', (event) => {
             let file = event.target.files[0]; // Get the selected file
             if (file) {
                 const reader = new FileReader();
@@ -277,13 +310,14 @@ export class Whiteboard extends HTMLElement {
             }
         });
 
+        // Kernel restart dropdown menu
         this.#restart_kernel.addEventListener("change", () => {
 
             const restartFormData = new FormData();
             restartFormData.append("language", this.#restart_kernel.value);
 
             setTimeout(() => {
-              this.#restart_kernel.selectedIndex = 0; // Reset to the default "restart kernel"
+                this.#restart_kernel.selectedIndex = 0; // Reset to the default "restart kernel"
             }, 100); // Give the form a moment to submit
 
             return fetch("/restart_kernel/", {
@@ -291,7 +325,7 @@ export class Whiteboard extends HTMLElement {
                 body: restartFormData,
                 credentials: 'include',
                 headers: {
-                    "X-CSRFTOKEN" : csrftoken
+                    "X-CSRFTOKEN": csrftoken
                 }
             })
                 .then((rsp) => rsp.text())
@@ -304,7 +338,7 @@ export class Whiteboard extends HTMLElement {
 
                 })
                 .catch((error) => console.error("Error:", error));
-          });
+        });
 
         this.applyNotebookEventListeners();
 
@@ -314,29 +348,26 @@ export class Whiteboard extends HTMLElement {
         window.matchMedia('(prefers-color-scheme: dark)')
             .addEventListener("change", () => setTimeout(() => { this.render() }));
 
-        /** Thickness for new lines */
-        this.lineWidth = 3;
-
         this.#start_x = 0;
         this.#start_y = 0;
-        this.#writing = false;
+        this.#touching = false;
         this.#last_selection = null;
         this.#erased_lines = [];
 
         this.#ui.addEventListener("pointerdown",
-            (event) => this.#handlePointerDown(event));
+            (event) => this.handlePointerDown(event));
 
         this.#ui.addEventListener("pointercancel",
-            (event) => this.#handlePointerUp(event));
+            (event) => this.handlePointerUp(event));
         this.#ui.addEventListener("pointerup",
-            (event) => this.#handlePointerUp(event));
+            (event) => this.handlePointerUp(event));
 
         this.#ui.addEventListener("pointermove",
-            (event) => this.#handlePointerMove(event));
+            (event) => this.handlePointerMove(event));
 
         this.#ui.addEventListener("touchstart",
             (event) => {
-                if (this.#writing)
+                if (this.#touching)
                     event.preventDefault();
             });
 
@@ -355,14 +386,14 @@ export class Whiteboard extends HTMLElement {
 
         this.#new_tab.addEventListener(
             "click",
-            () => this.#newPage());
+            () => this.newPage());
 
         this.#pages = new Map();
         this.#line_colors = { "code": "auto", "annotations": "#0000ff" };
-        // TODO: Add code to load page state from local storage here
+        // Get the notebook with the ID in localStorage from the server.
         var current_notebook_id = localStorage.getItem("current_notebook_id");
-        this.#newPage();
-        if ((current_notebook_id != null) && (current_notebook_id != -1)){
+        this.newPage();
+        if ((current_notebook_id != null) && (current_notebook_id != -1)) {
             const notebookFormData = new FormData();
             notebookFormData.append("notebook_id", current_notebook_id);
             fetch("/get_notebook_data/", {
@@ -370,7 +401,7 @@ export class Whiteboard extends HTMLElement {
                 body: notebookFormData,
                 credentials: 'include',
                 headers: {
-                    "X-CSRFTOKEN" : csrftoken
+                    "X-CSRFTOKEN": csrftoken
                 }
             })
                 .then((rsp) => rsp.json())
@@ -387,6 +418,7 @@ export class Whiteboard extends HTMLElement {
 
     /**
      * Perform the necessary operations to handle a change in the given region of the current page.
+     * @param {shapeUtils.Rectangle} region
      */
     handleRegionUpdate(region) {
         for (const block of this.#ui.querySelectorAll("code-block")) {
@@ -395,6 +427,9 @@ export class Whiteboard extends HTMLElement {
         }
     }
 
+    /**
+     * @returns {string} The current notebook state as serialised JSON.
+     */
     serialiseNotebook() {
         this.#active_page.scrollLeft = this.#container.scrollLeft;
         this.#active_page.scrollTop = this.#container.scrollTop;
@@ -408,13 +443,14 @@ export class Whiteboard extends HTMLElement {
             code_block_list.push(attributes_dict);
         }
 
-        var whiteboard_dict = {"pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list}
-        const jsonString =JSON.stringify(whiteboard_dict, null, 2)
+        var whiteboard_dict = { "pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list }
+        const jsonString = JSON.stringify(whiteboard_dict, null, 2)
 
         return jsonString
     }
 
-    downloadNotebook(notebook_name){
+    /** Download a local copy of the current notebook. */
+    downloadNotebook(notebook_name) {
         const jsonString = this.serialiseNotebook();
         const blob = new Blob([jsonString], { type: "application/json" }); // Create a Blob
         const link = document.createElement("a"); // Create a temporary link
@@ -425,6 +461,11 @@ export class Whiteboard extends HTMLElement {
         document.body.removeChild(link); // Cleanup
     }
 
+    /**
+     * Save the current notebook to the server.
+     *
+     * @param {FormData} notebookFormData - Form data containing the notebook, its name and ID.
+     */
     async saveNotebook(notebookFormData) {
         try {
             const response = await fetch("/save_notebook/", {
@@ -450,6 +491,7 @@ export class Whiteboard extends HTMLElement {
         }
     }
 
+    /** Generate an interactive list of the notebooks the current user has saved on the server. */
     updateNotebookList() {
         const container = document.getElementById("notebooks-container");
         container.innerHTML = ""; // Clear existing notebooks
@@ -472,6 +514,8 @@ export class Whiteboard extends HTMLElement {
         this.applyNotebookEventListeners();
     }
 
+
+    /** Add event listeners to all .open-notebook and .delete-notebook buttons */
     applyNotebookEventListeners() {
         // Open notebook button for each notebook
         document.querySelectorAll(".open-notebook").forEach(button => {
@@ -484,7 +528,7 @@ export class Whiteboard extends HTMLElement {
                     body: notebookFormData,
                     credentials: 'include',
                     headers: {
-                        "X-CSRFTOKEN" : csrftoken
+                        "X-CSRFTOKEN": csrftoken
                     }
                 })
                     .then((rsp) => rsp.json())
@@ -528,24 +572,28 @@ export class Whiteboard extends HTMLElement {
                     body: notebookFormData,
                     credentials: 'include',
                     headers: {
-                        "X-CSRFTOKEN" : csrftoken
+                        "X-CSRFTOKEN": csrftoken
                     }
                 })
                     .then((rsp) => console.log(rsp))
                     .catch((error) => console.error("Error:", error));
-            })}
-        );
+            })
+        });
 
     };
 
-    // Load a notebook on the canvas using JSON
-    loadNotebook(notebook_data){
+    /**
+     * Load the contents of a notebook into the application.
+     *
+     * @param {string} notebook_data - The notebook's contents.
+     */
+    loadNotebook(notebook_data) {
         const notebook = JSON.parse(notebook_data);
         const pages = notebook["pages"];
         const code_blocks = notebook["code_blocks"];
 
         // Close all existing tabs
-        this.#closeAllPages();
+        this.closeAllPages();
 
         // Create a new pages map
         this.#pages = new Map();
@@ -555,7 +603,7 @@ export class Whiteboard extends HTMLElement {
         // For each page in saved notebook
         for (const [key, page] of pages) {
             // Create a new page
-            var page_id = this.#newPage();
+            var page_id = this.newPage();
             this.#tab_bar.querySelector(`button[data-id='${page_id}'] > span`).textContent = page.name;
             this.#pages.get(page_id).name = page.name;
 
@@ -570,7 +618,7 @@ export class Whiteboard extends HTMLElement {
 
             // Reconstruct each line of code layer
             var line_objs = [];
-            for (var code_line of page.layers[0].lines){
+            for (var code_line of page.layers[0].lines) {
                 let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
                 line_objs.push(line)
             }
@@ -579,27 +627,28 @@ export class Whiteboard extends HTMLElement {
 
             // Reconstruct each line of annotations layer
             var line_objs = [];
-            for (var code_line of page.layers[1].lines){
+            for (var code_line of page.layers[1].lines) {
                 let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
                 line_objs.push(line)
             }
 
             this.#pages.get(page_id).layers[1].lines = line_objs
-          }
+        }
 
         // Restore each code block
-        for (const code_block of code_blocks){
-            this.#restoreSelection(code_block)
+        for (const code_block of code_blocks) {
+            this.restoreSelection(code_block)
         }
 
         // Switch to the first page
-        this.#switchToPage(first_page_id);
+        this.switchToPage(first_page_id);
     }
 
     connectedCallback() {
-        this.#resizeCanvas();
+        // Ensure the handwriting canvas is always resized to cover the visible area of the page.
+        this.resizeCanvas();
         window.addEventListener("resize",
-            () => this.#resizeCanvas());
+            () => this.resizeCanvas());
 
         window.addEventListener("message",
             (event) => {
@@ -617,6 +666,10 @@ export class Whiteboard extends HTMLElement {
             })
     }
 
+    /**
+     * @param {number | string | Date} date
+     * @returns {string} An approximation of time since date in English.
+     */
     timeSince(date) {
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
 
@@ -640,7 +693,11 @@ export class Whiteboard extends HTMLElement {
     }
 
     // This get/set API exposes hex color values even if the line color is auto.
-    // The color input type requires hex colors, hence this song and dance
+    // The color input element requires hex colors, hence this song and dance
+
+    /**
+     * The hex color code that should be used to draw lines on the current layer.
+     */
     set lineColor(color) {
         // Enable auto colour if switching to what it would currently render as.
         if (color === interpretColor("auto")) {
@@ -657,9 +714,10 @@ export class Whiteboard extends HTMLElement {
     /**
      * Create a new page, and add a tab for it.
      * Make it the active page.
+     *
      * @returns {string} The id of the new page
      */
-    #newPage() {
+    newPage() {
         // Get an unused ID for the tab
         let id = 1;
         while (this.#pages.has(id)) {
@@ -678,14 +736,14 @@ export class Whiteboard extends HTMLElement {
 
         tab.addEventListener(
             "click",
-            () => this.#switchToPage(tab.dataset.id));
+            () => this.switchToPage(tab.dataset.id));
 
         let label = "Page " + id;
         let label_element = document.createElement("span");
         label_element.innerHTML = label;
         this.#pages.get(id).name = label
 
-        // Enable label editing on double-click.
+        // Edit page names on double-click.
         tab.addEventListener(
             "dblclick",
             () => {
@@ -711,7 +769,7 @@ export class Whiteboard extends HTMLElement {
             (event) => {
                 // Don't count this as a click on the tab, which would switch to it.
                 event.stopPropagation();
-                this.#closePage(id);
+                this.closePage(id);
             });
 
         tab.appendChild(close_button);
@@ -719,18 +777,19 @@ export class Whiteboard extends HTMLElement {
         // Add the new tab at the end of the list, before the new tab button.
         this.#tab_bar.insertBefore(tab, this.#new_tab);
 
-        this.#switchToPage(id);
+        this.switchToPage(id);
 
         return id;
     }
 
     /**
      * Switch to the page with the given id, and hide code blocks that aren't on that page.
+     * @param {number | string} id
      */
-    #switchToPage(id) {
+    switchToPage(id) {
         id = parseInt(id);
         // Remove the border of the deselected tab, if it exists
-        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page?.id??-1}']`);
+        let active_tab = this.#tab_bar.querySelector(`button[data-id='${this.#active_page?.id ?? -1}']`);
         if (active_tab !== null) {
             active_tab.style["border-color"] = "#00000000";
             // Store the scroll position of the page so we can have each scrolled a different amount
@@ -745,11 +804,12 @@ export class Whiteboard extends HTMLElement {
 
         // Show only code blocks on the current page
         for (const block of this.#ui.querySelectorAll("code-block")) {
+            // This relies on == treating a number and its decimal form as equal.
             block.style["visibility"] = block.dataset.page == id ? "visible" : "hidden";
         }
 
         // Switch to the same layer on the new page
-        this.#switchToLayer(this.active_layer?.name ?? "code");
+        this.switchToLayer(this.active_layer?.name ?? "code");
 
         // Apply the stored scroll position of the selected tab.
         this.#container.scrollTo(this.#active_page.scrollLeft, this.#active_page.scrollTop);
@@ -762,10 +822,11 @@ export class Whiteboard extends HTMLElement {
 
     /**
      * Remove the page with the given id, and switch to the next tab if there is one, or the last
-     * tab otherwise.
-     * Do nothing if this is the only page.
+     * tab otherwise. Do nothing if this is the only page.
+     *
+     * @param {number | string} id
      */
-    #closePage(id) {
+    closePage(id) {
         id = parseInt(id);
         if (this.#pages.size <= 1) {
             return;
@@ -786,7 +847,7 @@ export class Whiteboard extends HTMLElement {
             let target_tab =
                 page_tab == last_tab ? last_tab.previousSibling : page_tab.nextSibling;
 
-            this.#switchToPage(target_tab.dataset.id);
+            this.switchToPage(target_tab.dataset.id);
         }
 
         // Delete the page and its associated tab
@@ -799,9 +860,9 @@ export class Whiteboard extends HTMLElement {
         }
     }
 
-    // Close all existing pages, including the last tab
-    #closeAllPages() {
-        for (var id of Array.from(this.#pages.keys())){
+    /** Close all existing pages */
+    closeAllPages() {
+        for (var id of Array.from(this.#pages.keys())) {
             id = parseInt(id);
 
             let page_tab = this.#tab_bar.querySelector(`button[data-id='${id}']`);
@@ -820,144 +881,175 @@ export class Whiteboard extends HTMLElement {
     /**
      * Determine the type of action a pointer event should cause.
      * Takes this.dataset.tool and event.pointerType into account.
+     *
+     * @param {PointerEvent} event
      */
-    #eventAction(event) {
+    eventAction(event) {
         if (!event.isPrimary)
             return "none";
         switch (event.pointerType) {
-        case "touch":
-            // Use native touch for scrolling
-            if (this.dataset.touchAction === "pan" || this.dataset.tool === "pan")
-                return "none";
-            else
+            case "touch":
+                // Use native touch scrolling
+                if (this.dataset.touchAction === "pan" || this.dataset.tool === "pan")
+                    return "none";
+                else
+                    return this.dataset.tool;
+            case "mouse":
+                if (event.buttons & 4)
+                    // Middle-click to scroll
+                    return "pan";
+                else if (event.buttons & 2)
+                    // Ignore right click to prevent the application from starting a line when it shouldn't.
+                    return "none";
+                else
+                    return this.dataset.tool;
+            default:
                 return this.dataset.tool;
-        case "mouse":
-            if (event.buttons & 4)
-                // Middle-click to scroll
-                return "pan";
-            else if (event.buttons & 2)
-                // Ignore right click to prevent the application from starting a line when it shouldn't.
-                return "none";
-            else
-                return this.dataset.tool;
-        default:
-            return this.dataset.tool;
         }
     }
 
-    #handlePointerDown(event) {
+    /**
+     * Begin handling a pointer tap and/or stroke based on the given pointerdown event.
+     * @param {PointerEvent} event
+     */
+    handlePointerDown(event) {
         event.preventDefault();
         if (event.isPrimary)
             event.target.setPointerCapture(event.pointerId);
-        let action = this.#eventAction(event);
+        let action = this.eventAction(event);
         switch (action) {
-        case "erase":
-            this.#erase(event.offsetX, event.offsetY);
-            this.render();
-            break;
-        case "write":
-            this.#penDown(event.offsetX, event.offsetY);
-            break;
-        case "select":
-            this.#createSelection(event.offsetX, event.offsetY);
-            break;
-        case "pan":
-            this.#start_x = event.offsetX;
-            this.#start_y = event.offsetY;
-            break;
+            case "erase":
+                this.erase(event.offsetX, event.offsetY);
+                this.render();
+                break;
+            case "write":
+                this.penDown(event.offsetX, event.offsetY);
+                break;
+            case "select":
+                this.createSelection(event.offsetX, event.offsetY);
+                break;
+            case "pan":
+                this.#start_x = event.offsetX;
+                this.#start_y = event.offsetY;
+                break;
         }
         if (action !== "none") {
-            this.#writing = true;
-            this.#drawCursor(event);
+            this.#touching = true;
+            this.drawCursor(event);
         }
     }
 
-    #drawCursor(event) {
+    /**
+     * Render a cursor on the canvas previewing the size and colour of the pen or eraser,
+     * depending on the active tool, at the location of event.
+     *
+     * @param {PointerEvent} event
+     */
+    drawCursor(event) {
         // Show a preview of the cursor position
         if (event.isPrimary) {
-            let clip = this.#clipRegion();
+            let clip = this.clipRegion();
             switch (this.dataset.tool) {
-            case "write":
-                this.#drawing.fillStyle = this.lineColor;
-                fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
-                    this.lineWidth/2);
-                break;
-            case "erase":
-                this.#drawing.strokeStyle = this.lineColor;
-                this.#drawing.lineWidth = 1;
-                strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
-                    this.dataset.eraserWidth/2);
+                case "write":
+                    this.#drawing.fillStyle = this.lineColor;
+                    fillCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
+                        this.dataset.lineWidth / 2);
+                    break;
+                case "erase":
+                    this.#drawing.strokeStyle = this.lineColor;
+                    this.#drawing.lineWidth = 1;
+                    strokeCircle(this.#drawing, event.offsetX - clip.left, event.offsetY - clip.top,
+                        this.dataset.eraserWidth / 2);
             }
         }
     }
 
     /**
-     * Decides what type of action to perform based on the PointerEvent received,
+     * Continue an action based on the pointermove PointerEvent received,
      * and the state of the whiteboard.
+     *
+     * @param {PointerEvent} event
      */
-    #handlePointerMove(event) {
+    handlePointerMove(event) {
         if (event.buttons !== 0) {
             // A button is pressed, so some action must be taken
-            let action = this.#eventAction(event);
-            // if (event.pointerType !== "touch")
+            let action = this.eventAction(event);
             switch (action) {
-            case "pan":
-                this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
-                break;
-            case "write":
-                this.#draw(event);
-                break;
-            case "erase":
-                this.#erase(event.offsetX, event.offsetY);
-                break;
-            case "select":
-                if (this.#last_selection !== null)
-                    this.#last_selection.resize(event);
-                break;
+                case "pan":
+                    this.#container.scrollBy(this.#start_x - event.offsetX, this.#start_y - event.offsetY);
+                    break;
+                case "write":
+                    this.draw(event);
+                    break;
+                case "erase":
+                    this.erase(event.offsetX, event.offsetY);
+                    break;
+                case "select":
+                    if (this.#last_selection !== null)
+                        this.#last_selection.resize(event);
+                    break;
             }
         }
 
         this.render();
-        this.#drawCursor(event);
+        this.drawCursor(event);
     }
 
-    #handlePointerUp(event) {
+    /**
+     * Complete an action based on the pointerup PointerEvent received,
+     * and the state of the whiteboard.
+     *
+     * @param {PointerEvent} event
+     */
+    handlePointerUp(event) {
         if (event.isPrimary)
             event.target.releasePointerCapture(event.pointerId);
-        switch (this.#eventAction(event)) {
-        case "erase":
-            this.#penUp();
-            break;
-        case "write":
-            this.#penUp();
-            break;
-        case "select":
-            if (this.#last_selection !== null) {
-                this.#last_selection.confirm();
+        switch (this.eventAction(event)) {
+            case "erase":
+                this.penUp();
+                break;
+            case "write":
+                this.penUp();
+                break;
+            case "select":
+                if (this.#last_selection !== null) {
+                    this.#last_selection.confirm();
 
-                // Only execute and/or record block creation if the block was resized,
-                // and so didn't immediately close itself.
-                if (this.#last_selection.parentElement !== null) {
-                    if (this.dataset.autoExecute === "on") {
-                        // Immediately execute a code block if auto-execution is enabled.
-                        this.#last_selection.execute();
+                    // Only execute and/or record block creation if the block was resized,
+                    // and so didn't immediately close itself.
+                    if (this.#last_selection.parentElement !== null) {
+                        if (this.dataset.autoExecute === "on") {
+                            // Immediately execute a code block if auto-execution is enabled.
+                            this.#last_selection.execute();
+                        }
+
+                        this.#active_page.recordAction(new CreateSelectionAction(this, this.#last_selection));
                     }
 
-                    this.#active_page.recordAction(new CreateSelectionAction(this, this.#last_selection));
+                    this.#last_selection = null;
                 }
-
-                this.#last_selection = null;
-            }
-            break;
+                break;
         }
-        this.#writing = false;
+        this.#touching = false;
     }
 
+    /**
+     * Add the supplied code block to the notebook.
+     *
+     * @param {CodeBlock} block
+     */
     addSelection(block) {
         this.#ui.appendChild(block);
     }
 
-    #createSelection(x, y) {
+    /**
+     * Create a new CodeBlock at the given coordinates,
+     * and store a reference to it in #last_selection.
+     *
+     * @param {number} x
+     * @param {number} y
+     */
+    createSelection(x, y) {
         this.#last_selection = document.createElement("code-block");
         this.#last_selection.dataset.x = x;
         this.#last_selection.dataset.y = y;
@@ -966,14 +1058,17 @@ export class Whiteboard extends HTMLElement {
         this.#last_selection.setAttribute("language", this.dataset.defaultLanguage);
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = this.#active_page.id;
-        this.#last_selection.setAttribute("predicted-text","");
-        this.#last_selection.setAttribute("execution-output","");
-        this.#last_selection.setAttribute("predictions",{});
+        this.#last_selection.setAttribute("predicted-text", "");
+        this.#last_selection.setAttribute("execution-output", "");
+        this.#last_selection.setAttribute("predictions", {});
         this.#last_selection.setAttribute("restored", false);
         this.addSelection(this.#last_selection);
     }
 
-    #restoreSelection(code_block_attributes) {
+    /**
+     * Re-create a CodeBlock with the given attributes.
+     */
+    restoreSelection(code_block_attributes) {
         this.#last_selection = document.createElement("code-block");
         this.#last_selection.dataset.x = code_block_attributes["data-x"];
         this.#last_selection.dataset.y = code_block_attributes["data-y"];
@@ -983,42 +1078,47 @@ export class Whiteboard extends HTMLElement {
         this.#last_selection.whiteboard = this;
         this.#last_selection.dataset.page = code_block_attributes["data-page"];
         this.#last_selection.setAttribute("state", "executed");
-        this.#last_selection.setAttribute("predicted-text",code_block_attributes["predicted-text"]);
+        this.#last_selection.setAttribute("predicted-text", code_block_attributes["predicted-text"]);
         this.#last_selection.setAttribute("execution-output", code_block_attributes["execution-output"]);
-        this.#last_selection.setAttribute("predictions",code_block_attributes["predictions"]);
+        this.#last_selection.setAttribute("predictions", code_block_attributes["predictions"]);
         this.#last_selection.setAttribute("restored", true);
         this.addSelection(this.#last_selection);
     }
 
     /**
-     * Draw with PointerEvent event on 2D context ctx.
+     * Continue drawing a line using event.
+     *
+     * @param {PointerEvent} event
      */
-    #draw(event) {
-        if (!this.#writing)
+    draw(event) {
+        if (!this.#touching)
             return;
         // Safari only has support for getCoalescedEvents as of 18.2
         if ("getCoalescedEvents" in event) {
             let coa = event.getCoalescedEvents();
             for (const e of coa) {
-                this.active_layer.extendLine({x: e.offsetX, y: e.offsetY});
+                this.active_layer.extendLine({ x: e.offsetX, y: e.offsetY });
             }
         } else {
-            this.active_layer.extendLine({x: event.offsetX, y: event.offsetY});
+            this.active_layer.extendLine({ x: event.offsetX, y: event.offsetY });
         }
     }
 
     /**
-     * Start a new drawn line at (x, y) on ctx.
-     * Draw a dot at that point, which will appear even if the pointer doesn't move.
+     * Start a new drawn line at (x, y)
+     *
+     * @param {number} x
+     * @param {number} y
      */
-    #penDown(x, y) {
-        this.active_layer.newLine({y: y, x: x}, this.lineWidth,
+    penDown(x, y) {
+        this.active_layer.newLine({ y: y, x: x }, this.dataset.lineWidth,
             this.#line_colors[this.active_layer.name]);
         this.render();
     }
 
-    #penUp() {
-        if (this.#writing) {
+    /** Complete the current pointer action. */
+    penUp() {
+        if (this.#touching) {
             let index = this.active_layer.completeLine();
 
             // Record writing action
@@ -1032,17 +1132,24 @@ export class Whiteboard extends HTMLElement {
                 }
             }
 
-            this.#writing = false;
+            this.#touching = false;
         }
 
+        // Record line erasure action
         if (this.#erased_lines.length > 0) {
             this.#active_page.recordAction(new EraseAction(this.active_layer, this.#erased_lines));
             this.#erased_lines = [];
         }
     }
 
-    #erase(x, y) {
-        let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth)/2);
+    /**
+     * Erase any lines that intersect the eraser when it is placed at (x, y)
+     *
+     * @param {number} x
+     * @param {number} y
+     */
+    erase(x, y) {
+        let erased = this.active_layer.erase(x, y, parseInt(this.dataset.eraserWidth) / 2);
 
         // Update any blocks that contained erased lines.
         if (this.active_layer.is_code) {
@@ -1057,21 +1164,14 @@ export class Whiteboard extends HTMLElement {
         }
     }
 
-    /** Draw a circle, diameter ctx.lineWidth at (x, y). */
-    #drawPoint(ctx, x, y) {
-        const circle = new Path2D();
-        // Radius must be half ctx.lineWidth so diameter matches lines.
-        circle.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
-        ctx.fill(circle);
-    }
-
-    #resizeSurface() {
+    /** Resize the drawing surface to match data-width and data-height. */
+    resizeSurface() {
         this.#surface.style["width"] = this.dataset.width + "px";
         this.#surface.style["height"] = this.dataset.height + "px";
     }
 
-    /// Handle a change in the size of the visible region of the whiteboard.
-    #resizeCanvas() {
+    /** Handle a change in the size of the visible region of the whiteboard. */
+    resizeCanvas() {
         // Match the size of the window to prevent situations where the canvas is too small after
         // some other element resized. This will usually not be much bigger than it would have to be
         // anyway, so we don't need to worry about the performance implications too much.
@@ -1084,26 +1184,28 @@ export class Whiteboard extends HTMLElement {
         if (oldValue === newValue)
             return;
         switch (name) {
-        case "data-width":
-        case "data-height":
-            this.#resizeSurface();
-            break;
-        case "data-background":
-            this.#surface.dataset.background = newValue;
-            break;
-        case "data-layer":
-            this.#switchToLayer(newValue);
-            break;
-        case "data-show-annotations":
-            this.render();
-            break;
+            case "data-width":
+            case "data-height":
+                this.resizeSurface();
+                break;
+            case "data-background":
+                this.#surface.dataset.background = newValue;
+                break;
+            case "data-layer":
+                this.switchToLayer(newValue);
+                break;
+            case "data-show-annotations":
+                this.render();
+                break;
         }
     }
 
     /**
      * Switch to the layer with the given name on the current page.
+     *
+     * @param {string} name
      */
-    #switchToLayer(name) {
+    switchToLayer(name) {
         for (var i = 0; i < this.#active_page.layers.length; i += 1) {
             if (name === this.#active_page.layers[i].name) {
                 this.active_layer = this.#active_page.layers[i];
@@ -1112,8 +1214,11 @@ export class Whiteboard extends HTMLElement {
         }
     }
 
-    /// Compute the region of the whiteboard surface that intersects the canvas
-    #clipRegion() {
+    /**
+     * Determine the visible region of the whiteboard surface.
+     *
+     * @returns {shapeUtils.Rectangle} */
+    clipRegion() {
         let ui_bounds = this.#ui.getBoundingClientRect();
         let canvas_bounds = this.#drawing.canvas.getBoundingClientRect();
         let clip = {
@@ -1127,7 +1232,9 @@ export class Whiteboard extends HTMLElement {
 
     /**
      * Generate an image containing the whiteboard/page contents within clip
-     * @param {DOMRect} clip
+     *
+     * @param {shapeUtils.Rectangle} clip
+     * @returns {Blob}
      */
     async extractCode(clip) {
         const codeCanvas = new OffscreenCanvas(clip.width, clip.height);
@@ -1138,12 +1245,12 @@ export class Whiteboard extends HTMLElement {
         return codeCanvas.convertToBlob();
     }
 
-    /// Re-draw the entire whiteboard contents (minimise calls to this)
+    /** Render the handwriting on the visible portion of the page. */
     render() {
         this.#drawing.clearRect(0, 0, this.#drawing.canvas.width, this.#drawing.canvas.height);
         this.#drawing.lineCap = "round";
         this.#drawing.lineJoin = "round";
-        let clip = this.#clipRegion();
+        let clip = this.clipRegion();
 
         for (const layer of this.#active_page.layers) {
             if (layer.is_code || this.dataset.showAnnotations === "on")

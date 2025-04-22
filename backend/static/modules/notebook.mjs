@@ -3,6 +3,7 @@
  */
 
 import * as shapeUtils from './shapeUtils.mjs';
+import { Action } from './undo-redo.mjs';
 
 /**
  * @param {string} color - The color to interpret.
@@ -32,26 +33,36 @@ export class Line {
         this.color = color;
         /** @type {float} */
         this.lineWidth = lineWidth;
-        if (Array.isArray(points)){
+        if (Array.isArray(points)) {
             /** @type {shapeUtils.Point[]} */
             this.points = points;
             this.recomputeBoundingRect();
         } else {
             this.points = [points];
             /** @type {shapeUtils.Rectangle} */
-            this.boundingRect = shapeUtils.circleBoundingRect(points, lineWidth/2);
+            this.boundingRect = shapeUtils.circleBoundingRect(points, lineWidth / 2);
         }
     }
 
+    /**
+     * Add point to the end of the line.
+     *
+     * @param {shapeUtils.Point}
+     */
     addPoint(point) {
         this.points.push(point);
     }
 
+    /**
+     * Update this.boundingRect to the smallest rectangle containing the whole line,
+     * accounting for its thickness.
+     */
     recomputeBoundingRect() {
-        let lineWidth2 = this.lineWidth/2;
+        let lineWidth2 = this.lineWidth / 2;
         this.boundingRect = shapeUtils.circleBoundingRect(this.points[0], lineWidth2);
         for (var i = 1; i < this.points.length; i += 1) {
-            this.boundingRect = shapeUtils.rectangleUnion(this.boundingRect, shapeUtils.circleBoundingRect(this.points[i], lineWidth2));
+            this.boundingRect = shapeUtils.rectangleUnion(
+                this.boundingRect, shapeUtils.circleBoundingRect(this.points[i], lineWidth2));
         }
     }
 
@@ -68,7 +79,7 @@ export class Line {
         if (this.points.length == 1) {
             // Render a single-point "line" as a point.
             ctx.fillStyle = interpretColor(this.color);
-            shapeUtils.fillCircle(ctx, this.points[0].x - clip.left, this.points[0].y - clip.top, this.lineWidth/2);
+            shapeUtils.fillCircle(ctx, this.points[0].x - clip.left, this.points[0].y - clip.top, this.lineWidth / 2);
         } else {
             ctx.strokeStyle = interpretColor(this.color);
             ctx.lineWidth = this.lineWidth;
@@ -86,14 +97,27 @@ export class Line {
  * Layer
  */
 export class Layer {
+    /**
+     * @param {string} name
+     * @param {boolean} is_code
+     */
     constructor(name, is_code) {
         this.name = name;
-        /// Contents of the layer
+        /**
+         * Contents of the layer
+         * @type {Line[]}
+         */
         this.lines = [];
+        /** @type {boolean} */
         this.is_code = is_code;
     }
 
-    /// Draw the contents of this layer in the given context, bounded to the given clip rectangle
+    /**
+     * Draw the contents of this layer in the given context, bounded to the given clip rectangle
+     *
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {shapeUtils.Rectangle} clip
+     */
     draw(ctx, clip) {
         // lines is a sparse array, so we must use "in" rather than "of"
         for (const i in this.lines) {
@@ -106,7 +130,7 @@ export class Layer {
      *
      * @param {shapeUtils.Point} start - Starting point of the the line.
      * @param {number} lineWidth - Width of the line.
-     * @param color - A color hex code, or the string "auto".
+     * @param {string} color - A color hex code, or the string "auto".
      *
      * @returns {Line} A reference to the new line that was created.
      */
@@ -116,14 +140,17 @@ export class Layer {
         return line;
     }
 
-    /// Extend the last line on the Layer to point
+    /**
+     * Extend the last line on the Layer to point
+     * @param {Point} point
+     */
     extendLine(point) {
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
     /**
      * Mark the last line as complete and return a reference to it.
-     * @returns {number?} The index of the line that was completed, if any.
+     * @returns {?number} The index of the line that was completed, if any.
      */
     completeLine() {
         // Last line could be undefined if it was erased
@@ -136,11 +163,15 @@ export class Layer {
 
     /**
      * Erase lines with vertices intersecting circle centre (x, y), of given radius.
+     *
+     * @param {float} x
+     * @param {float} y
+     * @param {float} radius
      * @returns {Line[]} a sparse array of the lines that were erased, at their respective indices.
      */
     erase(x, y, radius) {
         let erased = [];
-        let eraserPoint = {x, y};
+        let eraserPoint = { x, y };
         let eraserBoundingRect = shapeUtils.circleBoundingRect(eraserPoint, radius);
         for (const i in this.lines) {
             // Do bounding box tests as a first pass for efficiency.
@@ -166,35 +197,56 @@ export class Layer {
  * whereas the Page is our abstract representation of drawn lines.
  */
 export class Page {
+    /**
+     * History of actions on this page that can be undone.
+     * @type {Action[]}
+     */
     #action_history;
+    /**
+     * Current position in this.actions (the undo/redo history of this page)
+     * Index *after* the last action that has been performed (and not undone)
+     * @type {number}
+     */
     #undo_head;
 
+    /** @param {string | number} id */
     constructor(id) {
+        /** @type {Layer[]} */
         this.layers = [
             new Layer("code", true),
             new Layer("annotations", false),
         ];
+        /** @type {string | number } */
         this.id = id;
+        /** @type {string} */
         this.name = "";
-        // Scroll position of page, updated when switching away from a given page.
+        /**
+         * Horizontal scroll offset of page, updated when switching away from a given page.
+         * @type {number}
+         */
         this.scrollLeft = 0;
+        /**
+         * Vertical scroll offset of page, updated when switching away from a given page.
+         * @type {number}
+         */
         this.scrollTop = 0;
-        // History of actions on this page that can be undone
         this.#action_history = [];
-        // Current position in this.actions (the undo/redo history of this page)
-        // Index *after* the last action that has been performed (and not undone)
         this.#undo_head = 0;
     }
 
+    /** @returns {boolean} */
     canUndo() {
         return this.#undo_head > 0;
     }
 
+    /** @returns {boolean} */
     canRedo() {
         return this.#undo_head < this.#action_history.length;
     }
 
-    // Notify the rest of the application of the undo/redo state of this page
+    /**
+     * Notify the rest of the application of the undo/redo state of this page.
+     */
     postUndoState() {
         window.postMessage({
             "setting": "undo",
@@ -203,19 +255,22 @@ export class Page {
         });
     }
 
+    /**
+     * Add action to the undo history, dropping the history after the current position.
+     *
+     * @param {Action} action
+     */
     recordAction(action) {
-        // Drop the history after the current position
         if (this.canRedo()) {
             this.#action_history = this.#action_history.slice(0, this.#undo_head);
         }
-
-        // TODO: Impose maximum history length if it consumes too much memory (unlikely).
 
         this.#action_history.push(action);
         this.#undo_head = this.#action_history.length;
         this.postUndoState();
     }
 
+    /** Undo if possible */
     undo() {
         if (!this.canUndo()) {
             // There is no history to undo.
@@ -227,6 +282,7 @@ export class Page {
         this.postUndoState();
     }
 
+    /** Redo if possible */
     redo() {
         if (!this.canRedo()) {
             // There is no history to redo.

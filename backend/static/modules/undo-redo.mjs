@@ -1,23 +1,36 @@
+/** @module undo-redo */
+
+import * as shapeUtils from './shapeUtils.mjs';
+import { Layer, Line } from './notebook.mjs';
+import { CodeBlock } from './code-block.mjs';
+
 /**
  * A single change to the state of the application, that can be undone or redone.
  */
-class Action {
-    // Post a message indicating that a region of the whiteboard has changed
+export class Action {
+    /**
+     * Post a message indicating that a region of the whiteboard has changed.
+     * @param {shapeUtils.Rectangle} region */
     postRegionUpdate(region) {
-        window.postMessage({"regionUpdate": region});
+        window.postMessage({ "regionUpdate": region });
     }
 
-    undo() {}
-    redo() {}
+    undo() { }
+    redo() { }
 }
 
 /**
  * The action of drawing a single stroke on a page.
  */
-class DrawAction extends Action {
+export class DrawAction extends Action {
+    /** @type {Layer} */
     #layer;
+    /** @type {Line} */
     #line;
-    // Index of #line in #layer.lines
+    /**
+     * Index of #line in #layer.lines
+     * @type {number}
+     */
     #index;
 
     constructor(layer, index, line) {
@@ -43,8 +56,10 @@ class DrawAction extends Action {
 /**
  * The action of erasing some lines.
  */
-class EraseAction extends Action {
+export class EraseAction extends Action {
+    /** @type {Layer} */
     #layer;
+    /** @type {Line[]} */
     #lines;
 
     constructor(layer, lines) {
@@ -78,8 +93,10 @@ class EraseAction extends Action {
 /**
  * The action of creating a code block/selection
  */
-class CreateSelectionAction extends Action {
+export class CreateSelectionAction extends Action {
+    /** @type {Whiteboard} */
     #whiteboard;
+    /** @type {CodeBlock} */
     #block;
 
     constructor(whiteboard, block) {
@@ -101,8 +118,10 @@ class CreateSelectionAction extends Action {
 /**
  * The action of closing a code block/selection
  */
-class CloseSelectionAction extends Action {
+export class CloseSelectionAction extends Action {
+    /** @type {Whiteboard} */
     #whiteboard;
+    /** @type {CodeBlock} */
     #block;
 
     constructor(whiteboard, block) {
@@ -120,5 +139,3 @@ class CloseSelectionAction extends Action {
         this.#block.close();
     }
 }
-
-export { Action, DrawAction, EraseAction, CreateSelectionAction, CloseSelectionAction };

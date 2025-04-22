@@ -25,10 +25,10 @@
  */
 export function rectanglesOverlapping(a, b) {
     return !(
-      a.right < b.left ||
-      a.left > b.right ||
-      a.bottom < b.top ||
-      a.top > b.bottom
+        a.right < b.left ||
+        a.left > b.right ||
+        a.bottom < b.top ||
+        a.top > b.bottom
     );
 }
 
@@ -40,9 +40,9 @@ export function rectanglesOverlapping(a, b) {
 export function pointInRect(point, rect) {
     return !(
         rect.right < point.x
-            || rect.left > point.x
-            || rect.bottom < point.y
-            || rect.top > point.y
+        || rect.left > point.x
+        || rect.bottom < point.y
+        || rect.top > point.y
     );
 }
 

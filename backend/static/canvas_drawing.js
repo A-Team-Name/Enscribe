@@ -1,4 +1,10 @@
 /**
+ * This is the implementation for our prototype canvas drawing applet.
+ * This code is not used in the main application.
+ * @module canvas_drawing
+ */
+
+/**
  * Generate a random integer in the range [min, max).
  *
  * @param {number} min - minimum random value.

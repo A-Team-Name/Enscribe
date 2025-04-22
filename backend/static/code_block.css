@@ -63,11 +63,11 @@
     white-space: pre;
 }
 
-#output{
+#output {
     white-space: pre;
 }
 
-.predicted-text-span:hover{
+.predicted-text-span:hover {
     cursor: default;
 }
 
