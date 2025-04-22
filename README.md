@@ -66,6 +66,17 @@ $ npm install
 $ NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
 ```
 
+We also use Playwright for frontend testing:
+
+``` bash
+$ cd playwright
+$ npm install
+$ npx playwright install
+$ npx playwright codegen enscribe-dev.containers.uwcs.co.uk --save-storage=auth.json
+$ # Log in to the app, then close the browser window. Credentials are now stored in auth.json
+$ npx playwright test
+```
+
 ### User Interface DOM Layout
 The user interface is composed of several overlapping elements, including a mixture of canvases and divs. See `layering_example.html` (accessible at route `/layering`) for an example of how we can use these layers. Below is a rough illustration of how the DOM is structured:
 
