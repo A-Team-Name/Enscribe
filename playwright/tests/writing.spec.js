@@ -63,11 +63,11 @@ async function drawLambdaCalculus(page, start, expr, height, spacing) {
             case 'y':
                 await doStroke(page, [
                     [coords.x, coords.y + height * 0.5],
-                    [coords.x + height * 0.25, coords.y + height * 0.75]]);
+                    [coords.x + height * 0.2, coords.y + height * 0.75]]);
                 await doStroke(page, [
                     [coords.x, coords.y + height],
-                    [coords.x + height * 0.5, coords.y + height * 0.5]]);
-                coords.x += height * 0.5;
+                    [coords.x + height * 0.4, coords.y + height * 0.5]]);
+                coords.x += height * 0.4;
                 break;
             case 'z':
                 await doStroke(page, [
@@ -87,19 +87,19 @@ async function drawLambdaCalculus(page, start, expr, height, spacing) {
                 break;
             case '(':
                 await doStroke(page,
-                    [[coords.x + height * 0.1, coords.y],
+                    [[coords.x + height * 0.15, coords.y],
                     [coords.x, coords.y + height * 0.2],
                     [coords.x, coords.y + height * 0.8],
-                    [coords.x + height * 0.1, coords.y + height]]);
-                coords.x += height * 0.1;
+                    [coords.x + height * 0.15, coords.y + height]]);
+                coords.x += height * 0.15;
                 break;
             case ')':
                 await doStroke(page,
                     [[coords.x, coords.y],
-                    [coords.x + height * 0.1, coords.y + height * 0.2],
-                    [coords.x + height * 0.1, coords.y + height * 0.8],
+                    [coords.x + height * 0.15, coords.y + height * 0.2],
+                    [coords.x + height * 0.15, coords.y + height * 0.8],
                     [coords.x, coords.y + height]]);
-                coords.x += height * 0.1;
+                coords.x += height * 0.15;
                 break;
             case ' ':
                 coords.x += height * 0.5;
@@ -154,9 +154,11 @@ test('Code Blocks', async ({ page }) => {
     await expect(page.locator('code-block')).toHaveCount(1);
 });
 
-function lambdaCalculusTest(expr, height, spacing, result = expr) {
+function lambdaCalculusTest(expr, height, spacing, { prelude = async page => { }, result = expr } = {}) {
     return async ({ page }) => {
         await page.goto('https://enscribe-dev.containers.uwcs.co.uk/');
+
+        await prelude(page);
 
         // Rely on auto-execute to run code:
         await page.getByRole('button', { name: 'Settings' }).click();
@@ -167,17 +169,21 @@ function lambdaCalculusTest(expr, height, spacing, result = expr) {
         let end = await drawLambdaCalculus(page, [300, 300], expr, height, spacing);
         await makeCodeBlock(page, [300 - spacing, 300 - spacing], [end[0] + spacing, end[1] + spacing]);
 
-
-        // await page.getByRole('button', { name: 'play_arrow' }).click();
-
         await page.locator('#output-column').getByText('text_fields').click();
 
-        // Space is not significant in lambda calculus, so trim it.
         await expect(page.locator('#text')).toContainText(expr);
+
+        // Wait for execution to finish
+        await expect(page.getByRole('button', { name: 'play_arrow' })).toBeEnabled();
+
         await expect(page.locator('#output')).toContainText(result);
     };
 }
 
-test('Lambda Calculus Identity', lambdaCalculusTest("λy.y", 100, 10));
+test('Lambda Calculus Identity', lambdaCalculusTest("λx.x", 100, 10));
 test('Lambda Calculus Small', lambdaCalculusTest("λy.y", 50, 10));
+test('Lambda Calculus Very Small', lambdaCalculusTest("λy.y", 25, 10));
+test('Lambda Calculus Thick',
+    lambdaCalculusTest("λz.λy.y(zz)", 150, 20,
+        { prelude: async page => await page.getByRole('slider', { name: 'Pen Size' }).fill('18') }));
 test('Lambda Calculus Interesting Combinator', lambdaCalculusTest("λz.λy.y(zy (y))", 100, 10));
