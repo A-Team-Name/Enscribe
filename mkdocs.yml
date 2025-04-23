@@ -8,6 +8,7 @@ nav:
   - Models: models.md
   - Utils: utils.md
   - Views: views.md
+  - Frontend: frontend.md
 
 plugins:
   - monorepo
