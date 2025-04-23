@@ -20,6 +20,17 @@ from io import BytesIO
 
 
 class RegisterView(CreateView):
+    """RegisterView for user registration
+
+    Inherits:
+        CreateView: Django's CreateView for creating a new user
+
+    Attributes:
+        form_class (CustomUserCreationForm): The form used for user registration
+        template_name (str): The template used for rendering the registration page
+        success_url (str): The URL to redirect to after successful registration
+    """
+
     form_class = CustomUserCreationForm
     template_name = "registration/register.html"
     success_url = reverse_lazy("login")
@@ -326,7 +337,18 @@ def image_to_text(request: WSGIRequest) -> HttpResponse:
 
 
 @login_required
-def save_notebook(request):
+def save_notebook(request: WSGIRequest) -> HttpResponse:
+    """Save the notebook data to the database
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - canvas: The notebook data to save
+            - notebook_name: The name of the notebook
+            - notebook_id: The ID of the notebook (if it exists)
+
+    Returns:
+        HttpResponse: Response with the ID of the saved notebook and the updated list of notebooks
+    """
     canvas = request.POST.get("canvas")
     notebook_name = request.POST.get("notebook_name")
     notebook_id = request.POST.get("notebook_id")
@@ -356,7 +378,16 @@ def save_notebook(request):
 
 # Return the canvas of notebook of given ID
 @login_required
-def get_notebook_data(request):
+def get_notebook_data(request: WSGIRequest) -> HttpResponse:
+    """Get the notebook data for the given ID
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - notebook_id: The ID of the notebook to get.
+
+    Returns:
+        HttpResponse: Response with the notebook data, name and ID
+    """
     notebook_id = request.POST.get("notebook_id")
     this_notebook = Notebook.objects.get(id=notebook_id)
 
@@ -371,7 +402,16 @@ def get_notebook_data(request):
 
 # Delete notebook with given ID
 @login_required
-def delete_notebook(request):
+def delete_notebook(request: WSGIRequest) -> HttpResponse:
+    """Delete the notebook with the given ID
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - notebook_id: The ID of the notebook to delete
+
+    Returns:
+        HttpResponse: Response with success message after notebook deletion.
+    """
     notebook_id = request.POST.get("notebook_id")
 
     this_notebook = Notebook.objects.get(id=notebook_id)
