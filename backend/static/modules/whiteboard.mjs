@@ -883,6 +883,7 @@ export class Whiteboard extends HTMLElement {
      * Takes this.dataset.tool and event.pointerType into account.
      *
      * @param {PointerEvent} event
+     * @returns {"none" | "pan" | "write" | "erase" | "select"}
      */
     eventAction(event) {
         if (!event.isPrimary)

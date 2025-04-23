@@ -850,7 +850,7 @@ The action of closing a code block/selection
         * [.switchToPage(id)](#module_whiteboard.Whiteboard+switchToPage)
         * [.closePage(id)](#module_whiteboard.Whiteboard+closePage)
         * [.closeAllPages()](#module_whiteboard.Whiteboard+closeAllPages)
-        * [.eventAction(event)](#module_whiteboard.Whiteboard+eventAction)
+        * [.eventAction(event)](#module_whiteboard.Whiteboard+eventAction) ⇒ <code>&quot;none&quot;</code> \| <code>&quot;pan&quot;</code> \| <code>&quot;write&quot;</code> \| <code>&quot;erase&quot;</code> \| <code>&quot;select&quot;</code>
         * [.handlePointerDown(event)](#module_whiteboard.Whiteboard+handlePointerDown)
         * [.drawCursor(event)](#module_whiteboard.Whiteboard+drawCursor)
         * [.handlePointerMove(event)](#module_whiteboard.Whiteboard+handlePointerMove)
@@ -892,7 +892,7 @@ Handles input, notebook state and rendering handwriting.
     * [.switchToPage(id)](#module_whiteboard.Whiteboard+switchToPage)
     * [.closePage(id)](#module_whiteboard.Whiteboard+closePage)
     * [.closeAllPages()](#module_whiteboard.Whiteboard+closeAllPages)
-    * [.eventAction(event)](#module_whiteboard.Whiteboard+eventAction)
+    * [.eventAction(event)](#module_whiteboard.Whiteboard+eventAction) ⇒ <code>&quot;none&quot;</code> \| <code>&quot;pan&quot;</code> \| <code>&quot;write&quot;</code> \| <code>&quot;erase&quot;</code> \| <code>&quot;select&quot;</code>
     * [.handlePointerDown(event)](#module_whiteboard.Whiteboard+handlePointerDown)
     * [.drawCursor(event)](#module_whiteboard.Whiteboard+drawCursor)
     * [.handlePointerMove(event)](#module_whiteboard.Whiteboard+handlePointerMove)
@@ -1022,7 +1022,7 @@ Close all existing pages
 **Kind**: instance method of [<code>Whiteboard</code>](#module_whiteboard.Whiteboard)  
 <a name="module_whiteboard.Whiteboard+eventAction"></a>
 
-#### whiteboard.eventAction(event)
+#### whiteboard.eventAction(event) ⇒ <code>&quot;none&quot;</code> \| <code>&quot;pan&quot;</code> \| <code>&quot;write&quot;</code> \| <code>&quot;erase&quot;</code> \| <code>&quot;select&quot;</code>
 Determine the type of action a pointer event should cause.
 Takes this.dataset.tool and event.pointerType into account.
 
