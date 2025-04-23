@@ -11,7 +11,7 @@ import json
 import requests
 import numpy as np
 from websocket import create_connection
-from backend.utils import send_execute_request
+from backend.utils import send_execute_request, strip_html_div
 from backend.models import Notebook
 
 from PIL import Image
@@ -171,7 +171,9 @@ def execute(request: WSGIRequest) -> HttpResponse:
                         output = {
                             "success": True,
                             "type": "html",
-                            "content": rsp["content"]["data"]["text/html"],
+                            "content": strip_html_div(
+                                rsp["content"]["data"]["text/html"]
+                            ),
                         }
                     case "stream":
                         output = {
