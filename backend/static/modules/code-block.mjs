@@ -301,6 +301,7 @@ class CodeBlock extends HTMLElement {
                         var new_text = text.substring(0, index) + character_prediction["character"] + text.substring(index + 1);
                         this.#text.textContent = new_text
                         this.predicted_text = new_text
+                        this.setAttribute("predicted-text", new_text);
 
                         // Close predictions menu when user has clicked on a character
                         this.#predictions.close()
