@@ -76,7 +76,7 @@ class ViewTests(TestCase):
 
     def test_save_new_notebook(self):
         response = self.client.post(
-            reverse("save_notebook"),  # Replace with actual URL name
+            reverse("save_notebook"),
             {
                 "canvas": "sample canvas",
                 "notebook_name": "New Notebook",
@@ -89,18 +89,18 @@ class ViewTests(TestCase):
         self.assertEqual(data["notebooks"][0]["notebook_name"], "New Notebook")
 
     def test_get_notebook_data(self):
-        nb = Notebook.objects.create(
+        notebook = Notebook.objects.create(
             user=self.user,
-            notebook_name="Existing",
+            notebook_name="Django Test Notebook",
             notebook_data="sample data",
         )
         response = self.client.post(
-            reverse("get_notebook_data"),  # Replace with actual URL name
-            {"notebook_id": nb.id},
+            reverse("get_notebook_data"),
+            {"notebook_id": notebook.id},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["notebook_name"], "Existing")
+        self.assertEqual(data["notebook_name"], "Django Test Notebook")
 
     def test_delete_notebook(self):
         nb = Notebook.objects.create(
