@@ -250,6 +250,7 @@ class CodeBlock extends HTMLElement {
             .then((rsp) => rsp.json())
             .then((json) => {
                 this.setAttribute("predicted-text", json.predicted_text);
+                this.#text.textContent = json.predicted_text;
                 this.setAttribute("predictions", JSON.stringify(json.predictions["predictions"]));
             })
             .catch((error) => console.error("Error:", error));
@@ -259,11 +260,16 @@ class CodeBlock extends HTMLElement {
      * Update the event listeners for each character in the predicted text
      */
     refreshClickableCharacters (){
-
         var text = this.#text.textContent;
 
         // Clear previous buttons
         this.#text.innerHTML = "";
+
+        // Insert zero width space so text can be inserted
+        const empty_span = document.createElement("span");
+        empty_span.textContent = "​";
+        empty_span.className = "char predicted-text-span";
+        this.#text.appendChild(empty_span);
 
         // Loop through each character in predicted text field
         text.split("").forEach((char, index) => {
@@ -271,6 +277,7 @@ class CodeBlock extends HTMLElement {
             const span = document.createElement("span");
             span.textContent = char || " ";
             span.className = "char predicted-text-span";
+            span.contentEditable = "false";
 
             // Add event listener to display the top 3 predictions for that character's position
             span.onclick = (e) =>{
@@ -298,22 +305,25 @@ class CodeBlock extends HTMLElement {
                     // Add event listener to replace selected character with the new chosen character
                     character_button.onclick = (e) => {
                         e.stopPropagation();
-                        var new_text = text.substring(0, index) + character_prediction["character"] + text.substring(index + 1);
-                        this.#text.textContent = new_text
-                        this.predicted_text = new_text
-                        this.setAttribute("predicted-text", new_text);
+                        span.textContent = character_prediction["character"] || " ";
+
+                        this.predicted_text = this.#text.textContent;
+                        this.setAttribute("predicted-text", this.#text.textContent);
 
                         // Close predictions menu when user has clicked on a character
                         this.#predictions.close()
                         e.stopPropagation();
-
-                        this.refreshClickableCharacters();
                     }
 
                     this.#predictions.appendChild(character_button);
                 }
             }
+            // Insert zero width spaces so text can be inserted
             this.#text.appendChild(span);
+            const empty_span = document.createElement("span");
+            empty_span.textContent = "​";
+            empty_span.className = "char predicted-text-span";
+            this.#text.appendChild(empty_span);
         });
 
     }
@@ -538,11 +548,9 @@ class CodeBlock extends HTMLElement {
             catch (error) {
                 console.log("Error loading predictions dictionary: " + error)
             }
+            var predicted_text = this.getAttribute("predicted-text");
+            this.#text.textContent = predicted_text
             this.refreshClickableCharacters();
-            break;
-        case "predicted-text":
-            // Update the text box to show the predicted text
-            this.#text.textContent = newValue;
             break;
         case "execution-output":
             this.#output.value = newValue;
