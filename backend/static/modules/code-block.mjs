@@ -197,6 +197,11 @@ class CodeBlock extends HTMLElement {
         this.#predictions = shadowRoot.getElementById("predictions");
         this.#predictions.close();
 
+        this.#text.addEventListener("input", () => {
+            this.predicted_text = this.#text.textContent;
+            this.setAttribute("predicted-text", this.#text.textContent);
+        })
+
         // Close menus on click anywhere outside the element
         document.addEventListener("click",(e) => {
             this.#predictions.close()
@@ -249,10 +254,21 @@ class CodeBlock extends HTMLElement {
         })
             .then((rsp) => rsp.json())
             .then((json) => {
+                // Set the predicted text attribute to transcribed text and display in text box
                 this.setAttribute("predicted-text", json.predicted_text);
                 this.#text.textContent = json.predicted_text;
                 this.setAttribute("predictions", JSON.stringify(json.predictions["predictions"]));
-            })
+
+                // Update the change character predictions UI
+                this.#predictions.value = JSON.stringify(json.predictions["predictions"]);
+                try{
+                    this.predictions_dict = json.predictions["predictions"]
+                }
+                catch (error) {
+                    console.log("Error loading predictions dictionary: " + error)
+                }
+                this.refreshClickableCharacters();
+                })
             .catch((error) => console.error("Error:", error));
     }
 
@@ -550,7 +566,6 @@ class CodeBlock extends HTMLElement {
             }
             var predicted_text = this.getAttribute("predicted-text");
             this.#text.textContent = predicted_text
-            this.refreshClickableCharacters();
             break;
         case "execution-output":
             this.#output.value = newValue;
