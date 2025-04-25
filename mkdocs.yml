@@ -5,10 +5,12 @@ theme:
 
 nav:
   - Overview: index.md
+  - Urls: urls.md
   - Models: models.md
   - Utils: utils.md
   - Views: views.md
   - Frontend: frontend.md
+  - Forms: forms.md
 
 plugins:
   - monorepo

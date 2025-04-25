@@ -175,8 +175,12 @@ input[type="checkbox"].toggle-button {
     display: none;
 }
 
-label:has(input[type="checkbox"].toggle-button):hover {
+label:has(input[type="checkbox"].toggle-button:not(:disabled)):hover {
     background-color: var(--ui-focus-color);
+}
+
+label:has(input[type="checkbox"].toggle-button:disabled) {
+    color: grey;
 }
 
 label:has(input[type="checkbox"].toggle-button:checked) {
