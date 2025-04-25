@@ -3,17 +3,37 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from .forms import CustomUserCreationForm
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
 
 import json
 import requests
 import numpy as np
 from websocket import create_connection
-from backend.utils import send_execute_request
+from backend.utils import send_execute_request, strip_html_div
 from backend.models import Notebook
 
 from PIL import Image
 
 from io import BytesIO
+
+
+class RegisterView(CreateView):
+    """RegisterView for user registration
+
+    Inherits:
+        CreateView: Django's CreateView for creating a new user
+
+    Attributes:
+        form_class (CustomUserCreationForm): The form used for user registration
+        template_name (str): The template used for rendering the registration page
+        success_url (str): The URL to redirect to after successful registration
+    """
+
+    form_class = CustomUserCreationForm
+    template_name = "registration/register.html"
+    success_url = reverse_lazy("login")
 
 
 def draw(request: WSGIRequest) -> HttpResponse:
@@ -159,7 +179,9 @@ def execute(request: WSGIRequest) -> HttpResponse:
                         output = {
                             "success": True,
                             "type": "html",
-                            "content": rsp["content"]["data"]["text/html"],
+                            "content": strip_html_div(
+                                rsp["content"]["data"]["text/html"]
+                            ),
                         }
                     case "stream":
                         output = {
@@ -193,6 +215,64 @@ def execute(request: WSGIRequest) -> HttpResponse:
 
     return JsonResponse({"output_stream": full_response})
     # return HttpResponse(output)
+
+
+@login_required
+def restart_kernel(request: WSGIRequest) -> HttpResponse:
+    """Restart the Juyter kernel in the given language
+
+    Accepted languages:
+        - python3
+        - dyalog_apl
+        - lambda-calculus
+
+    Requires:
+        - user to be logged in
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - language: The language of the kernel to restart
+
+    Returns:
+        HttpResponse: Success if restart was successful
+    """
+
+    base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
+    headers = {
+        "Authorization": "Token {settings.JUPYTER_TOKEN}",
+        "Cookie": request.headers["Cookie"],
+    }
+
+    url = base + "/api/kernels"
+
+    # Get language from frontend request
+    language = request.POST.get("language")
+
+    # Get list of existing kernels
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return HttpResponse("Could not connect to Jupyter Server")
+
+    # Get kernel ID of active kernel in given language
+    existing_kernel = False
+    if response:
+        for kernel in json.loads(response.text):
+            if kernel["name"] == language:
+                kernel_id = kernel["id"]
+                existing_kernel = True
+
+    if not existing_kernel:
+        return HttpResponse("No active kernel in given language")
+
+    # Restart kernel
+    url = base + "/api/kernels/restart"
+    try:
+        response = requests.post(url, params={"kernel_id": kernel_id}, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return HttpResponse("Could not restart kernel")
+
+    return HttpResponse("Restarted Kernel")
 
 
 @login_required
@@ -267,7 +347,18 @@ def image_to_text(request: WSGIRequest) -> HttpResponse:
 
 
 @login_required
-def save_notebook(request):
+def save_notebook(request: WSGIRequest) -> HttpResponse:
+    """Save the notebook data to the database
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - canvas: The notebook data to save
+            - notebook_name: The name of the notebook
+            - notebook_id: The ID of the notebook (if it exists)
+
+    Returns:
+        HttpResponse: Response with the ID of the saved notebook and the updated list of notebooks
+    """
     canvas = request.POST.get("canvas")
     notebook_name = request.POST.get("notebook_name")
     notebook_id = request.POST.get("notebook_id")
@@ -297,7 +388,16 @@ def save_notebook(request):
 
 # Return the canvas of notebook of given ID
 @login_required
-def get_notebook_data(request):
+def get_notebook_data(request: WSGIRequest) -> HttpResponse:
+    """Get the notebook data for the given ID
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - notebook_id: The ID of the notebook to get.
+
+    Returns:
+        HttpResponse: Response with the notebook data, name and ID
+    """
     notebook_id = request.POST.get("notebook_id")
     this_notebook = Notebook.objects.get(id=notebook_id)
 
@@ -312,7 +412,16 @@ def get_notebook_data(request):
 
 # Delete notebook with given ID
 @login_required
-def delete_notebook(request):
+def delete_notebook(request: WSGIRequest) -> HttpResponse:
+    """Delete the notebook with the given ID
+
+    Args:
+        request (WSGIRequest): POST request with the following fields:
+            - notebook_id: The ID of the notebook to delete
+
+    Returns:
+        HttpResponse: Response with success message after notebook deletion.
+    """
     notebook_id = request.POST.get("notebook_id")
 
     this_notebook = Notebook.objects.get(id=notebook_id)

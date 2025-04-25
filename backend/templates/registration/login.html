@@ -17,7 +17,16 @@
         {{ form }}
         <button type="submit">Log In</button>
       </form>
-      <p class="password-reset"><a href="{% url 'password_reset' %}">Password Reset</a></p>
+      <p class="password-reset"><a href="{% url 'password_reset' %}">Forgotten Account?</a></p>
+      <form action="/register">
+        <div class="divider">
+          <hr>
+          <span>or</span>
+          <hr>
+        </div>
+
+        <button type="submit">Register</button>
+      </form>
   </main>
 </body>
 

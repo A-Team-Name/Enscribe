@@ -1,6 +1,7 @@
 from typing import Any
 
 import datetime
+import re
 import uuid
 
 
@@ -30,3 +31,20 @@ def send_execute_request(code: str) -> dict[str, Any]:
             "silent": False,
         },
     }
+
+
+def strip_html_div(html: str) -> str:
+    """Remove the <div> tags from the html string.
+
+    Args:
+        html (str): The html string to strip
+
+    Returns:
+        str: The stripped html string
+    """
+    regex_str = r"^<.*?>(.*?)<\/.*?>$"
+    regex = re.compile(regex_str, re.DOTALL)
+    matches = regex.findall(html)
+    if len(matches) == 0:
+        return html
+    return matches[0]
