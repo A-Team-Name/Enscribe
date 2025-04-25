@@ -347,8 +347,9 @@ class CodeBlock extends HTMLElement {
     async executeTranscribedCode() {
         // Put the execution language and code to be executed into FormData object
         const executeFormData = new FormData();
+        const cleaned_text = this.#text.textContent.replace(/\u200B/g, ''); // Remove zero width spaces
         executeFormData.append("language", this.getAttribute("language"));
-        executeFormData.append("code", this.#text.textContent);
+        executeFormData.append("code", cleaned_text);
 
         return fetch("/execute/", {
             method: "POST",
