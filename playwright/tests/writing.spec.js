@@ -137,7 +137,7 @@ test('draw, undo and redo', async ({ page }) => {
     `);
 });
 
-test('Code Blocks', async ({ page }) => {
+test('Code Block Creation and Closing', async ({ page }) => {
     await page.goto('https://enscribe-dev.containers.uwcs.co.uk/');
     await page.getByRole('button', { name: 'select' }).click();
     // Click: Code block removes itself
@@ -178,6 +178,46 @@ test('Code Blocks', async ({ page }) => {
     - button "undo"
     - button "redo" [disabled]
     `);
+});
+
+test('Code Block Staling', async ({ page }) => {
+    await page.goto('https://enscribe-dev.containers.uwcs.co.uk/');
+
+    // Require manual code block execution to make state change testing easier
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('checkbox', { name: 'Automatically execute new' }).uncheck();
+    await page.locator('#settings-dialog').getByRole('button', { name: 'close' }).click();
+
+    const expect_stale_and_refresh = async () => {
+        await expect(page.locator("code-block[state='stale']")).toHaveCount(1);
+        await page.getByRole('button', { name: 'play_arrow' }).click();
+        await expect(page.locator("code-block[state='executed']")).toHaveCount(1);
+    }
+
+    // Code block is initially stale
+    await makeCodeBlock(page, [300, 300], [800, 600]);
+    await expect_stale_and_refresh();
+
+    // Drawing and erasing cause staling
+    await page.getByRole('button', { name: 'edit' }).click();
+    await doStroke(page, [[200, 200], [400, 500]]);
+
+    // Erase the line without the eraser directly intersecting the code block
+    await page.getByRole('button', { name: 'ink_eraser' }).click();
+    await doStroke(page, [[200, 200], [250, 250]]);
+    await expect_stale_and_refresh();
+
+    // Undoing erase and draw also cause staling
+    await page.getByRole('button', { name: 'undo' }).click();
+    await expect_stale_and_refresh();
+    await page.getByRole('button', { name: 'undo' }).click();
+    await expect_stale_and_refresh();
+
+    // Redoing erase and draw also cause staling
+    await page.getByRole('button', { name: 'redo' }).click();
+    await expect_stale_and_refresh();
+    await page.getByRole('button', { name: 'redo' }).click();
+    await expect_stale_and_refresh();
 });
 
 function lambdaCalculusTest(expr, height, spacing, { prelude = async page => { }, result = expr } = {}) {
