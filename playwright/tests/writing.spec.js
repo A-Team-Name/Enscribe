@@ -152,6 +152,32 @@ test('Code Blocks', async ({ page }) => {
     await page.mouse.move(800, 600);
     await page.mouse.up();
     await expect(page.locator('code-block')).toHaveCount(1);
+
+    // Closing
+    await page.locator('#close').click();
+    await expect(page.locator('code-block')).toHaveCount(0);
+
+    // Code block undo actions
+    await page.getByRole('button', { name: 'undo' }).click();
+    await expect(page.locator('code-block')).toHaveCount(1);
+    await page.getByRole('button', { name: 'undo' }).click();
+    await expect(page.locator('code-block')).toHaveCount(0);
+
+    await expect(page.getByText('undo redo')).toMatchAriaSnapshot(`
+    - button "undo" [disabled]
+    - button "redo"
+    `);
+
+    // Code block redo actions
+    await page.getByRole('button', { name: 'redo' }).click();
+    await expect(page.locator('code-block')).toHaveCount(1);
+    await page.getByRole('button', { name: 'redo' }).click();
+    await expect(page.locator('code-block')).toHaveCount(0);
+
+    await expect(page.getByText('undo redo')).toMatchAriaSnapshot(`
+    - button "undo"
+    - button "redo" [disabled]
+    `);
 });
 
 function lambdaCalculusTest(expr, height, spacing, { prelude = async page => { }, result = expr } = {}) {
