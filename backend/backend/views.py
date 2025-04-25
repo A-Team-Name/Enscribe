@@ -36,18 +36,6 @@ class RegisterView(CreateView):
     success_url = reverse_lazy("login")
 
 
-def draw(request: WSGIRequest) -> HttpResponse:
-    """Get request for /draw
-
-    Args:
-        request (WSGIRequest): GET request
-
-    Returns:
-        HttpResponse: Response with canvas_drawing.html
-    """
-    return render(request, "canvas_drawing.html")
-
-
 @login_required
 def index(request: WSGIRequest) -> HttpResponse:
     """Get request for /index
@@ -123,17 +111,25 @@ def execute(request: WSGIRequest) -> HttpResponse:
         response = requests.post(url, headers=headers, json={"name": language})
         active_kernel = json.loads(response.text)
 
-    # Create connection to jupyter kernel
-    ws = create_connection(
-        f"ws://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}/api/kernels/{active_kernel['id']}/channels",
-        header=headers,
-    )
-
     # Get code from POST request body
     code = request.POST.get("code")
 
-    # Send code to the jupyter kernel
-    ws.send(json.dumps(send_execute_request(code)))
+    try:
+        # Create connection to jupyter kernel
+        ws = create_connection(
+            f"ws://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}/api/kernels/{active_kernel['id']}/channels",
+            header=headers,
+        )
+
+        # Send code to the jupyter kernel
+        ws.send(json.dumps(send_execute_request(code)))
+    except ConnectionRefusedError:
+        output = {
+            "success": False,
+            "type": "text",
+            "content": "Jupyter Server Error",
+        }
+        return JsonResponse({"output_stream": [output]})
 
     # Process response
     # Collect all the messages which constitute the actual code output
