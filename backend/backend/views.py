@@ -36,18 +36,6 @@ class RegisterView(CreateView):
     success_url = reverse_lazy("login")
 
 
-def draw(request: WSGIRequest) -> HttpResponse:
-    """Get request for /draw
-
-    Args:
-        request (WSGIRequest): GET request
-
-    Returns:
-        HttpResponse: Response with canvas_drawing.html
-    """
-    return render(request, "canvas_drawing.html")
-
-
 @login_required
 def index(request: WSGIRequest) -> HttpResponse:
     """Get request for /index
