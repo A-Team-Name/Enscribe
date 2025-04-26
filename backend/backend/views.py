@@ -77,7 +77,7 @@ def execute(request: WSGIRequest) -> HttpResponse:
     # The token is written on stdout when you start the notebook
     base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
     headers = {
-        "Authorization": "Token {settings.JUPYTER_TOKEN}",
+        "Authorization": f"Token {settings.JUPYTER_TOKEN}",
         "Cookie": request.headers["Cookie"],
         # "X-XSRFToken": request.COOKIES["_xsrf"], # Safe to disable this when using token
     }
@@ -227,7 +227,7 @@ def restart_kernel(request: WSGIRequest) -> HttpResponse:
 
     base = f"http://{settings.JUPYTER_URL}:{settings.JUPYTER_PORT}"
     headers = {
-        "Authorization": "Token {settings.JUPYTER_TOKEN}",
+        "Authorization": f"Token {settings.JUPYTER_TOKEN}",
         "Cookie": request.headers["Cookie"],
     }
 
@@ -257,10 +257,13 @@ def restart_kernel(request: WSGIRequest) -> HttpResponse:
     url = base + f"/api/kernels/{kernel_id}/restart"
     try:
         response = requests.post(url, headers=headers)
+        if response.status_code == 200:
+            return HttpResponse("Restarted Kernel")
+        else:
+            return HttpResponse("Could not restart kernel")
+
     except requests.exceptions.ConnectionError:
         return HttpResponse("Could not restart kernel")
-
-    return HttpResponse("Restarted Kernel")
 
 
 @login_required

@@ -106,21 +106,25 @@ WSGI_APPLICATION = "thesite.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASES = (
+    {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-} if DEBUG else {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("MYSQL_NAME"),
-        "USER": os.getenv("MYSQL_USER"),
-        "PASSWORD": os.getenv("MYSQL_PASSWORD"),
-        "HOST": os.getenv("MYSQL_HOST"),
-        "PORT": os.getenv("MYSQL_PORT"),
+    if DEBUG
+    else {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.getenv("MYSQL_NAME"),
+            "USER": os.getenv("MYSQL_USER"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD"),
+            "HOST": os.getenv("MYSQL_HOST"),
+            "PORT": os.getenv("MYSQL_PORT"),
+        }
     }
-}
+)
 
 
 # Password validation
@@ -188,6 +192,7 @@ SITE_ID = 1
 
 JUPYTER_URL = os.getenv("JUPYTER_URL")
 JUPYTER_PORT = os.getenv("JUPYTER_PORT")
+JUPYTER_TOKEN = os.getenv("JUPYTER_TOKEN")
 
 # Handwriting server configuration
 
