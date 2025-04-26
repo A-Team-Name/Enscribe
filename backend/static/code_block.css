@@ -64,6 +64,8 @@
 }
 
 #output {
+    width: 200px;
+    height: 40px;
     white-space: pre;
 }
 

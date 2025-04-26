@@ -28,7 +28,7 @@ const code_block_template = `
   <dialog id="predictions" class="ui-window clickable"></dialog>
   <div class="toggle-box">
     <label class="material-symbols-outlined clickable"><input id="show-output" name="show-output" type="checkbox" class="toggle-button"/>output</label>
-    <textarea id="output" class="ui-window clickable"></textarea>
+    <div contenteditable="true" id="output" class="ui-window clickable resizeable"></div>
   </div>
 </div>
 `;
@@ -386,7 +386,8 @@ export class CodeBlock extends HTMLElement {
                     // content_type = line.type
                     output += line.content
                 }
-                this.setAttribute("execution-output", output);
+                var cleaned_output = output.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ansi characters
+                this.setAttribute("execution-output", cleaned_output);
             })
             .catch((error) => console.error("Error:", error));
     }
@@ -594,7 +595,7 @@ export class CodeBlock extends HTMLElement {
                 this.#text.textContent = predicted_text;
                 break;
             case "execution-output":
-                this.#output.value = newValue;
+                this.#output.textContent = newValue;
                 break;
         }
     }
