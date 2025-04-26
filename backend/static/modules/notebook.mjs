@@ -33,6 +33,8 @@ export class Line {
         this.color = color;
         /** @type {float} */
         this.lineWidth = lineWidth;
+        /** @type {boolean} */
+        this.creatingLine = false;
         if (Array.isArray(points)) {
             /** @type {shapeUtils.Point[]} */
             this.points = points;
@@ -135,6 +137,7 @@ export class Layer {
      * @returns {Line} A reference to the new line that was created.
      */
     newLine(start, lineWidth, color) {
+        this.creatingLine = true;
         let line = new Line(color, lineWidth, start);
         this.lines.push(line);
         return line;
@@ -145,6 +148,7 @@ export class Layer {
      * @param {Point} point
      */
     extendLine(point) {
+        this.creatingLine = true;
         this.lines[this.lines.length - 1].addPoint(point);
     }
 
@@ -154,9 +158,10 @@ export class Layer {
      */
     completeLine() {
         // Last line could be undefined if it was erased
-        if (this.lines.length === 0 || this.lines[this.lines.length - 1] === undefined) {
+        if (this.lines.length === 0 || this.lines[this.lines.length - 1] === undefined || !this.creatingLine) {
             return null;
         }
+        this.creatingLine = false;
         this.lines[this.lines.length - 1].recomputeBoundingRect();
         return this.lines.length - 1;
     }
