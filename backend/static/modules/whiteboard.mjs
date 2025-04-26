@@ -1070,20 +1070,20 @@ export class Whiteboard extends HTMLElement {
      * Re-create a CodeBlock with the given attributes.
      */
     restoreSelection(code_block_attributes) {
-        this.#last_selection = document.createElement("code-block");
-        this.#last_selection.dataset.x = code_block_attributes["data-x"];
-        this.#last_selection.dataset.y = code_block_attributes["data-y"];
-        this.#last_selection.dataset.width = code_block_attributes["data-width"];
-        this.#last_selection.dataset.height = code_block_attributes["data-height"];
-        this.#last_selection.setAttribute("language", code_block_attributes["language"]);
-        this.#last_selection.whiteboard = this;
-        this.#last_selection.dataset.page = code_block_attributes["data-page"];
-        this.#last_selection.setAttribute("state", "executed");
-        this.#last_selection.setAttribute("predicted-text", code_block_attributes["predicted-text"]);
-        this.#last_selection.setAttribute("execution-output", code_block_attributes["execution-output"]);
-        this.#last_selection.setAttribute("predictions", code_block_attributes["predictions"]);
-        this.#last_selection.setAttribute("restored", true);
-        this.addSelection(this.#last_selection);
+        let selection = document.createElement("code-block");
+        selection.dataset.x = code_block_attributes["data-x"];
+        selection.dataset.y = code_block_attributes["data-y"];
+        selection.dataset.width = code_block_attributes["data-width"];
+        selection.dataset.height = code_block_attributes["data-height"];
+        selection.setAttribute("language", code_block_attributes["language"]);
+        selection.whiteboard = this;
+        selection.dataset.page = code_block_attributes["data-page"];
+        selection.setAttribute("state", "executed");
+        selection.setAttribute("predicted-text", code_block_attributes["predicted-text"]);
+        selection.setAttribute("execution-output", code_block_attributes["execution-output"]);
+        selection.setAttribute("predictions", code_block_attributes["predictions"]);
+        selection.setAttribute("restored", true);
+        this.addSelection(selection);
     }
 
     /**
