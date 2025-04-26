@@ -33,7 +33,7 @@ const code_block_template = `
 </div>
 `;
 
-const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
 /**
  * A code block element, that can be used to run handwritten code.
