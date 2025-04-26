@@ -20,5 +20,6 @@ urlpatterns = [
     path("save_notebook/", views.save_notebook, name="save_notebook"),
     path("get_notebook_data/", views.get_notebook_data, name="get_notebook_data"),
     path("delete_notebook/", views.delete_notebook, name="delete_notebook"),
+    path("restart_kernel/", views.restart_kernel, name="restart_kernel"),
     path("register/", RegisterView.as_view(), name="register"),
 ]
