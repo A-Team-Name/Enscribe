@@ -254,9 +254,9 @@ def restart_kernel(request: WSGIRequest) -> HttpResponse:
         return HttpResponse("No active kernel in given language")
 
     # Restart kernel
-    url = base + "/api/kernels/restart"
+    url = base + f"/api/kernels/{kernel_id}/restart"
     try:
-        response = requests.post(url, params={"kernel_id": kernel_id}, headers=headers)
+        response = requests.post(url, headers=headers)
     except requests.exceptions.ConnectionError:
         return HttpResponse("Could not restart kernel")
 
