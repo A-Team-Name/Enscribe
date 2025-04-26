@@ -9,8 +9,9 @@ nav:
   - Models: models.md
   - Utils: utils.md
   - Views: views.md
+  - Frontend: frontend.md
   - Forms: forms.md
-  
+
 plugins:
   - monorepo
   - mkdocstrings

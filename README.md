@@ -58,7 +58,19 @@ Set the environment variables using the url from the command output which follow
 ## Frontend Implementation Notes
 ### Frontend Testing
 
-We use [Jest](https://jestjs.io) for frontend (JS) unit testing. The environment variable is necessary to enable ECMAScript module support in Jest, which is [currently experimental](https://jestjs.io/docs/ecmascript-modules).
+We use Playwright for frontend testing. Run the following commands to run Playwright's test suite. WebKit requires system libraries that probably won't be available on Linux, so only Chromium and Firefox testing will work.
+
+``` bash
+$ cd playwright
+$ npm install
+$ npx playwright install
+$ npx playwright codegen enscribe-dev.containers.uwcs.co.uk --save-storage=auth.json
+$ # Log in to the app, then close the browser window. Credentials are now stored in auth.json
+$ npx playwright test --project=chromium # or --project=firefox to test on firefox
+$ npx playwright test --ui # For an interactive UI to run individual tests
+```
+
+We also use [Jest](https://jestjs.io) for a small amount of frontend testing. The environment variable is necessary to enable ECMAScript module support in Jest, which is [currently experimental](https://jestjs.io/docs/ecmascript-modules).
 
 ``` bash
 $ cd backend
@@ -67,10 +79,10 @@ $ NODE_OPTIONS="$NODE_OPTIONS --experimental-vm-modules" npx jest
 ```
 
 ### User Interface DOM Layout
-The user interface is composed of several overlapping elements, including a mixture of canvases and divs. See `layering_example.html` (accessible at route `/layering`) for an example of how we can use these layers. Below is a rough illustration of how the DOM is structured:
+The user interface is composed of several overlapping elements, including a mixture of canvas rendering and divs. Below is a visualisation of how the DOM is structured:
 
 ![UI layers illustration](ui-layers.png)
 
-The background, code and annotations stay on separate layers, which makes them easy to manipulate independently, e.g. by changing the background while still displaying code over it, or toggling annotation visibility. We will also have UI elements, such as the borders around code blocks, that must render on top of the writing layers, and are positioned accordingly. For these, we use DOM elements, which come with many benefits like dynamic scaling and styling.
+The background, code and annotations stay on separate (logical) layers, which makes them easy to manipulate independently, e.g. by changing the background while still displaying code over it, or toggling annotation visibility. We will also have UI elements, such as the borders around code blocks, that must render on top of the writing layers, and are positioned accordingly. For these, we use DOM elements, which come with many benefits like dynamic scaling and styling.
 
 When multiple elements overlap at a point, a pointer event there is sent only to the element with the highest Z index, and then propagates up through its ancestors. In order for us to be able to write on the canvases underneath the UI layer, we apply `pointer-events: none` to most UI elements, allowing us to handle "writing" input just on the base UI layer element. Any UI elements that should be clickable, such as buttons, can have the CSS property `pointer-events: auto`.

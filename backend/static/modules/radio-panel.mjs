@@ -1,3 +1,7 @@
+/**
+ * @module radio-panel
+ */
+
 const panel_template = `
 <link rel="stylesheet" href="/static/radio_panel.css">
 <fieldset class="spaced-bar">
@@ -5,6 +9,12 @@ const panel_template = `
 </fieldset>
 `;
 
+/**
+ * A "radio panel" of buttons.
+ * It behaves similarly to a set of radio inputs, with the UX of buttons.
+ * At most one button is "checked/selected" at a time.
+ * This is indicated by the button having the disabled attribute.
+ */
 class RadioPanel extends HTMLElement {
     static observedAttributes = [
         "name",
@@ -13,7 +23,7 @@ class RadioPanel extends HTMLElement {
     constructor() {
         super();
 
-        const shadowRoot = this.attachShadow({mode: 'closed'});
+        const shadowRoot = this.attachShadow({ mode: 'closed' });
         shadowRoot.innerHTML = panel_template;
 
     }
