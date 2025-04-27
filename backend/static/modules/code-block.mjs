@@ -302,7 +302,8 @@ export class CodeBlock extends HTMLElement {
         this.#text.appendChild(empty_span);
 
         // Loop through each character in predicted text field
-        text.split("").forEach((char, index) => {
+        this.predictions_dict.forEach((preds, index) => {
+            var char = preds[0]["character"];
             // Create a span element and insert the character
             const span = document.createElement("span");
             span.textContent = char || " ";
