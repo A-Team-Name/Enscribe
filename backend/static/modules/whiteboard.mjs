@@ -452,7 +452,7 @@ export class Whiteboard extends HTMLElement {
         }
 
         var whiteboard_dict = { "pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list }
-        const jsonString = JSON.stringify(whiteboard_dict, null, 2)
+        const jsonString = JSON.stringify(whiteboard_dict, null, 0)
 
         return jsonString
     }
@@ -631,8 +631,10 @@ export class Whiteboard extends HTMLElement {
             // Reconstruct each line of code layer
             var line_objs = [];
             for (var code_line of page.layers[0].lines) {
-                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
-                line_objs.push(line)
+                if (code_line != null) {
+                    let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
+                    line_objs.push(line);
+                }
             }
 
             this.#pages.get(page_id).layers[0].lines = line_objs
@@ -640,8 +642,10 @@ export class Whiteboard extends HTMLElement {
             // Reconstruct each line of annotations layer
             var line_objs = [];
             for (var code_line of page.layers[1].lines) {
-                let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
-                line_objs.push(line)
+                if (code_line != null) {
+                    let line = new Line(code_line.color, code_line.lineWidth, code_line.points);
+                    line_objs.push(line)
+                }
             }
 
             this.#pages.get(page_id).layers[1].lines = line_objs
