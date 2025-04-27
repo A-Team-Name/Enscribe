@@ -452,7 +452,7 @@ export class Whiteboard extends HTMLElement {
         }
 
         var whiteboard_dict = { "pages": Array.from(this.#pages.entries()), "code_blocks": code_block_list }
-        const jsonString = JSON.stringify(whiteboard_dict, null, 2)
+        const jsonString = JSON.stringify(whiteboard_dict, null, 0)
 
         return jsonString
     }
