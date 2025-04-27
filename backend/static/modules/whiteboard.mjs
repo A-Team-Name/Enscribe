@@ -226,6 +226,10 @@ export class Whiteboard extends HTMLElement {
 
         // Create a new, blank notebook
         document.getElementById("new").addEventListener("click", async () => {
+            // Allow the user to cancel creating a new notebook
+            if (!confirm("Creating a new notebook will delete any unsaved work \nAre you sure you want to continue?")) {
+                return;
+            }
             this.closeAllPages();
             this.newPage();
             this.#notebook_name = "";
@@ -284,6 +288,10 @@ export class Whiteboard extends HTMLElement {
         // Open from file button. This triggers the hidden file input on the toolbar.
         document.getElementById("open_file")
             .addEventListener("click", () => {
+                // Allow the user to cancel opening a new notebook
+                if (!confirm("Opening a notebook will delete any unsaved work \nAre you sure you want to continue?")) {
+                    return;
+                }
                 document.getElementById('fileInput').click();
 
             });
@@ -520,6 +528,10 @@ export class Whiteboard extends HTMLElement {
         // Open notebook button for each notebook
         document.querySelectorAll(".open-notebook").forEach(button => {
             button.addEventListener("click", () => {
+                // Allow the user to cancel opening a new notebook
+                if (!confirm("Opening a notebook will delete any unsaved work \nAre you sure you want to continue?")) {
+                    return;
+                }
                 let notebook_id = button.getAttribute("data-notebook-id");
                 const notebookFormData = new FormData();
                 notebookFormData.append("notebook_id", notebook_id);
